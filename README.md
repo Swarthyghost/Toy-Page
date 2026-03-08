@@ -1,11 +1,65 @@
-<div align="center">
+# PleasureToys GH - E-commerce Platform
 
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+A premium, modern e-commerce platform for PleasureToys GH featuring a dark aesthetic, smooth animations, and seamless WhatsApp ordering.
 
-  <h1>Built with AI Studio</h2>
+## Features
 
-  <p>The fastest path from prompt to production with Gemini.</p>
+- **Full-Stack Architecture**: Express.js backend with Vite frontend integration.
+- **Database**: SQLite (better-sqlite3) for persistent product management.
+- **Admin Dashboard**: Full CRUD capabilities for products.
+- **WhatsApp Ordering**: Automated message generation for orders.
+- **Responsive Design**: Mobile-first UI using Tailwind CSS 4.
+- **Modern Animations**: Powered by Motion (formerly Framer Motion).
 
-  <a href="https://aistudio.google.com/apps">Start building</a>
+## Getting Started in VS Code
 
-</div>
+### Prerequisites
+
+- [Node.js](https://nodejs.org/) (v18 or higher recommended)
+- [VS Code](https://code.visualstudio.com/)
+
+### Installation
+
+1. Open the project folder in VS Code.
+2. Open the terminal (`Ctrl + ` ` or `Cmd + ` `).
+3. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+### Running the Application
+
+To start the development server (both backend and frontend):
+
+```bash
+npm run dev
+```
+
+The application will be available at `http://localhost:3000`.
+
+### Project Structure
+
+- `server.ts`: Express server and API endpoints.
+- `src/`: React frontend source code.
+  - `components/`: Reusable UI components.
+  - `context/`: State management (Cart).
+  - `services/`: API communication layer.
+  - `data/`: Initial seed data.
+- `pleasuretoys.db`: SQLite database file (generated on first run).
+
+## Admin Access
+
+You can access the Admin Portal by clicking the "Admin Portal" link in the footer of the website.
+
+## Deployment
+
+To build the application for production:
+
+```bash
+npm run build
+npm start
+```
+
+## License
+
+MIT

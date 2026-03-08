@@ -1,0 +1,82 @@
+[
+  {
+    "id": 1,
+    "name": "Midnight Pulse Vibrator",
+    "price": 250,
+    "image": "https://images.unsplash.com/photo-1590650153855-d9e808231d41?auto=format&fit=crop&q=80&w=800",
+    "category": "Vibrators",
+    "description": "Experience deep, rumbly vibrations with 10 patterns of intense pleasure."
+  },
+  {
+    "id": 2,
+    "name": "Silk & Steel Handcuffs",
+    "price": 120,
+    "image": "https://images.unsplash.com/photo-1583241800698-e8ab01c85b27?auto=format&fit=crop&q=80&w=800",
+    "category": "BDSM",
+    "description": "Premium leather-lined steel handcuffs for elegant restraint."
+  },
+  {
+    "id": 3,
+    "name": "Organic Water-Based Lube",
+    "price": 85,
+    "image": "https://images.unsplash.com/photo-1611073102012-0f8109923ee1?auto=format&fit=crop&q=80&w=800",
+    "category": "Lubricants",
+    "description": "Silky smooth, long-lasting, and body-safe organic formula."
+  },
+  {
+    "id": 4,
+    "name": "Velvet Blindfold",
+    "price": 45,
+    "image": "https://images.unsplash.com/photo-1514316454349-750a7fd3da3a?auto=format&fit=crop&q=80&w=800",
+    "category": "Accessories",
+    "description": "Soft velvet blindfold to heighten your other senses."
+  },
+  {
+    "id": 5,
+    "name": "Rose Gold Glass Wand",
+    "price": 180,
+    "image": "https://images.unsplash.com/photo-1591348113527-7166544b059b?auto=format&fit=crop&q=80&w=800",
+    "category": "Vibrators",
+    "description": "Elegant glass wand for temperature play and pinpoint stimulation."
+  },
+  {
+    "id": 6,
+    "name": "Leather Riding Crop",
+    "price": 95,
+    "image": "https://images.unsplash.com/photo-1584949091598-c31daaaa4aa9?auto=format&fit=crop&q=80&w=800",
+    "category": "BDSM",
+    "description": "Genuine leather crop with a comfortable grip for playful impact."
+  },
+  {
+    "id": 7,
+    "name": "Silicone Massage Oil",
+    "price": 110,
+    "image": "https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?auto=format&fit=crop&q=80&w=800",
+    "category": "Lubricants",
+    "description": "Premium silicone-based oil for sensual full-body massages."
+  },
+  {
+    "id": 8,
+    "name": "Feather Tickler",
+    "price": 35,
+    "image": "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&q=80&w=800",
+    "category": "Accessories",
+    "description": "Soft ostrich feathers for delicate sensory play."
+  },
+  {
+    "id": 9,
+    "name": "Sensual Scented Candle",
+    "price": 60,
+    "image": "https://images.unsplash.com/photo-1602874801007-bd458bb1b8b6?auto=format&fit=crop&q=80&w=800",
+    "category": "Others",
+    "description": "Soy-based candle with aphrodisiac scents to set the mood."
+  },
+  {
+    "id": 10,
+    "name": "Couples' Connection Cards",
+    "price": 75,
+    "image": "https://images.unsplash.com/photo-1606335543042-57c525922933?auto=format&fit=crop&q=80&w=800",
+    "category": "Others",
+    "description": "A deck of 50 cards with prompts to deepen intimacy and conversation."
+  }
+]
