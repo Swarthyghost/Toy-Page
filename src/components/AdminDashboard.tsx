@@ -1,13 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Plus, Edit2, Trash2, X, Image as ImageIcon, DollarSign, Tag, FileText } from 'lucide-react';
-import { fetchProducts, createProduct, updateProduct, deleteProduct } from '../services/api';
-import { Product } from '../context/CartContext';
+import { Plus, Edit2, Trash2, X, Image as ImageIcon, DollarSign, Tag, FileText, Upload, LogOut, Gift } from 'lucide-react';
+import { useAdminAuth } from '../context/AdminAuthContext';
+import { fetchProducts, createProduct, updateProduct, deleteProduct, Product } from '../services/firebaseApi';
+import { uploadImage } from '../config/cloudinary';
+import PromoManagement from './PromoManagement';
 
 export default function AdminDashboard() {
+  const { adminUser, logout } = useAdminAuth();
   const [products, setProducts] = useState<Product[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [activeTab, setActiveTab] = useState<'products' | 'promos'>('products');
   const [formData, setFormData] = useState({
     name: '',
     price: '',
@@ -15,6 +19,8 @@ export default function AdminDashboard() {
     category: 'Vibrators',
     description: '',
   });
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
     loadProducts();
@@ -27,21 +33,43 @@ export default function AdminDashboard() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const payload = {
-      ...formData,
-      price: parseFloat(formData.price),
-    };
+    setIsUploading(true);
+    
+    try {
+      console.log('Submitting product:', formData);
+      console.log('Image file:', imageFile);
+      
+      // For testing, let's try without image first
+      const payload = {
+        name: formData.name,
+        price: parseFloat(formData.price),
+        image: imageFile ? formData.image : 'https://via.placeholder.com/300x300/000000/FFFFFF?text=Product+Image', // Default placeholder
+        category: formData.category,
+        description: formData.description,
+      };
 
-    if (editingProduct) {
-      await updateProduct(editingProduct.id, payload);
-    } else {
-      await createProduct(payload);
+      console.log('Payload:', payload);
+
+      if (editingProduct) {
+        console.log('Updating product:', editingProduct.id);
+        await updateProduct(editingProduct.id, payload, imageFile || undefined);
+      } else {
+        console.log('Creating new product');
+        await createProduct(payload, imageFile || undefined);
+      }
+
+      console.log('Product saved successfully');
+      setIsModalOpen(false);
+      setEditingProduct(null);
+      setImageFile(null);
+      setFormData({ name: '', price: '', image: '', category: 'Vibrators', description: '' });
+      loadProducts();
+    } catch (error) {
+      console.error('Error saving product:', error);
+      alert(`Failed to save product: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setIsUploading(false);
     }
-
-    setIsModalOpen(false);
-    setEditingProduct(null);
-    setFormData({ name: '', price: '', image: '', category: 'Vibrators', description: '' });
-    loadProducts();
   };
 
   const handleEdit = (product: Product) => {
@@ -53,35 +81,114 @@ export default function AdminDashboard() {
       category: product.category,
       description: product.description,
     });
+    setImageFile(null);
     setIsModalOpen(true);
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: string) => {
     if (confirm('Are you sure you want to delete this product?')) {
-      await deleteProduct(id);
-      loadProducts();
+      try {
+        await deleteProduct(id);
+        loadProducts();
+      } catch (error) {
+        console.error('Error deleting product:', error);
+        alert('Failed to delete product. Please try again.');
+      }
+    }
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData({ ...formData, image: reader.result as string });
+      };
+      reader.readAsDataURL(file);
     }
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-24">
-      <div className="flex justify-between items-end mb-12">
-        <div>
-          <h1 className="text-5xl font-display font-bold mb-4">Admin Dashboard</h1>
-          <p className="text-white/40">Manage your product collection and inventory.</p>
+    <div className="min-h-screen bg-black">
+      {/* Admin Header */}
+      <div className="border-b border-white/10">
+        <div className="max-w-7xl mx-auto px-6 py-6">
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-3xl font-display font-bold">Admin Dashboard</h1>
+              <p className="text-white/60">Welcome back, {adminUser?.displayName}</p>
+            </div>
+            <button
+              onClick={logout}
+              className="flex items-center gap-2 px-4 py-2 text-white/60 hover:text-white transition-colors"
+            >
+              <LogOut size={18} />
+              Logout
+            </button>
+          </div>
         </div>
-        <button
-          onClick={() => {
-            setEditingProduct(null);
-            setFormData({ name: '', price: '', image: '', category: 'Vibrators', description: '' });
-            setIsModalOpen(true);
-          }}
-          className="px-6 py-3 bg-primary text-white font-bold rounded-2xl flex items-center gap-2 hover:scale-105 transition-transform"
-        >
-          <Plus size={20} />
-          Add Product
-        </button>
       </div>
+
+      {/* Admin Navigation */}
+      <div className="border-b border-white/10 bg-black">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="flex gap-8">
+            <button
+              onClick={() => setActiveTab('products')}
+              className={`py-4 border-b-2 transition-colors ${
+                activeTab === 'products'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-white/60 hover:text-white'
+              }`}
+            >
+              Products
+            </button>
+            <button
+              onClick={() => setActiveTab('promos')}
+              className={`py-4 border-b-2 transition-colors flex items-center gap-2 ${
+                activeTab === 'promos'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-white/60 hover:text-white'
+              }`}
+            >
+              <Gift size={18} />
+              Promo Codes
+            </button>
+            <div className="ml-auto flex items-center gap-4">
+              <a
+                href="/"
+                className="py-4 text-white/60 hover:text-white transition-colors"
+              >
+                View Store
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Content */}
+      {activeTab === 'products' ? (
+        <div className="max-w-7xl mx-auto px-6 py-8">
+          <div className="flex justify-between items-end mb-8">
+            <div>
+              <h2 className="text-2xl font-bold mb-2">Product Management</h2>
+              <p className="text-white/40">Manage your product collection and inventory.</p>
+            </div>
+            <button
+              onClick={() => {
+                setEditingProduct(null);
+                setImageFile(null);
+                setFormData({ name: '', price: '', image: '', category: 'Vibrators', description: '' });
+                setIsModalOpen(true);
+              }}
+              className="px-6 py-3 bg-primary text-white font-bold rounded-2xl flex items-center gap-2 hover:scale-105 transition-transform"
+            >
+              <Plus size={20} />
+              Add Product
+            </button>
+          </div>
 
       <div className="bg-white/5 border border-white/10 rounded-[2rem] overflow-hidden">
         <table className="w-full text-left border-collapse">
@@ -185,36 +292,56 @@ export default function AdminDashboard() {
                   </div>
                 </div>
 
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-white/40 ml-1">
-                      <ImageIcon size={14} /> Image URL
-                    </label>
-                    <input
-                      required
-                      type="url"
-                      value={formData.image}
-                      onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                      className="w-full px-6 py-4 bg-white/5 border border-white/10 rounded-2xl focus:border-primary focus:outline-none transition-colors"
-                    />
+                <div className="space-y-2">
+                  <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-white/40 ml-1">
+                    <ImageIcon size={14} /> Product Image
+                  </label>
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-4">
+                      <label className="flex-1 px-6 py-4 bg-white/5 border border-white/10 rounded-2xl hover:border-primary transition-colors cursor-pointer flex items-center justify-center gap-2">
+                        <Upload size={18} />
+                        <span>{imageFile ? imageFile.name : 'Choose image file'}</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleImageChange}
+                          className="hidden"
+                        />
+                      </label>
+                    </div>
+                    
+                    {(formData.image || imageFile) && (
+                      <div className="relative">
+                        <img
+                          src={formData.image}
+                          alt="Product preview"
+                          className="w-full h-48 object-cover rounded-xl"
+                        />
+                        {imageFile && (
+                          <div className="absolute top-2 right-2 px-2 py-1 bg-primary text-white text-xs rounded-full">
+                            New Image
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
-                  
-                  <div className="space-y-2">
-                    <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-white/40 ml-1">
-                      <Tag size={14} /> Category
-                    </label>
-                    <select
-                      value={formData.category}
-                      onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                      className="w-full px-6 py-4 bg-white/5 border border-white/10 rounded-2xl focus:border-primary focus:outline-none transition-colors appearance-none"
-                    >
-                      <option value="Vibrators">Vibrators</option>
-                      <option value="BDSM">BDSM</option>
-                      <option value="Lubricants">Lubricants</option>
-                      <option value="Accessories">Accessories</option>
-                      <option value="Others">Others</option>
-                    </select>
-                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-white/40 ml-1">
+                    <Tag size={14} /> Category
+                  </label>
+                  <select
+                    value={formData.category}
+                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                    className="w-full px-6 py-4 bg-white/5 border border-white/10 rounded-2xl focus:border-primary focus:outline-none transition-colors appearance-none"
+                  >
+                    <option value="Vibrators">Vibrators</option>
+                    <option value="BDSM">BDSM</option>
+                    <option value="Lubricants">Lubricants</option>
+                    <option value="Accessories">Accessories</option>
+                    <option value="Others">Others</option>
+                  </select>
                 </div>
 
                 <div className="space-y-2">
@@ -231,15 +358,27 @@ export default function AdminDashboard() {
 
                 <button
                   type="submit"
-                  className="w-full py-5 bg-primary text-white font-bold rounded-2xl hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-primary/20"
+                  disabled={isUploading}
+                  className="w-full py-5 bg-primary text-white font-bold rounded-2xl hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-primary/20 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {editingProduct ? 'Update Product' : 'Create Product'}
+                  {isUploading ? (
+                    <div className="flex items-center justify-center gap-2">
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      {editingProduct ? 'Updating...' : 'Creating...'}
+                    </div>
+                  ) : (
+                    editingProduct ? 'Update Product' : 'Create Product'
+                  )}
                 </button>
               </form>
             </motion.div>
           </div>
         )}
       </AnimatePresence>
+        </div>
+      ) : (
+        <PromoManagement />
+      )}
     </div>
   );
 }

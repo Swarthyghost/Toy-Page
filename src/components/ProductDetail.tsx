@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { ShoppingCart, ArrowLeft, ShieldCheck, Truck, Package } from 'lucide-react';
 import { useCart, Product } from '../context/CartContext';
-import { fetchProductById } from '../services/api';
+import { fetchProductById } from '../services/firebaseApi';
 
 export default function ProductDetail() {
   const { id } = useParams();

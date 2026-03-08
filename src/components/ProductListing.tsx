@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { fetchProducts } from '../services/api';
+import { fetchProducts } from '../services/firebaseApi';
 import ProductCard from './ProductCard';
 import { motion, AnimatePresence } from 'motion/react';
 import { SlidersHorizontal } from 'lucide-react';

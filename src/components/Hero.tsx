@@ -23,8 +23,8 @@ export default function Hero() {
           </div>
           
           <h1 className="text-6xl md:text-8xl font-display font-bold leading-[1.1] mb-6">
-            Elevate Your <br />
-            <span className="text-gradient">Pleasure.</span>
+            Explore <br />
+            <span className="text-gradient">Pleasure Without Limits.</span>
           </h1>
           
           <p className="text-lg text-white/60 mb-10 max-w-lg leading-relaxed">
@@ -65,32 +65,46 @@ export default function Hero() {
           </div>
         </motion.div>
 
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 1, ease: "easeOut" }}
-          className="relative hidden lg:block"
-        >
-          <div className="relative z-10 rounded-[2rem] overflow-hidden border border-white/10 shadow-2xl shadow-primary/20">
-            <img
-              src="https://images.unsplash.com/photo-1590650153855-d9e808231d41?auto=format&fit=crop&q=80&w=1200"
-              alt="Premium Product"
-              className="w-full aspect-[4/5] object-cover hover:scale-110 transition-transform duration-700"
-              referrerPolicy="no-referrer"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-            <div className="absolute bottom-8 left-8 right-8 p-6 glass rounded-2xl">
-              <div className="text-sm text-primary font-bold mb-1 uppercase tracking-widest">Featured</div>
-              <div className="text-2xl font-bold">Midnight Pulse Pro</div>
-              <div className="text-white/60 text-sm mt-1">GHS 450.00</div>
-            </div>
-          </div>
-          
-          {/* Decorative Elements */}
-          <div className="absolute -top-10 -right-10 w-40 h-40 bg-secondary/30 rounded-full blur-3xl -z-10" />
-          <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-primary/30 rounded-full blur-3xl -z-10" />
-        </motion.div>
+       
       </div>
+      
+      <div className="max-w-7xl mx-auto px-6 py-16">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl font-display font-bold mb-4">Featured Product</h2>
+          <p className="text-white/60 mb-8">Experience pleasure with our premium selection</p>
+        </div>
+        
+        <div className="bg-white/5 border border-white/10 rounded-[3rem] overflow-hidden">
+          <div className="grid md:grid-cols-1 gap-8 p-6">
+            <div className="relative h-96">
+              <div className="absolute inset-0">
+                <img
+                  src="/rosetoy2in1.jpg"
+                  alt="Rose Toy Sucking Vibrator 2 in 1"
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+              </div>
+              <div className="relative z-10 flex items-end justify-center p-8 h-full">
+                <div>
+                  <h3 className="text-2xl font-bold text-white mb-2">Rose Toy Sucking Vibrator 2 in 1</h3>
+                  <p className="text-white/80 text-sm mb-4">Premium pleasure device with advanced suction technology</p>
+                  <div className="flex items-center gap-4">
+                    <span className="text-3xl font-bold text-primary">GHS 400.00</span>
+                    <Link
+                      to="/product/featured-rose-vibrator"
+                      className="px-6 py-3 bg-white text-black font-bold rounded-2xl hover:bg-gray-100 transition-colors"
+                    >
+                      View Details
+                    </Link>
+                  </div>
+                </div>
+              </div>
+          </div>
+          </div>
+        </div>
+      </div>
+
     </section>
   );
 }

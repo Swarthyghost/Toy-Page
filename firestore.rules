@@ -1,0 +1,38 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper function to check if user is admin
+    function isAdmin() {
+      return request.auth != null;
+    }
+    
+    // Admin users collection - only admins can read/write
+    match /admins/{adminId} {
+      allow read, write: if request.auth != null;
+      allow create: if request.auth != null && 
+                       request.auth.uid == adminId &&
+                       request.resource.data.email in [
+                         'charlesnnamdiudeagwu@gmail.com',
+                         'admin@pleasuretoys.com'
+                       ];
+    }
+    
+    // Products collection - admin only for write, public read
+    match /products/{productId} {
+      allow read: if true; // Public read access
+      allow create, update, delete: if request.auth != null; // Any authenticated user can write for now
+    }
+    
+    // Promo codes collection - admin only for write, public read for validation
+    match /promoCodes/{promoId} {
+      allow read: if true; // Public read access
+      allow create, update, delete: if request.auth != null; // Any authenticated user can write for now
+    }
+    
+    // Deny all other access
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

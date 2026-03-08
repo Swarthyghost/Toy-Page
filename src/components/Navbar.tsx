@@ -71,6 +71,12 @@ export default function Navbar() {
 
         {/* Actions */}
         <div className="flex items-center gap-4">
+          <Link 
+            to="/admin" 
+            className="hidden md:flex text-sm font-medium text-white/50 hover:text-primary transition-colors"
+          >
+            Admin
+          </Link>
           <Link to="/cart" className="relative p-2 hover:bg-white/10 rounded-full transition-colors">
             <ShoppingCart size={22} />
             {totalItems > 0 && (
@@ -111,6 +117,12 @@ export default function Navbar() {
                   {cat.name}
                 </Link>
               ))}
+              <Link
+                to="/admin"
+                className="flex items-center justify-between p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-colors"
+              >
+                <span className="font-medium">Admin Dashboard</span>
+              </Link>
               <Link
                 to="/cart"
                 className="flex items-center justify-between p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-colors"

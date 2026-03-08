@@ -1,3 +1,4 @@
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { useEffect } from 'react';
 import Navbar from './components/Navbar';
@@ -9,9 +10,12 @@ import About from './components/About';
 import Contact from './components/Contact';
 import Privacy from './components/Privacy';
 import Shipping from './components/Shipping';
+import BDSMPage from './components/BDSMPage';
 import AdminDashboard from './components/AdminDashboard';
+import ProtectedRoute from './components/ProtectedRoute';
 import Footer from './components/Footer';
 import { CartProvider } from './context/CartContext';
+import { AdminAuthProvider } from './context/AdminAuthContext';
 import { motion, AnimatePresence } from 'motion/react';
 
 function ScrollToTop() {
@@ -35,31 +39,58 @@ function HomePage() {
   );
 }
 
+function Layout({ children, showNavbar = true }: { children: React.ReactNode; showNavbar?: boolean }) {
+  const location = useLocation();
+  const isAdminPage = location.pathname.startsWith('/admin');
+
+  return (
+    <div className="min-h-screen flex flex-col selection:bg-primary selection:text-white">
+      {!isAdminPage && showNavbar && <Navbar />}
+      <main className={`flex-grow ${isAdminPage ? '' : ''}`}>
+        {children}
+      </main>
+      {!isAdminPage && <Footer />}
+    </div>
+  );
+}
+
 export default function App() {
   return (
-    <CartProvider>
-      <Router>
-        <ScrollToTop />
-        <div className="min-h-screen flex flex-col selection:bg-primary selection:text-white">
-          <Navbar />
-          <main className="flex-grow">
-            <AnimatePresence mode="wait">
-              <Routes>
-                <Route path="/" element={<HomePage />} />
-                <Route path="/category/:categoryName" element={<ProductListing />} />
-                <Route path="/product/:id" element={<ProductDetail />} />
-                <Route path="/cart" element={<Cart />} />
-                <Route path="/about" element={<About />} />
-                <Route path="/contact" element={<Contact />} />
-                <Route path="/privacy" element={<Privacy />} />
-                <Route path="/shipping" element={<Shipping />} />
-                <Route path="/admin" element={<AdminDashboard />} />
-              </Routes>
-            </AnimatePresence>
-          </main>
-          <Footer />
-        </div>
-      </Router>
-    </CartProvider>
+    <AdminAuthProvider>
+      <CartProvider>
+        <Router>
+          <ScrollToTop />
+          <Routes>
+            <Route path="/" element={
+              <Layout>
+                <AnimatePresence mode="wait">
+                  <Routes>
+                    <Route path="/" element={<HomePage />} />
+                    <Route path="/category/:categoryName" element={<ProductListing />} />
+                    <Route path="/product/:id" element={<ProductDetail />} />
+                    <Route path="/cart" element={<Cart />} />
+                    <Route path="/about" element={<About />} />
+                    <Route path="/contact" element={<Contact />} />
+                    <Route path="/privacy" element={<Privacy />} />
+                    <Route path="/shipping" element={<Shipping />} />
+                    <Route path="/bdsm" element={<BDSMPage />} />
+                  </Routes>
+                </AnimatePresence>
+              </Layout>
+            } />
+            <Route 
+              path="/admin" 
+              element={
+                <Layout showNavbar={false}>
+                  <ProtectedRoute>
+                    <AdminDashboard />
+                  </ProtectedRoute>
+                </Layout>
+              } 
+            />
+          </Routes>
+        </Router>
+      </CartProvider>
+    </AdminAuthProvider>
   );
 }
