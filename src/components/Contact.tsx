@@ -29,7 +29,7 @@ export default function Contact() {
               </div>
               <div>
                 <div className="text-sm font-bold uppercase tracking-widest text-white/40 mb-1">Email</div>
-                <div className="text-xl font-bold">hello@pleasuretoysgh.com</div>
+                <div className="text-xl font-bold">pleasuretoysgh@gmail.com</div>
               </div>
             </div>
 
@@ -39,7 +39,7 @@ export default function Contact() {
               </div>
               <div>
                 <div className="text-sm font-bold uppercase tracking-widest text-white/40 mb-1">Location</div>
-                <div className="text-xl font-bold">Accra, Ghana (Online Only)</div>
+                <div className="text-xl font-bold">Accra, Ghana (Ablekuma)</div>
               </div>
             </div>
           </div>
