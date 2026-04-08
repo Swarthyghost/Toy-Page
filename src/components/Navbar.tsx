@@ -14,8 +14,8 @@ const categories = [
   { name: 'Vibrators', path: '/category/Vibrators' },
   { name: 'BDSM', path: '/category/BDSM' },
   { name: 'Lubricants', path: '/category/Lubricants' },
-  { name: 'Accessories', path: '/category/Accessories' },
   { name: 'Mens Toy', path: '/category/Mens Toy' },
+  { name: 'Accessories', path: '/category/Accessories' },
 ];
 
 export default function Navbar() {

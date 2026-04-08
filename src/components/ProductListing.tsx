@@ -24,7 +24,7 @@ export default function ProductListing() {
     }
   }, [categoryName]);
 
-  const categories = ['All', 'Vibrators', 'BDSM', 'Lubricants', 'Accessories', 'Mens Toy'];
+  const categories = ['All', 'Vibrators', 'BDSM', 'Lubricants', 'Mens Toy', 'Accessories'];
 
   const handleCategoryChange = (cat: string) => {
     setActiveCategory(cat);

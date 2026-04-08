@@ -241,11 +241,12 @@ export default function Hero() {
           </button>
         </motion.div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           {[
             { name: 'Vibrators', emoji: '💜', desc: 'Solo & couples', path: '/category/Vibrators', accent: 'from-purple-900/30' },
             { name: 'BDSM', emoji: '🖤', desc: 'Restraints & more', path: '/category/BDSM', accent: 'from-red-900/30' },
             { name: 'Lubricants', emoji: '✨', desc: 'Smooth & safe', path: '/category/Lubricants', accent: 'from-blue-900/30' },
+            { name: 'Mens Toy', emoji: '🍆', desc: 'For him', path: '/category/Mens Toy', accent: 'from-indigo-900/30' },
             { name: 'Accessories', emoji: '🎀', desc: 'Enhance your play', path: '/category/Accessories', accent: 'from-pink-900/30' },
           ].map((cat, i) => (
             <motion.div
