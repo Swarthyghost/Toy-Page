@@ -340,7 +340,7 @@ export default function AdminDashboard() {
                     <option value="BDSM">BDSM</option>
                     <option value="Lubricants">Lubricants</option>
                     <option value="Accessories">Accessories</option>
-                    <option value="Mens Toy "> Men's Toy</option>
+                    <option value="Mens Toy">Men's Toy</option>
                   </select>
                 </div>
 

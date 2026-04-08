@@ -37,7 +37,7 @@ export default function ProductListing() {
 
   const filteredProducts = useMemo(() => {
     if (activeCategory === 'All') return products;
-    return products.filter((p) => p.category === activeCategory);
+    return products.filter((p) => p.category?.trim() === activeCategory);
   }, [activeCategory, products]);
 
   return (
