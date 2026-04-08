@@ -171,7 +171,7 @@ export default function Hero() {
                 <div className="relative aspect-[4/3] overflow-hidden">
                   <img
                     src="/rosetoy2in1.jpg"
-                    alt="Rose Toy Sucking Vibrator 2 in 1"
+                    alt="Rose Thrusting & Sucking Vibrator"
                     className="w-full h-full object-cover transition-transform duration-700 hover:scale-105"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
@@ -186,13 +186,13 @@ export default function Hero() {
                 {/* Card body */}
                 <div className="p-6">
                   <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary/70 mb-2">Vibrators</p>
-                  <h3 className="text-xl font-display font-bold mb-1 leading-tight">Rose Toy Sucking Vibrator 2 in 1</h3>
+                  <h3 className="text-xl font-display font-bold mb-1 leading-tight">Rose Thrusting & Sucking Vibrator</h3>
                   <p className="text-white/40 text-sm mb-5">Advanced suction technology with dual stimulation modes</p>
 
                   <div className="flex items-center justify-between">
                     <span className="text-3xl font-display font-bold text-primary">GHS 400</span>
                     <Link
-                      to="/product/featured-rose-vibrator"
+                      to="/product/pcNPkD2LuoQ8hdODSntW"
                       className="group flex items-center gap-2 px-5 py-3 bg-white text-black text-sm font-bold rounded-xl hover:bg-primary hover:text-white transition-all"
                     >
                       View
