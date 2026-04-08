@@ -190,7 +190,7 @@ export default function Hero() {
                   <p className="text-white/40 text-sm mb-5">Advanced suction technology with dual stimulation modes</p>
 
                   <div className="flex items-center justify-between">
-                    <span className="text-3xl font-display font-bold text-primary">GHS 400</span>
+                    <span className="text-3xl font-display font-bold text-primary">GHS 450</span>
                     <Link
                       to="/product/pcNPkD2LuoQ8hdODSntW"
                       className="group flex items-center gap-2 px-5 py-3 bg-white text-black text-sm font-bold rounded-xl hover:bg-primary hover:text-white transition-all"
