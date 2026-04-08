@@ -235,10 +235,10 @@ export default function Hero() {
             <p className="text-xs font-bold uppercase tracking-[0.2em] text-primary/70 mb-2">Browse by category</p>
             <h2 className="text-4xl font-display font-bold">Shop the Collection</h2>
           </div>
-          <Link to="/" className="group flex items-center gap-2 text-white/40 hover:text-primary text-sm font-bold transition-colors">
+          <button onClick={() => document.getElementById('collection')?.scrollIntoView({ behavior: 'smooth' })} className="group flex items-center gap-2 text-white/40 hover:text-primary text-sm font-bold transition-colors cursor-pointer">
             View All
             <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
-          </Link>
+          </button>
         </motion.div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
