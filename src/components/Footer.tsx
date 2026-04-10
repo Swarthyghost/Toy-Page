@@ -18,10 +18,16 @@ export default function Footer() {
             Ghana's premier destination for high-quality adult toys and sensual accessories. We prioritize your pleasure and privacy with 100% discreet packaging and delivery.
           </p>
           <div className="flex gap-4">
-            {[Instagram, Twitter, Facebook].map((Icon, i) => (
+            {[
+              { Icon: Instagram, href: "https://www.instagram.com/pleasuretoys_gh", target: "_blank" },
+              { Icon: Twitter, href: "#", target: undefined },
+              { Icon: Facebook, href: "#", target: undefined },
+            ].map(({ Icon, href, target }, i) => (
               <a
                 key={i}
-                href="#"
+                href={href}
+                target={target}
+                rel={target === "_blank" ? "noopener noreferrer" : undefined}
                 className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-primary hover:border-primary transition-all"
               >
                 <Icon size={18} />
