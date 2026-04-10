@@ -1,24 +1,37 @@
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { ShoppingCart, Trash2, Plus, Minus, ArrowRight, X } from 'lucide-react';
-import { useCart } from '../context/CartContext';
-import { Link } from 'react-router-dom';
+import React, { useState } from "react";
+import { motion, AnimatePresence } from "motion/react";
+import { ShoppingCart, Trash2, Plus, Minus, ArrowRight, X } from "lucide-react";
+import { useCart } from "../context/CartContext";
+import { Link } from "react-router-dom";
+import { useSEO } from "../hooks/useSEO";
 
 export default function Cart() {
-  const { cart, removeFromCart, updateQuantity, totalPrice, totalItems } = useCart();
+  const { cart, removeFromCart, updateQuantity, totalPrice, totalItems } =
+    useCart();
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+
+  // SEO optimization for cart page
+  useSEO({
+    title: "Shopping Cart",
+    description: `Your shopping cart with ${totalItems} items. Total: GHS ${totalPrice.toFixed(2)}. Complete your order with discreet delivery across Ghana.`,
+    url: "/cart",
+  });
+
   const [formData, setFormData] = useState({
-    name: '',
-    phone: '',
-    location: '',
+    name: "",
+    phone: "",
+    location: "",
   });
 
   const handleWhatsAppOrder = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     const orderList = cart
-      .map((item, index) => `${index + 1}. ${item.name} x${item.quantity} - GHS ${(item.price * item.quantity).toFixed(2)}`)
-      .join('\n');
+      .map(
+        (item, index) =>
+          `${index + 1}. ${item.name} x${item.quantity} - GHS ${(item.price * item.quantity).toFixed(2)}`,
+      )
+      .join("\n");
 
     const message = `Hello, I would like to place an order.
 
@@ -36,8 +49,8 @@ Please confirm my order. Thank you!`;
 
     const encodedMessage = encodeURIComponent(message);
     const whatsappUrl = `https://wa.me/233266181581?text=${encodedMessage}`;
-    
-    window.open(whatsappUrl, '_blank');
+
+    window.open(whatsappUrl, "_blank");
   };
 
   if (cart.length === 0) {
@@ -85,7 +98,7 @@ Please confirm my order. Thank you!`;
                     referrerPolicy="no-referrer"
                   />
                 </div>
-                
+
                 <div className="flex-grow">
                   <h3 className="font-bold text-lg group-hover:text-primary transition-colors">
                     {item.name}
@@ -94,14 +107,20 @@ Please confirm my order. Thank you!`;
                   <div className="flex items-center gap-4">
                     <div className="flex items-center gap-3 bg-black/40 rounded-full px-3 py-1 border border-white/10">
                       <button
-                        onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                        onClick={() =>
+                          updateQuantity(item.id, item.quantity - 1)
+                        }
                         className="p-1 hover:text-primary transition-colors"
                       >
                         <Minus size={14} />
                       </button>
-                      <span className="text-sm font-bold w-4 text-center">{item.quantity}</span>
+                      <span className="text-sm font-bold w-4 text-center">
+                        {item.quantity}
+                      </span>
                       <button
-                        onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                        onClick={() =>
+                          updateQuantity(item.id, item.quantity + 1)
+                        }
                         className="p-1 hover:text-primary transition-colors"
                       >
                         <Plus size={14} />
@@ -128,7 +147,7 @@ Please confirm my order. Thank you!`;
         <div className="lg:col-span-1">
           <div className="sticky top-24 p-8 bg-white/5 border border-white/10 rounded-[2rem]">
             <h2 className="text-2xl font-bold mb-6">Order Summary</h2>
-            
+
             <div className="space-y-4 mb-8">
               <div className="flex justify-between text-white/60">
                 <span>Subtotal ({totalItems} items)</span>
@@ -153,7 +172,7 @@ Please confirm my order. Thank you!`;
               Proceed to Order
               <ArrowRight size={20} />
             </button>
-            
+
             <p className="mt-4 text-[10px] text-center text-white/30 uppercase tracking-widest">
               Secure Checkout via WhatsApp
             </p>
@@ -172,7 +191,7 @@ Please confirm my order. Thank you!`;
               onClick={() => setIsCheckoutOpen(false)}
               className="absolute inset-0 bg-black/80 backdrop-blur-sm"
             />
-            
+
             <motion.div
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -187,40 +206,54 @@ Please confirm my order. Thank you!`;
               </button>
 
               <h2 className="text-3xl font-display font-bold mb-2">Checkout</h2>
-              <p className="text-white/40 mb-8">Please provide your details to complete the order via WhatsApp.</p>
+              <p className="text-white/40 mb-8">
+                Please provide your details to complete the order via WhatsApp.
+              </p>
 
               <form onSubmit={handleWhatsAppOrder} className="space-y-6">
                 <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase tracking-widest text-white/40 ml-1">Full Name</label>
+                  <label className="text-xs font-bold uppercase tracking-widest text-white/40 ml-1">
+                    Full Name
+                  </label>
                   <input
                     required
                     type="text"
                     placeholder="John Doe"
                     value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full px-6 py-4 bg-white/5 border border-white/10 rounded-2xl focus:border-primary focus:outline-none transition-colors"
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase tracking-widest text-white/40 ml-1">Phone Number</label>
-                  <input
-                    required
-                    type="tel"
-                    placeholder="024 000 0000"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, name: e.target.value })
+                    }
                     className="w-full px-6 py-4 bg-white/5 border border-white/10 rounded-2xl focus:border-primary focus:outline-none transition-colors"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase tracking-widest text-white/40 ml-1">Delivery Location</label>
+                  <label className="text-xs font-bold uppercase tracking-widest text-white/40 ml-1">
+                    Phone Number
+                  </label>
+                  <input
+                    required
+                    type="tel"
+                    placeholder="024 000 0000"
+                    value={formData.phone}
+                    onChange={(e) =>
+                      setFormData({ ...formData, phone: e.target.value })
+                    }
+                    className="w-full px-6 py-4 bg-white/5 border border-white/10 rounded-2xl focus:border-primary focus:outline-none transition-colors"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-widest text-white/40 ml-1">
+                    Delivery Location
+                  </label>
                   <textarea
                     required
                     placeholder="Accra, East Legon..."
                     value={formData.location}
-                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, location: e.target.value })
+                    }
                     className="w-full px-6 py-4 bg-white/5 border border-white/10 rounded-2xl focus:border-primary focus:outline-none transition-colors min-h-[100px] resize-none"
                   />
                 </div>
