@@ -2,30 +2,36 @@
 // Drop this file into src/hooks/ and call it at the top of any page component.
 // It dynamically updates <title>, meta description, og tags, etc.
 
-import { useEffect } from 'react';
+import { useEffect } from "react";
 
 interface SEOProps {
   title?: string;
   description?: string;
+  keywords?: string;
   image?: string;
   url?: string;
   type?: string;
 }
 
-const BASE_TITLE = 'PleasureToys GH';
+const BASE_TITLE = "PleasureToys GH";
 const BASE_DESCRIPTION =
   "Ghana's premier destination for high-quality adult toys, vibrators, BDSM gear, lubricants and accessories. 100% discreet packaging, fast delivery across Ghana.";
-const BASE_URL = 'https://pleasuretoysgh.com';
+const BASE_KEYWORDS =
+  "adult toys Ghana, sex toys Accra, vibrators Ghana, BDSM gear, lubricants, mens toys, discreet delivery, pleasure toys, adult shop Ghana, sex accessories";
+const BASE_URL = "https://pleasuretoysgh.com";
 const BASE_IMAGE = `${BASE_URL}/og-image.jpg`;
 
 export function useSEO({
   title,
   description = BASE_DESCRIPTION,
+  keywords = BASE_KEYWORDS,
   image = BASE_IMAGE,
   url,
-  type = 'website',
+  type = "website",
 }: SEOProps = {}) {
-  const fullTitle = title ? `${title} | ${BASE_TITLE}` : `${BASE_TITLE} | Premium Adult Toys & Accessories in Ghana`;
+  const fullTitle = title
+    ? `${title} | ${BASE_TITLE}`
+    : `${BASE_TITLE} | Premium Adult Toys & Accessories in Ghana`;
   const fullUrl = url ? `${BASE_URL}${url}` : BASE_URL;
 
   useEffect(() => {
@@ -36,27 +42,30 @@ export function useSEO({
     const setMeta = (selector: string, value: string) => {
       let el = document.querySelector(selector) as HTMLMetaElement | null;
       if (!el) {
-        el = document.createElement('meta');
-        const attr = selector.includes('[name') ? 'name' : 'property';
-        const val = selector.match(/["']([^"']+)["']/)?.[1] ?? '';
+        el = document.createElement("meta");
+        const attr = selector.includes("[name") ? "name" : "property";
+        const val = selector.match(/["']([^"']+)["']/)?.[1] ?? "";
         el.setAttribute(attr, val);
         document.head.appendChild(el);
       }
-      el.setAttribute('content', value);
+      el.setAttribute("content", value);
     };
 
     const setLink = (rel: string, href: string) => {
-      let el = document.querySelector(`link[rel="${rel}"]`) as HTMLLinkElement | null;
+      let el = document.querySelector(
+        `link[rel="${rel}"]`,
+      ) as HTMLLinkElement | null;
       if (!el) {
-        el = document.createElement('link');
-        el.setAttribute('rel', rel);
+        el = document.createElement("link");
+        el.setAttribute("rel", rel);
         document.head.appendChild(el);
       }
-      el.setAttribute('href', href);
+      el.setAttribute("href", href);
     };
 
     setMeta('meta[name="description"]', description);
-    setLink('canonical', fullUrl);
+    setMeta('meta[name="keywords"]', keywords);
+    setLink("canonical", fullUrl);
 
     // Open Graph
     setMeta('meta[property="og:title"]', fullTitle);
@@ -70,7 +79,7 @@ export function useSEO({
     setMeta('meta[name="twitter:description"]', description);
     setMeta('meta[name="twitter:image"]', image);
     setMeta('meta[name="twitter:url"]', fullUrl);
-  }, [fullTitle, description, image, fullUrl, type]);
+  }, [fullTitle, description, keywords, image, fullUrl, type]);
 }
 
 // ─── Usage examples ──────────────────────────────────────────────────────────

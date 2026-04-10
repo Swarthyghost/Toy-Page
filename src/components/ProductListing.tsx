@@ -26,12 +26,29 @@ export default function ProductListing() {
   }, [categoryName]);
 
   // SEO optimization to prevent Soft 404s
+  const getCategoryKeywords = (category: string) => {
+    const keywordMap: Record<string, string> = {
+      All: "adult toys Ghana, sex toys Accra, vibrators Ghana, BDSM gear, lubricants, mens toys, discreet delivery, pleasure toys, adult shop Ghana",
+      Vibrators:
+        "vibrators Ghana, sex toys Accra, rabbit vibrators, bullet vibrators, wand vibrators, discreet delivery Ghana, adult toys Ghana",
+      BDSM: "BDSM gear Ghana, bondage toys Accra, restraints, impact toys, sensation play, adult toys Ghana, discreet delivery",
+      Lubricants:
+        "lubricants Ghana, sex lube Accra, personal lubricant, water based lube, silicone lube, adult toys Ghana",
+      "Mens Toy":
+        "mens toys Ghana, male sex toys Accra, cock rings, masturbators, prostate massagers, adult toys for men",
+      Accessories:
+        "adult accessories Ghana, sex toy accessories Accra, cleaners, storage, batteries, adult toy maintenance",
+    };
+    return keywordMap[category] || keywordMap["All"];
+  };
+
   useSEO({
     title: activeCategory === "All" ? "Our Collection" : activeCategory,
     description:
       activeCategory === "All"
         ? "Browse Ghana's premier collection of adult toys, vibrators, BDSM gear, lubricants and accessories. 100% discreet packaging, fast delivery across Ghana."
         : `Shop premium ${activeCategory.toLowerCase()} in Ghana. High-quality products with fast, discreet delivery. Explore our curated selection today.`,
+    keywords: getCategoryKeywords(activeCategory),
     url: categoryName ? `/category/${categoryName}` : "/",
   });
 
