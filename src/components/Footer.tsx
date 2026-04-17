@@ -1,4 +1,4 @@
-import { Heart, Instagram, Twitter, Facebook } from 'lucide-react';
+import { Instagram, Twitter, Facebook } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export default function Footer() {
@@ -7,8 +7,8 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto grid md:grid-cols-4 gap-12 mb-16">
         <div className="col-span-2">
           <Link to="/" className="flex items-center gap-2 mb-6">
-            <div className="w-10 h-10 bg-gradient-to-br from-primary to-secondary rounded-xl flex items-center justify-center">
-              <Heart className="text-white fill-current" size={20} />
+            <div className="w-10 h-10 rounded-xl overflow-hidden border border-white/10">
+              <img src="/toy.jpg" alt="Logo" className="w-full h-full object-cover" />
             </div>
             <span className="text-2xl font-display font-bold tracking-tight">
               PleasureToys <span className="text-primary">GH</span>

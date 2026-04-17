@@ -19,7 +19,7 @@ const BASE_DESCRIPTION =
 const BASE_KEYWORDS =
   "adult toys Ghana, sex toys Accra, vibrators Ghana, BDSM gear, lubricants, mens toys, discreet delivery, pleasure toys, adult shop Ghana, sex accessories";
 const BASE_URL = "https://pleasuretoysgh.com";
-const BASE_IMAGE = `${BASE_URL}/og-image.jpg`;
+const BASE_IMAGE = `${BASE_URL}/toy-og.png`;
 
 export function useSEO({
   title,

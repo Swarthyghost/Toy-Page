@@ -207,7 +207,7 @@ export default function Hero() {
                 {/* Image */}
                 <div className="relative aspect-[4/3] overflow-hidden">
                   <img
-                    src="/rosetoy2in1.jpg"
+                    src="/hero-optimized.png"
                     alt="Rose Thrusting & Sucking Vibrator"
                     className="w-full h-full object-cover transition-transform duration-700 hover:scale-105"
                   />
