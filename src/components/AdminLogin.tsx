@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
+import { useNavigate } from 'react-router-dom';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { Lock, Mail, AlertCircle, Eye, EyeOff } from 'lucide-react';
 
@@ -9,7 +10,14 @@ export default function AdminLogin() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showPin, setShowPin] = useState(false);
-  const { signInWithEmail } = useAdminAuth();
+  const { signInWithEmail, adminUser } = useAdminAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (adminUser) {
+      navigate('/admin', { replace: true });
+    }
+  }, [adminUser, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,6 +32,7 @@ export default function AdminLogin() {
 
     try {
       await signInWithEmail(email, pin);
+      navigate('/admin', { replace: true });
     } catch (error) {
       console.error('Login error:', error);
       setError('Invalid email or PIN. Please try again.');

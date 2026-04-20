@@ -1,6 +1,6 @@
 import React from 'react';
+import { Navigate } from 'react-router-dom';
 import { useAdminAuth } from '../context/AdminAuthContext';
-import AdminLogin from './AdminLogin';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -18,7 +18,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   }
 
   if (!adminUser) {
-    return <AdminLogin />;
+    return <Navigate to="/admin-login" replace />;
   }
 
   return <>{children}</>;
