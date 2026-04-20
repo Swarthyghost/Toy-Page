@@ -135,7 +135,7 @@ export default function Hero() {
                 className="text-white/50 text-lg leading-relaxed mb-10 max-w-lg"
               >
                 A curated collection of premium toys, elegant restraints and
-                sensual accessories — delivered with complete privacy across
+                sensual accessories - delivered with complete privacy across
                 Ghana.
               </motion.p>
 
