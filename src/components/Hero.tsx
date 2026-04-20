@@ -209,7 +209,7 @@ export default function Hero() {
                   <img
                     src="/rosetoy2in1.jpg"
                     alt="Rose Thrusting & Sucking Vibrator"
-                    className="w-full h-full object-cover transition-transform duration-700 hover:scale-105"
+                    className="w-full h-full object-cover transition-transform duration-700 hover:scale-105 bg-white"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
 

@@ -27,18 +27,20 @@ export default function ProductDetail() {
   }, [id]);
 
   // SEO optimization for product pages
-  if (product) {
-    const productKeywords = `${product.name}, ${product.category} Ghana, adult toys Accra, ${product.name} price Ghana, discreet delivery, pleasure toys, sex toys Ghana, ${product.name} review`;
+  const productKeywords = product 
+    ? `${product.name}, ${product.category} Ghana, adult toys Accra, ${product.name} price Ghana, discreet delivery, pleasure toys, sex toys Ghana, ${product.name} review`
+    : undefined;
 
-    useSEO({
-      title: product.name,
-      description: `${product.name} - ${product.description.substring(0, 150)}... Shop premium adult toys in Ghana with discreet delivery.`,
-      keywords: productKeywords,
-      image: product.image,
-      url: `/product/${id}`,
-      type: "product",
-    });
-  }
+  useSEO({
+    title: product?.name,
+    description: product 
+      ? `${product.name} - ${product.description.substring(0, 150)}... Shop premium adult toys in Ghana with discreet delivery.`
+      : undefined,
+    keywords: productKeywords,
+    image: product?.image,
+    url: id ? `/product/${id}` : undefined,
+    type: "product",
+  });
 
   if (loading)
     return (
