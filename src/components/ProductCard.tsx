@@ -67,13 +67,13 @@ export default function ProductCard({ product }: ProductCardProps) {
             GHS {product.price.toFixed(2)}
           </span>
           {product.isOutOfStock ? (
-            <span className="px-4 py-2 bg-white/5 text-primary text-xs font-bold uppercase tracking-widest rounded-xl border border-white/10">
+            <span className="px-2 py-1 md:px-4 md:py-2 bg-white/5 text-primary text-[10px] md:text-sm font-bold uppercase tracking-widest rounded-xl border border-white/10">
               Restocking soon
             </span>
           ) : (
             <button
               onClick={() => addToCart(product)}
-              className="px-4 py-2 bg-white/5 hover:bg-primary text-white text-sm font-bold rounded-xl transition-all border border-white/10 hover:border-primary"
+              className="px-2 py-1 md:px-4 md:py-2 bg-white/5 hover:bg-primary text-white text-[10px] md:text-sm font-bold rounded-xl transition-all border border-white/10 hover:border-primary"
             >
               Add to Cart
             </button>
