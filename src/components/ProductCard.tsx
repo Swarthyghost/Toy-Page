@@ -62,18 +62,18 @@ export default function ProductCard({ product }: ProductCardProps) {
         <p className="text-white/40 text-sm mb-4 line-clamp-1">
           {product.description}
         </p>
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 md:gap-0">
           <span className={`text-xl font-display font-bold ${product.isOutOfStock ? 'text-white/20' : ''}`}>
             GHS {product.price.toFixed(2)}
           </span>
           {product.isOutOfStock ? (
-            <span className="px-2 py-1 md:px-4 md:py-2 bg-white/5 text-primary text-[10px] md:text-sm font-bold uppercase tracking-widest rounded-xl border border-white/10">
+            <span className="w-full md:w-auto text-center px-2 py-1 md:px-4 md:py-2 bg-white/5 text-primary text-[10px] md:text-sm font-bold uppercase tracking-widest rounded-xl border border-white/10">
               Restocking soon
             </span>
           ) : (
             <button
               onClick={() => addToCart(product)}
-              className="px-2 py-1 md:px-4 md:py-2 bg-white/5 hover:bg-primary text-white text-[10px] md:text-sm font-bold rounded-xl transition-all border border-white/10 hover:border-primary"
+              className="w-full md:w-auto px-2 py-1 md:px-4 md:py-2 bg-white/5 hover:bg-primary text-white text-[10px] md:text-sm font-bold rounded-xl transition-all border border-white/10 hover:border-primary"
             >
               Add to Cart
             </button>
