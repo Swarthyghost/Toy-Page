@@ -29,20 +29,22 @@ export default function ProductCard({ product }: ProductCardProps) {
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
           referrerPolicy="no-referrer"
         />
-        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
-          <Link
-            to={`/product/${product.id}`}
-            className="p-3 bg-white text-black rounded-full hover:bg-primary hover:text-white transition-colors"
-          >
-            <Eye size={20} />
-          </Link>
-          <button
-            onClick={() => addToCart(product)}
-            className="p-3 bg-primary text-white rounded-full hover:bg-white hover:text-black transition-colors"
-          >
-            <ShoppingCart size={20} />
-          </button>
-        </div>
+        {!product.isOutOfStock && (
+          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
+            <Link
+              to={`/product/${product.id}`}
+              className="p-3 bg-white text-black rounded-full hover:bg-primary hover:text-white transition-colors"
+            >
+              <Eye size={20} />
+            </Link>
+            <button
+              onClick={() => addToCart(product)}
+              className="p-3 bg-primary text-white rounded-full hover:bg-white hover:text-black transition-colors"
+            >
+              <ShoppingCart size={20} />
+            </button>
+          </div>
+        )}
         
         {/* Category Badge */}
         <div className="absolute top-4 left-4 px-3 py-1 bg-black/60 backdrop-blur-md border border-white/10 rounded-full text-[10px] font-bold uppercase tracking-widest">
@@ -61,15 +63,21 @@ export default function ProductCard({ product }: ProductCardProps) {
           {product.description}
         </p>
         <div className="flex items-center justify-between">
-          <span className="text-xl font-display font-bold">
+          <span className={`text-xl font-display font-bold ${product.isOutOfStock ? 'text-white/20' : ''}`}>
             GHS {product.price.toFixed(2)}
           </span>
-          <button
-            onClick={() => addToCart(product)}
-            className="px-4 py-2 bg-white/5 hover:bg-primary text-white text-sm font-bold rounded-xl transition-all border border-white/10 hover:border-primary"
-          >
-            Add to Cart
-          </button>
+          {product.isOutOfStock ? (
+            <span className="px-4 py-2 bg-white/5 text-primary text-xs font-bold uppercase tracking-widest rounded-xl border border-white/10">
+              Restocking soon
+            </span>
+          ) : (
+            <button
+              onClick={() => addToCart(product)}
+              className="px-4 py-2 bg-white/5 hover:bg-primary text-white text-sm font-bold rounded-xl transition-all border border-white/10 hover:border-primary"
+            >
+              Add to Cart
+            </button>
+          )}
         </div>
       </div>
     </motion.div>

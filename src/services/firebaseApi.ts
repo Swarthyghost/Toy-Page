@@ -20,6 +20,7 @@ export interface Product {
   image: string;
   category: string;
   description: string;
+  isOutOfStock: boolean;
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }
@@ -77,6 +78,7 @@ export const createProduct = async (productData: Omit<Product, 'id' | 'createdAt
     const product = {
       ...productData,
       image: imageUrl,
+      isOutOfStock: productData.isOutOfStock || false,
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now(),
     };

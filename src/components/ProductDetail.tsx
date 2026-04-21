@@ -87,9 +87,16 @@ export default function ProductDetail() {
           <h1 className="text-5xl font-display font-bold mb-4">
             {product.name}
           </h1>
-          <p className="text-3xl font-display font-bold text-primary mb-8">
-            GHS {product.price.toFixed(2)}
-          </p>
+          <div className="flex items-center gap-4 mb-8">
+            <p className={`text-3xl font-display font-bold ${product.isOutOfStock ? 'text-white/20' : 'text-primary'}`}>
+              GHS {product.price.toFixed(2)}
+            </p>
+            {product.isOutOfStock && (
+              <div className="px-4 py-1 bg-primary/10 border border-primary/20 text-primary text-[10px] font-bold uppercase tracking-widest rounded-full">
+                Restocking soon
+              </div>
+            )}
+          </div>
 
           <p className="text-white/60 text-lg leading-relaxed mb-10">
             {product.description}
@@ -116,13 +123,19 @@ export default function ProductDetail() {
             </div>
           </div>
 
-          <button
-            onClick={() => addToCart(product)}
-            className="w-full py-5 bg-primary text-white font-bold rounded-2xl flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-primary/20"
-          >
-            <ShoppingCart size={24} />
-            Add to Collection
-          </button>
+          {product.isOutOfStock ? (
+            <div className="w-full py-5 bg-white/5 border border-white/10 text-primary font-bold rounded-2xl flex items-center justify-center gap-3">
+               Restocking soon
+            </div>
+          ) : (
+            <button
+              onClick={() => addToCart(product)}
+              className="w-full py-5 bg-primary text-white font-bold rounded-2xl flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-primary/20"
+            >
+              <ShoppingCart size={24} />
+              Add to Collection
+            </button>
+          )}
         </div>
       </div>
     </div>

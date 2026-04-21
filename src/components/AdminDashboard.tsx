@@ -18,6 +18,7 @@ export default function AdminDashboard() {
     image: '',
     category: 'Vibrators',
     description: '',
+    isOutOfStock: false,
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -43,9 +44,10 @@ export default function AdminDashboard() {
       const payload = {
         name: formData.name,
         price: parseFloat(formData.price),
-        image: imageFile ? formData.image : 'https://via.placeholder.com/300x300/000000/FFFFFF?text=Product+Image', // Default placeholder
+        image: formData.image || 'https://via.placeholder.com/300x300/000000/FFFFFF?text=Product+Image', // Keep existing or use placeholder
         category: formData.category,
         description: formData.description,
+        isOutOfStock: formData.isOutOfStock,
       };
 
       console.log('Payload:', payload);
@@ -62,7 +64,7 @@ export default function AdminDashboard() {
       setIsModalOpen(false);
       setEditingProduct(null);
       setImageFile(null);
-      setFormData({ name: '', price: '', image: '', category: 'Vibrators', description: '' });
+      setFormData({ name: '', price: '', image: '', category: 'Vibrators', description: '', isOutOfStock: false });
       loadProducts();
     } catch (error) {
       console.error('Error saving product:', error);
@@ -80,6 +82,7 @@ export default function AdminDashboard() {
       image: product.image,
       category: product.category,
       description: product.description,
+      isOutOfStock: product.isOutOfStock || false,
     });
     setImageFile(null);
     setIsModalOpen(true);
@@ -180,7 +183,7 @@ export default function AdminDashboard() {
               onClick={() => {
                 setEditingProduct(null);
                 setImageFile(null);
-                setFormData({ name: '', price: '', image: '', category: 'Vibrators', description: '' });
+                setFormData({ name: '', price: '', image: '', category: 'Vibrators', description: '', isOutOfStock: false });
                 setIsModalOpen(true);
               }}
               className="px-6 py-3 bg-primary text-white font-bold rounded-2xl flex items-center gap-2 hover:scale-105 transition-transform"
@@ -207,6 +210,11 @@ export default function AdminDashboard() {
                   <div className="flex items-center gap-4">
                     <img src={product.image} alt="" className="w-12 h-12 rounded-lg object-cover" />
                     <span className="font-bold">{product.name}</span>
+                    {product.isOutOfStock && (
+                      <span className="px-2 py-0.5 bg-primary/20 text-primary text-[10px] font-bold uppercase tracking-wider rounded-full border border-primary/20">
+                        Restocking
+                      </span>
+                    )}
                   </div>
                 </td>
                 <td className="p-6 text-white/60">{product.category}</td>
@@ -342,6 +350,14 @@ export default function AdminDashboard() {
                     <option value="Mens Toy">Men's Toy</option>
                     <option value="Accessories">Accessories</option>
                   </select>
+                </div>
+
+                <div className="flex items-center gap-3 p-4 bg-white/5 border border-white/10 rounded-2xl cursor-pointer hover:border-primary/50 transition-colors"
+                     onClick={() => setFormData({ ...formData, isOutOfStock: !formData.isOutOfStock })}>
+                  <div className={`w-6 h-6 rounded-md border flex items-center justify-center transition-colors ${formData.isOutOfStock ? 'bg-primary border-primary' : 'border-white/20'}`}>
+                    {formData.isOutOfStock && <X size={14} className="text-white" />}
+                  </div>
+                  <span className="text-sm font-bold text-white/80">Mark as Out of Stock (Restocking soon)</span>
                 </div>
 
                 <div className="space-y-2">

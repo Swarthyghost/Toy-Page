@@ -16,11 +16,12 @@ import Contact from "./components/Contact";
 import Privacy from "./components/Privacy";
 import Shipping from "./components/Shipping";
 import AdminDashboard from "./components/AdminDashboard";
+import AdminLogin from "./components/AdminLogin";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Footer from "./components/Footer";
 import { CartProvider } from "./context/CartContext";
 import { AdminAuthProvider } from "./context/AdminAuthContext";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -32,7 +33,7 @@ function ScrollToTop() {
 
 function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
-  const isAdminPage = location.pathname.startsWith("/admin");
+  const isAdminPage = location.pathname.startsWith("/admin") || location.pathname === "/admin-login";
 
   return (
     <div className="min-h-screen flex flex-col selection:bg-primary selection:text-white">
@@ -48,32 +49,39 @@ function AppRoutes() {
 
   return (
     <Layout>
-      <Routes>
-        <Route
-          path="/"
-          element={
-            <>
-              <Hero />
-              <ProductListing />
-            </>
-          }
-        />
-        <Route path="/category/:categoryName" element={<ProductListing />} />
-        <Route path="/product/:id" element={<ProductDetail />} />
-        <Route path="/cart" element={<Cart />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/contact" element={<Contact />} />
-        <Route path="/privacy" element={<Privacy />} />
-        <Route path="/shipping" element={<Shipping />} />
-        <Route
-          path="/admin"
-          element={
-            <ProtectedRoute>
-              <AdminDashboard />
-            </ProtectedRoute>
-          }
-        />
-      </Routes>
+      <AnimatePresence mode="wait">
+        <Routes location={location} key={location.pathname}>
+          <Route
+            path="/"
+            element={
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                <Hero />
+                <ProductListing />
+              </motion.div>
+            }
+          />
+          <Route path="/category/:categoryName" element={<ProductListing />} />
+          <Route path="/product/:id" element={<ProductDetail />} />
+          <Route path="/cart" element={<Cart />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="/shipping" element={<Shipping />} />
+          <Route path="/admin-login" element={<AdminLogin />} />
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute>
+                <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+        </Routes>
+      </AnimatePresence>
     </Layout>
   );
 }
