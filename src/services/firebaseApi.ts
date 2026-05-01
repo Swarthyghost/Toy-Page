@@ -18,6 +18,7 @@ export interface Product {
   name: string;
   price: number;
   image: string;
+  images?: string[];
   category: string;
   description: string;
   isOutOfStock: boolean;
@@ -64,20 +65,33 @@ export const fetchProductById = async (id: string): Promise<Product | null> => {
   return null;
 };
 
-export const createProduct = async (productData: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>, imageFile?: File): Promise<string> => {
+export const createProduct = async (productData: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>, imageFile?: File, additionalImageFiles?: File[]): Promise<string> => {
   let imageUrl = productData.image;
+  let additionalImageUrls: string[] = productData.images || [];
   
   try {
-    // Upload image if file is provided
+    // Upload main image if file is provided
     if (imageFile) {
-      console.log('Uploading image:', imageFile.name);
+      console.log('Uploading main image:', imageFile.name);
       imageUrl = await uploadImage(imageFile);
-      console.log('Image uploaded successfully:', imageUrl);
+      console.log('Main image uploaded successfully:', imageUrl);
+    } else if (!imageUrl) {
+      imageUrl = 'https://via.placeholder.com/300x300/000000/FFFFFF?text=Product+Image';
+    }
+
+    // Upload additional images if files are provided
+    if (additionalImageFiles && additionalImageFiles.length > 0) {
+      console.log(`Uploading ${additionalImageFiles.length} additional images`);
+      const uploadPromises = additionalImageFiles.map(file => uploadImage(file));
+      const uploadedUrls = await Promise.all(uploadPromises);
+      additionalImageUrls = [...additionalImageUrls, ...uploadedUrls];
+      console.log('Additional images uploaded successfully');
     }
 
     const product = {
       ...productData,
       image: imageUrl,
+      images: additionalImageUrls,
       isOutOfStock: productData.isOutOfStock || false,
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now(),
@@ -93,17 +107,26 @@ export const createProduct = async (productData: Omit<Product, 'id' | 'createdAt
   }
 };
 
-export const updateProduct = async (id: string, productData: Partial<Product>, imageFile?: File): Promise<void> => {
+export const updateProduct = async (id: string, productData: Partial<Product>, imageFile?: File, additionalImageFiles?: File[]): Promise<void> => {
   let imageUrl = productData.image;
+  let additionalImageUrls = productData.images || [];
   
-  // Upload image if file is provided
+  // Upload main image if file is provided
   if (imageFile) {
     imageUrl = await uploadImage(imageFile);
+  }
+
+  // Upload additional images if files are provided
+  if (additionalImageFiles && additionalImageFiles.length > 0) {
+    const uploadPromises = additionalImageFiles.map(file => uploadImage(file));
+    const uploadedUrls = await Promise.all(uploadPromises);
+    additionalImageUrls = [...additionalImageUrls, ...uploadedUrls];
   }
 
   const updates = {
     ...productData,
     ...(imageUrl && { image: imageUrl }),
+    images: additionalImageUrls,
     updatedAt: Timestamp.now(),
   };
 

@@ -16,12 +16,16 @@ export default function ProductDetail() {
   const { id } = useParams();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
+  const [activeImage, setActiveImage] = useState<string>("");
   const { addToCart } = useCart();
 
   useEffect(() => {
     if (id) {
       fetchProductById(id)
-        .then(setProduct)
+        .then((data) => {
+          setProduct(data);
+          if (data?.image) setActiveImage(data.image);
+        })
         .finally(() => setLoading(false));
     }
   }, [id]);
@@ -66,18 +70,45 @@ export default function ProductDetail() {
       </Link>
 
       <div className="grid lg:grid-cols-2 gap-16">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="rounded-[2.5rem] overflow-hidden border border-white/10"
-        >
-          <img
-            src={product.image}
-            alt={product.name}
-            className="w-full aspect-square object-cover"
-            referrerPolicy="no-referrer"
-          />
-        </motion.div>
+        <div className="space-y-6">
+          <motion.div
+            key={activeImage}
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="rounded-[2.5rem] overflow-hidden border border-white/10"
+          >
+            <img
+              src={activeImage}
+              alt={product.name}
+              className="w-full aspect-square object-cover"
+              referrerPolicy="no-referrer"
+            />
+          </motion.div>
+
+          {product.images && product.images.length > 0 && (
+            <div className="grid grid-cols-5 gap-4">
+              <button
+                onClick={() => setActiveImage(product.image)}
+                className={`aspect-square rounded-xl overflow-hidden border-2 transition-all ${
+                  activeImage === product.image ? 'border-primary' : 'border-transparent hover:border-white/20'
+                }`}
+              >
+                <img src={product.image} alt="" className="w-full h-full object-cover" />
+              </button>
+              {product.images.map((img, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setActiveImage(img)}
+                  className={`aspect-square rounded-xl overflow-hidden border-2 transition-all ${
+                    activeImage === img ? 'border-primary' : 'border-transparent hover:border-white/20'
+                  }`}
+                >
+                  <img src={img} alt="" className="w-full h-full object-cover" />
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
 
         <div className="flex flex-col justify-center">
           <div className="inline-flex px-3 py-1 bg-primary/10 border border-primary/20 text-primary text-xs font-bold uppercase tracking-widest rounded-full w-fit mb-6">

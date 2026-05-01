@@ -16,11 +16,13 @@ export default function AdminDashboard() {
     name: '',
     price: '',
     image: '',
+    images: [] as string[],
     category: 'Vibrators',
     description: '',
     isOutOfStock: false,
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [additionalImageFiles, setAdditionalImageFiles] = useState<(File | null)[]>([]);
   const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
@@ -38,33 +40,30 @@ export default function AdminDashboard() {
     
     try {
       console.log('Submitting product:', formData);
-      console.log('Image file:', imageFile);
       
-      // For testing, let's try without image first
       const payload = {
         name: formData.name,
         price: parseFloat(formData.price),
-        image: formData.image || 'https://via.placeholder.com/300x300/000000/FFFFFF?text=Product+Image', // Keep existing or use placeholder
+        image: formData.image.startsWith('data:') ? '' : formData.image,
+        images: formData.images.filter(img => !img.startsWith('data:')),
         category: formData.category,
         description: formData.description,
         isOutOfStock: formData.isOutOfStock,
       };
 
-      console.log('Payload:', payload);
+      const validAdditionalFiles = additionalImageFiles.filter((f): f is File => f !== null);
 
       if (editingProduct) {
-        console.log('Updating product:', editingProduct.id);
-        await updateProduct(editingProduct.id, payload, imageFile || undefined);
+        await updateProduct(editingProduct.id, payload, imageFile || undefined, validAdditionalFiles);
       } else {
-        console.log('Creating new product');
-        await createProduct(payload, imageFile || undefined);
+        await createProduct(payload, imageFile || undefined, validAdditionalFiles);
       }
 
-      console.log('Product saved successfully');
       setIsModalOpen(false);
       setEditingProduct(null);
       setImageFile(null);
-      setFormData({ name: '', price: '', image: '', category: 'Vibrators', description: '', isOutOfStock: false });
+      setAdditionalImageFiles([]);
+      setFormData({ name: '', price: '', image: '', images: [], category: 'Vibrators', description: '', isOutOfStock: false });
       loadProducts();
     } catch (error) {
       console.error('Error saving product:', error);
@@ -80,11 +79,13 @@ export default function AdminDashboard() {
       name: product.name,
       price: product.price.toString(),
       image: product.image,
+      images: product.images || [],
       category: product.category,
       description: product.description,
       isOutOfStock: product.isOutOfStock || false,
     });
     setImageFile(null);
+    setAdditionalImageFiles(new Array(product.images?.length || 0).fill(null));
     setIsModalOpen(true);
   };
 
@@ -104,13 +105,51 @@ export default function AdminDashboard() {
     const file = e.target.files?.[0];
     if (file) {
       setImageFile(file);
-      // Create preview
       const reader = new FileReader();
       reader.onloadend = () => {
         setFormData({ ...formData, image: reader.result as string });
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const handleAdditionalImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    // Limit to total 4 additional images
+    const availableSlots = 4 - formData.images.length;
+    const filesToAdd = files.slice(0, availableSlots);
+
+    // Update files state immediately to preserve order
+    const newFiles = [...additionalImageFiles, ...filesToAdd];
+    setAdditionalImageFiles(newFiles);
+
+    // Read all files as Data URLs in order
+    const readFiles = filesToAdd.map(file => {
+      return new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.readAsDataURL(file);
+      });
+    });
+
+    const newImagePreviews = await Promise.all(readFiles);
+    
+    setFormData(prev => ({
+      ...prev,
+      images: [...prev.images, ...newImagePreviews]
+    }));
+  };
+
+  const removeAdditionalImage = (index: number) => {
+    const newFiles = [...additionalImageFiles];
+    newFiles.splice(index, 1);
+    setAdditionalImageFiles(newFiles);
+
+    const newImages = [...formData.images];
+    newImages.splice(index, 1);
+    setFormData({ ...formData, images: newImages });
   };
 
   return (
@@ -183,7 +222,8 @@ export default function AdminDashboard() {
               onClick={() => {
                 setEditingProduct(null);
                 setImageFile(null);
-                setFormData({ name: '', price: '', image: '', category: 'Vibrators', description: '', isOutOfStock: false });
+                setAdditionalImageFiles([]);
+                setFormData({ name: '', price: '', image: '', images: [], category: 'Vibrators', description: '', isOutOfStock: false });
                 setIsModalOpen(true);
               }}
               className="px-6 py-3 bg-primary text-white font-bold rounded-2xl flex items-center gap-2 hover:scale-105 transition-transform"
@@ -300,38 +340,77 @@ export default function AdminDashboard() {
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-white/40 ml-1">
-                    <ImageIcon size={14} /> Product Image
-                  </label>
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-4">
-                      <label className="flex-1 px-6 py-4 bg-white/5 border border-white/10 rounded-2xl hover:border-primary transition-colors cursor-pointer flex items-center justify-center gap-2">
-                        <Upload size={18} />
-                        <span>{imageFile ? imageFile.name : 'Choose image file'}</span>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={handleImageChange}
-                          className="hidden"
-                        />
-                      </label>
-                    </div>
-                    
-                    {(formData.image || imageFile) && (
-                      <div className="relative">
-                        <img
-                          src={formData.image}
-                          alt="Product preview"
-                          className="w-full h-48 object-cover rounded-xl"
-                        />
-                        {imageFile && (
-                          <div className="absolute top-2 right-2 px-2 py-1 bg-primary text-white text-xs rounded-full">
-                            New Image
-                          </div>
-                        )}
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-white/40 ml-1">
+                      <ImageIcon size={14} /> Main Image
+                    </label>
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-4">
+                        <label className="flex-1 px-6 py-4 bg-white/5 border border-white/10 rounded-2xl hover:border-primary transition-colors cursor-pointer flex items-center justify-center gap-2">
+                          <Upload size={18} />
+                          <span>{imageFile ? imageFile.name : 'Choose main image'}</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleImageChange}
+                            className="hidden"
+                          />
+                        </label>
                       </div>
-                    )}
+                      
+                      {(formData.image || imageFile) && (
+                        <div className="relative">
+                          <img
+                            src={formData.image}
+                            alt="Product preview"
+                            className="w-full h-48 object-cover rounded-xl"
+                          />
+                          {imageFile && (
+                            <div className="absolute top-2 right-2 px-2 py-1 bg-primary text-white text-xs rounded-full">
+                              New Image
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-white/40 ml-1">
+                      <ImageIcon size={14} /> Additional Images (Max 4 more)
+                    </label>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                      {/* Existing additional images */}
+                      {formData.images.map((img, idx) => (
+                        <div key={idx} className="relative group">
+                          <img src={img} alt="" className="w-full h-32 object-cover rounded-xl border border-white/10" />
+                          <button
+                            type="button"
+                            onClick={() => removeAdditionalImage(idx)}
+                            className="absolute top-2 right-2 p-1 bg-black/60 hover:bg-primary text-white rounded-full opacity-0 group-hover:opacity-100 transition-all"
+                          >
+                            <X size={14} />
+                          </button>
+                        </div>
+                      ))}
+                      
+                      {/* Add more button if less than 4 additional images */}
+                      {formData.images.length < 4 && (
+                        <label className="h-32 border-2 border-dashed border-white/10 rounded-xl flex flex-col items-center justify-center gap-2 hover:border-primary hover:bg-primary/5 transition-all cursor-pointer">
+                          <Plus size={24} className="text-white/20" />
+                          <span className="text-[10px] font-bold uppercase tracking-widest text-white/20">Add Images</span>
+                          <input
+                            type="file"
+                            multiple
+                            accept="image/*"
+                            onChange={handleAdditionalImageChange}
+                            className="hidden"
+                          />
+                        </label>
+                      )}
+                    </div>
                   </div>
                 </div>
 
