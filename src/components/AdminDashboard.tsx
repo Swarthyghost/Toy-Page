@@ -152,6 +152,23 @@ export default function AdminDashboard() {
     setFormData({ ...formData, images: newImages });
   };
 
+  const replaceAdditionalImage = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const newFiles = [...additionalImageFiles];
+      newFiles[index] = file;
+      setAdditionalImageFiles(newFiles);
+
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const newImages = [...formData.images];
+        newImages[index] = reader.result as string;
+        setFormData({ ...formData, images: newImages });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-black">
       {/* Admin Header */}
@@ -384,15 +401,35 @@ export default function AdminDashboard() {
                     <div className="grid grid-cols-2 gap-4">
                       {/* Existing additional images */}
                       {formData.images.map((img, idx) => (
-                        <div key={idx} className="relative group">
-                          <img src={img} alt="" className="w-full h-32 object-cover rounded-xl border border-white/10" />
-                          <button
-                            type="button"
-                            onClick={() => removeAdditionalImage(idx)}
-                            className="absolute top-2 right-2 p-1 bg-black/60 hover:bg-primary text-white rounded-full opacity-0 group-hover:opacity-100 transition-all"
-                          >
-                            <X size={14} />
-                          </button>
+                        <div key={idx} className="relative group overflow-hidden rounded-xl border border-white/10 aspect-square">
+                          <img src={img} alt="" className="w-full h-full object-cover transition-transform group-hover:scale-110" />
+                          
+                          {/* Hover Overlay */}
+                          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center gap-3">
+                            <label className="p-2 bg-white/10 hover:bg-white/20 text-white rounded-lg cursor-pointer transition-colors">
+                              <Upload size={16} />
+                              <input
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => replaceAdditionalImage(e, idx)}
+                                className="hidden"
+                              />
+                            </label>
+                            <button
+                              type="button"
+                              onClick={() => removeAdditionalImage(idx)}
+                              className="p-2 bg-primary/20 hover:bg-primary/40 text-primary rounded-lg transition-colors"
+                            >
+                              <X size={16} />
+                            </button>
+                          </div>
+                          
+                          {/* New Label Tag */}
+                          {additionalImageFiles[idx] && (
+                            <div className="absolute top-2 left-2 px-2 py-0.5 bg-primary text-white text-[8px] font-bold uppercase tracking-wider rounded-full">
+                              New
+                            </div>
+                          )}
                         </div>
                       ))}
                       
