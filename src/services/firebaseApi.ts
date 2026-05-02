@@ -44,7 +44,7 @@ const PROMOS_COLLECTION = 'promoCodes';
 
 // Products API
 export const fetchProducts = async (): Promise<Product[]> => {
-  const q = query(collection(db, PRODUCTS_COLLECTION), orderBy('createdAt', 'desc'));
+  const q = query(collection(db, PRODUCTS_COLLECTION), orderBy('updatedAt', 'desc'));
   const querySnapshot = await getDocs(q);
   return querySnapshot.docs.map(doc => ({
     id: doc.id,
