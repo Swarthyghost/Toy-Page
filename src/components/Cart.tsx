@@ -92,13 +92,11 @@ ${promoDetails}
 
 Please confirm my order. Thank you!`;
 
-    // Increment promo usage if applicable
+    // Increment promo usage if applicable (Fire and forget to avoid blocking UI)
     if (appliedPromo) {
-      try {
-        await usePromoCode(appliedPromo.id);
-      } catch (error) {
+      usePromoCode(appliedPromo.id).catch((error) => {
         console.error("Error updating promo use:", error);
-      }
+      });
     }
 
     const encodedMessage = encodeURIComponent(message);
