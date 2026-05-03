@@ -63,15 +63,13 @@ export default function Footer() {
           <div className="flex flex-col gap-3">
             <div className="flex items-center gap-3 p-3 bg-white/5 border border-white/10 rounded-xl">
               <div className="w-12 h-8 bg-white/10 rounded overflow-hidden flex-shrink-0 flex items-center justify-center">
-                <img src="/momo.png" alt="MTN MoMo" className="w-full h-full object-contain" onError={(e) => e.currentTarget.style.display = 'none'} />
-                <span className="text-[8px] font-bold text-white/20">MTN MOMO</span>
+                <img src="/mtn.jpg" alt="MTN MoMo" className="w-full h-full object-contain" />
               </div>
               <span className="text-xs font-bold text-white/60 uppercase">MTN MoMo</span>
             </div>
             <div className="flex items-center gap-3 p-3 bg-white/5 border border-white/10 rounded-xl">
               <div className="w-12 h-8 bg-white/10 rounded overflow-hidden flex-shrink-0 flex items-center justify-center">
-                <img src="/airteltigo.png" alt="Airtel Tigo Money" className="w-full h-full object-contain" onError={(e) => e.currentTarget.style.display = 'none'} />
-                <span className="text-[8px] font-bold text-white/20">AIRTEL TIGO</span>
+                <img src="/airteltigo.jpg" alt="Airtel Tigo Money" className="w-full h-full object-contain" />
               </div>
               <span className="text-xs font-bold text-white/60 uppercase">Airtel Tigo</span>
             </div>
