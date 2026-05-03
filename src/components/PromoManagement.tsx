@@ -41,15 +41,16 @@ export default function PromoManagement() {
         }
       }
 
-      const payload = {
+      const payload: any = {
         code: formData.code.toUpperCase().trim(),
         discount: parseFloat(formData.discount),
         type: formData.type,
-        minAmount: formData.minAmount ? parseFloat(formData.minAmount) : undefined,
-        maxUses: formData.maxUses ? parseInt(formData.maxUses) : undefined,
         isActive: formData.isActive,
-        expiresAt: expiryDate,
       };
+
+      if (formData.minAmount) payload.minAmount = parseFloat(formData.minAmount);
+      if (formData.maxUses) payload.maxUses = parseInt(formData.maxUses);
+      if (expiryDate) payload.expiresAt = expiryDate;
 
       if (editingPromo) {
         await updatePromoCode(editingPromo.id, payload);
