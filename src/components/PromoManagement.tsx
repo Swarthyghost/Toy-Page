@@ -16,6 +16,7 @@ export default function PromoManagement() {
     isActive: true,
     expiresAt: '',
   });
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     loadPromos();
@@ -28,32 +29,52 @@ export default function PromoManagement() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const payload = {
-      ...formData,
-      discount: parseFloat(formData.discount),
-      minAmount: formData.minAmount ? parseFloat(formData.minAmount) : undefined,
-      maxUses: formData.maxUses ? parseInt(formData.maxUses) : undefined,
-      expiresAt: formData.expiresAt ? new Date(formData.expiresAt) : undefined,
-    };
+    setIsSaving(true);
 
-    if (editingPromo) {
-      await updatePromoCode(editingPromo.id, payload);
-    } else {
-      await createPromoCode(payload);
+    try {
+      // Ensure expiresAt is either a valid date or undefined
+      let expiryDate = undefined;
+      if (formData.expiresAt) {
+        expiryDate = new Date(formData.expiresAt);
+        if (isNaN(expiryDate.getTime())) {
+          throw new Error('Invalid expiry date');
+        }
+      }
+
+      const payload = {
+        code: formData.code.toUpperCase().trim(),
+        discount: parseFloat(formData.discount),
+        type: formData.type,
+        minAmount: formData.minAmount ? parseFloat(formData.minAmount) : undefined,
+        maxUses: formData.maxUses ? parseInt(formData.maxUses) : undefined,
+        isActive: formData.isActive,
+        expiresAt: expiryDate,
+      };
+
+      if (editingPromo) {
+        await updatePromoCode(editingPromo.id, payload);
+      } else {
+        await createPromoCode(payload);
+      }
+
+      setIsModalOpen(false);
+      setEditingPromo(null);
+      setFormData({
+        code: '',
+        discount: '',
+        type: 'percentage',
+        minAmount: '',
+        maxUses: '',
+        isActive: true,
+        expiresAt: '',
+      });
+      loadPromos();
+    } catch (error) {
+      console.error('Error saving promo code:', error);
+      alert(`Failed to save promo code: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setIsSaving(false);
     }
-
-    setIsModalOpen(false);
-    setEditingPromo(null);
-    setFormData({
-      code: '',
-      discount: '',
-      type: 'percentage',
-      minAmount: '',
-      maxUses: '',
-      isActive: true,
-      expiresAt: '',
-    });
-    loadPromos();
   };
 
   const handleEdit = (promo: PromoCode) => {
@@ -323,9 +344,17 @@ export default function PromoManagement() {
 
                 <button
                   type="submit"
-                  className="w-full py-5 bg-primary text-white font-bold rounded-2xl hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-primary/20"
+                  disabled={isSaving}
+                  className="w-full py-5 bg-primary text-white font-bold rounded-2xl hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-primary/20 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {editingPromo ? 'Update Promo Code' : 'Create Promo Code'}
+                  {isSaving ? (
+                    <div className="flex items-center justify-center gap-2">
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      {editingPromo ? 'Updating...' : 'Creating...'}
+                    </div>
+                  ) : (
+                    editingPromo ? 'Update Promo Code' : 'Create Promo Code'
+                  )}
                 </button>
               </form>
             </motion.div>
