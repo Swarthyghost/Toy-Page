@@ -56,6 +56,27 @@ export default function Footer() {
             <li><Link to="/admin" className="hover:text-primary transition-colors">Admin Portal</Link></li>
           </ul>
         </div>
+
+        <div>
+          <h4 className="font-bold mb-6 uppercase tracking-widest text-xs text-white/40">Secure Payments</h4>
+          <p className="text-white/40 text-[10px] uppercase tracking-widest mb-4">We accept Mobile Money</p>
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center gap-3 p-3 bg-white/5 border border-white/10 rounded-xl">
+              <div className="w-12 h-8 bg-white/10 rounded overflow-hidden flex-shrink-0 flex items-center justify-center">
+                <img src="/momo.png" alt="MTN MoMo" className="w-full h-full object-contain" onError={(e) => e.currentTarget.style.display = 'none'} />
+                <span className="text-[8px] font-bold text-white/20">MTN MOMO</span>
+              </div>
+              <span className="text-xs font-bold text-white/60 uppercase">MTN MoMo</span>
+            </div>
+            <div className="flex items-center gap-3 p-3 bg-white/5 border border-white/10 rounded-xl">
+              <div className="w-12 h-8 bg-white/10 rounded overflow-hidden flex-shrink-0 flex items-center justify-center">
+                <img src="/airteltigo.png" alt="Airtel Tigo Money" className="w-full h-full object-contain" onError={(e) => e.currentTarget.style.display = 'none'} />
+                <span className="text-[8px] font-bold text-white/20">AIRTEL TIGO</span>
+              </div>
+              <span className="text-xs font-bold text-white/60 uppercase">Airtel Tigo</span>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className="max-w-7xl mx-auto pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4 text-white/20 text-xs font-medium uppercase tracking-widest">
