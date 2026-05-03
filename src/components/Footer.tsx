@@ -61,17 +61,17 @@ export default function Footer() {
           <h4 className="font-bold mb-6 uppercase tracking-widest text-xs text-white/40">Secure Payments</h4>
           <p className="text-white/40 text-[10px] uppercase tracking-widest mb-4">We accept Mobile Money</p>
           <div className="flex flex-col gap-3">
-            <div className="flex items-center gap-3 p-3 bg-white/5 border border-white/10 rounded-xl">
-              <div className="w-12 h-8 bg-white/10 rounded overflow-hidden flex-shrink-0 flex items-center justify-center">
-                <img src="/mtn.jpg" alt="MTN MoMo" className="w-full h-full object-contain" />
+            <div className="flex items-center gap-3 p-2.5 bg-white/5 border border-white/10 rounded-2xl hover:border-white/20 transition-colors group">
+              <div className="w-14 h-10 bg-white rounded-lg overflow-hidden flex-shrink-0 flex items-center justify-center p-1 shadow-inner">
+                <img src="/mtn.jpg" alt="MTN MoMo" className="w-full h-full object-contain transition-transform group-hover:scale-110" />
               </div>
-              <span className="text-xs font-bold text-white/60 uppercase">MTN MoMo</span>
+              <span className="text-xs font-bold text-white/60 uppercase tracking-wider group-hover:text-white transition-colors">MTN MoMo</span>
             </div>
-            <div className="flex items-center gap-3 p-3 bg-white/5 border border-white/10 rounded-xl">
-              <div className="w-12 h-8 bg-white/10 rounded overflow-hidden flex-shrink-0 flex items-center justify-center">
-                <img src="/airteltigo.jpg" alt="Airtel Tigo Money" className="w-full h-full object-contain" />
+            <div className="flex items-center gap-3 p-2.5 bg-white/5 border border-white/10 rounded-2xl hover:border-white/20 transition-colors group">
+              <div className="w-14 h-10 bg-white rounded-lg overflow-hidden flex-shrink-0 flex items-center justify-center p-1 shadow-inner">
+                <img src="/airteltigo.jpg" alt="Airtel Tigo Money" className="w-full h-full object-contain transition-transform group-hover:scale-110" />
               </div>
-              <span className="text-xs font-bold text-white/60 uppercase">Airtel Tigo</span>
+              <span className="text-xs font-bold text-white/60 uppercase tracking-wider group-hover:text-white transition-colors">Airtel Tigo</span>
             </div>
           </div>
         </div>
