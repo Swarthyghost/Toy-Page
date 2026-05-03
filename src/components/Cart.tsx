@@ -4,11 +4,25 @@ import { ShoppingCart, Trash2, Plus, Minus, ArrowRight, X } from "lucide-react";
 import { useCart } from "../context/CartContext";
 import { Link } from "react-router-dom";
 import { useSEO } from "../hooks/useSEO";
+import { validatePromoCode, usePromoCode } from "../services/firebaseApi";
 
 export default function Cart() {
-  const { cart, removeFromCart, updateQuantity, totalPrice, totalItems } =
-    useCart();
+  const { 
+    cart, 
+    removeFromCart, 
+    updateQuantity, 
+    totalPrice, 
+    totalItems,
+    discount,
+    finalPrice,
+    appliedPromo,
+    applyPromo,
+    removePromo
+  } = useCart();
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+  const [promoInput, setPromoInput] = useState("");
+  const [promoError, setPromoError] = useState("");
+  const [isValidating, setIsValidating] = useState(false);
 
   // SEO optimization for cart page
   useSEO({
@@ -23,7 +37,31 @@ export default function Cart() {
     location: "",
   });
 
-  const handleWhatsAppOrder = (e: React.FormEvent) => {
+  const handleApplyPromo = async () => {
+    if (!promoInput) return;
+    setIsValidating(true);
+    setPromoError("");
+    
+    try {
+      const promo = await validatePromoCode(promoInput.toUpperCase());
+      if (promo) {
+        if (promo.minAmount && totalPrice < promo.minAmount) {
+          setPromoError(`Minimum order amount for this code is GHS ${promo.minAmount}`);
+        } else {
+          applyPromo(promo);
+          setPromoInput("");
+        }
+      } else {
+        setPromoError("Invalid or expired promo code");
+      }
+    } catch (error) {
+      setPromoError("Error validating promo code");
+    } finally {
+      setIsValidating(false);
+    }
+  };
+
+  const handleWhatsAppOrder = async (e: React.FormEvent) => {
     e.preventDefault();
 
     const orderList = cart
@@ -32,6 +70,10 @@ export default function Cart() {
           `${index + 1}. ${item.name} x${item.quantity} - GHS ${(item.price * item.quantity).toFixed(2)}`,
       )
       .join("\n");
+
+    const promoDetails = appliedPromo 
+      ? `\n*Promo Code:* ${appliedPromo.code} (-GHS ${discount.toFixed(2)})`
+      : "";
 
     const message = `Hello, I would like to place an order.
 
@@ -42,10 +84,22 @@ Location: ${formData.location}
 
 *Order Summary:*
 ${orderList}
+${promoDetails}
 
-*Total: GHS ${totalPrice.toFixed(2)}*
+*Subtotal: GHS ${totalPrice.toFixed(2)}*
+*Discount: GHS ${discount.toFixed(2)}*
+*Total Payable: GHS ${finalPrice.toFixed(2)}*
 
 Please confirm my order. Thank you!`;
+
+    // Increment promo usage if applicable
+    if (appliedPromo) {
+      try {
+        await usePromoCode(appliedPromo.id);
+      } catch (error) {
+        console.error("Error updating promo use:", error);
+      }
+    }
 
     const encodedMessage = encodeURIComponent(message);
     const whatsappUrl = `https://wa.me/233266181581?text=${encodedMessage}`;
@@ -153,6 +207,43 @@ Please confirm my order. Thank you!`;
                 <span>Subtotal ({totalItems} items)</span>
                 <span>GHS {totalPrice.toFixed(2)}</span>
               </div>
+              
+              {appliedPromo ? (
+                <div className="flex justify-between text-emerald-500 animate-in fade-in slide-in-from-top-1">
+                  <div className="flex items-center gap-2">
+                    <span>Discount ({appliedPromo.code})</span>
+                    <button onClick={removePromo} className="p-1 hover:text-primary transition-colors">
+                      <X size={14} />
+                    </button>
+                  </div>
+                  <span>- GHS {discount.toFixed(2)}</span>
+                </div>
+              ) : (
+                <div className="pt-2 border-t border-white/5">
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="Promo Code"
+                      value={promoInput}
+                      onChange={(e) => setPromoInput(e.target.value.toUpperCase())}
+                      className="flex-grow px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-sm focus:border-primary focus:outline-none transition-colors"
+                    />
+                    <button
+                      onClick={handleApplyPromo}
+                      disabled={isValidating || !promoInput}
+                      className="px-4 py-2 bg-white/10 hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold uppercase tracking-widest rounded-xl transition-all"
+                    >
+                      {isValidating ? "..." : "Apply"}
+                    </button>
+                  </div>
+                  {promoError && (
+                    <p className="mt-2 text-[10px] text-primary font-bold uppercase tracking-wider animate-in fade-in slide-in-from-top-1">
+                      {promoError}
+                    </p>
+                  )}
+                </div>
+              )}
+
               <div className="flex justify-between text-white/60">
                 <span>Delivery</span>
                 <span className="text-emerald-500">Calculated at checkout</span>
@@ -160,7 +251,7 @@ Please confirm my order. Thank you!`;
               <div className="pt-4 border-t border-white/10 flex justify-between items-end">
                 <span className="font-bold">Total</span>
                 <span className="text-3xl font-display font-bold text-primary">
-                  GHS {totalPrice.toFixed(2)}
+                  GHS {finalPrice.toFixed(2)}
                 </span>
               </div>
             </div>

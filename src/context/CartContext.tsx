@@ -21,8 +21,13 @@ interface CartContextType {
   removeFromCart: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
+  applyPromo: (promo: any) => void;
+  removePromo: () => void;
   totalItems: number;
   totalPrice: number;
+  discount: number;
+  finalPrice: number;
+  appliedPromo: any | null;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -32,6 +37,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     const savedCart = localStorage.getItem('pleasuretoys_cart');
     return savedCart ? JSON.parse(savedCart) : [];
   });
+
+  const [appliedPromo, setAppliedPromo] = useState<any | null>(null);
 
   useEffect(() => {
     localStorage.setItem('pleasuretoys_cart', JSON.stringify(cart));
@@ -63,10 +70,24 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     );
   };
 
-  const clearCart = () => setCart([]);
+  const clearCart = () => {
+    setCart([]);
+    setAppliedPromo(null);
+  };
+
+  const applyPromo = (promo: any) => setAppliedPromo(promo);
+  const removePromo = () => setAppliedPromo(null);
 
   const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
   const totalPrice = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+  const discount = appliedPromo ? (
+    appliedPromo.type === 'percentage' 
+      ? totalPrice * (appliedPromo.discount / 100)
+      : appliedPromo.discount
+  ) : 0;
+
+  const finalPrice = Math.max(0, totalPrice - discount);
 
   return (
     <CartContext.Provider
@@ -76,8 +97,13 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         removeFromCart,
         updateQuantity,
         clearCart,
+        applyPromo,
+        removePromo,
         totalItems,
         totalPrice,
+        discount,
+        finalPrice,
+        appliedPromo,
       }}
     >
       {children}
