@@ -38,8 +38,8 @@ function MarqueeBand() {
 }
 
 const stats = [
-  { value: "100+", label: "Products" },
-  { value: "10k", label: "Happy Clients" },
+  { value: "500+", label: "Products" },
+  { value: "10k+", label: "Happy Clients" },
   { value: "100%", label: "Discreet" },
 ];
 
