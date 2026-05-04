@@ -71,7 +71,7 @@ export default function Footer() {
               <div className="w-14 h-10 bg-white rounded-lg overflow-hidden flex-shrink-0 flex items-center justify-center p-1 shadow-inner">
                 <img src="/airteltigo.jpg" alt="Airtel Tigo Money" className="w-full h-full object-contain transition-transform group-hover:scale-110" />
               </div>
-              <span className="text-xs font-bold text-white/60 uppercase tracking-wider group-hover:text-white transition-colors">Airtel-Tigo Money</span>
+              <span className="text-xs font-bold text-white/60 uppercase tracking-wider group-hover:text-white transition-colors">AT Money</span>
             </div>
           </div>
         </div>
