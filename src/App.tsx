@@ -19,6 +19,7 @@ import AdminDashboard from "./components/AdminDashboard";
 import AdminLogin from "./components/AdminLogin";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Footer from "./components/Footer";
+import TrustBand from "./components/TrustBand";
 import { CartProvider } from "./context/CartContext";
 import { AdminAuthProvider } from "./context/AdminAuthContext";
 import { motion, AnimatePresence } from "motion/react";
@@ -39,6 +40,7 @@ function Layout({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen flex flex-col selection:bg-primary selection:text-white">
       {!isAdminPage && <Navbar />}
       <main className="flex-grow">{children}</main>
+      {!isAdminPage && <TrustBand />}
       {!isAdminPage && <Footer />}
     </div>
   );

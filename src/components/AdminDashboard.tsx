@@ -117,8 +117,8 @@ export default function AdminDashboard() {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
 
-    // Limit to total 4 additional images
-    const availableSlots = 4 - formData.images.length;
+    // Limit to total 10 additional images
+    const availableSlots = 10 - formData.images.length;
     const filesToAdd = files.slice(0, availableSlots);
 
     // Update files state immediately to preserve order
@@ -395,7 +395,7 @@ export default function AdminDashboard() {
 
                   <div className="space-y-4">
                     <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-white/40 ml-1">
-                      <ImageIcon size={14} /> Additional Images (Max 4 more)
+                      <ImageIcon size={14} /> Additional Images (Optional - Max 10)
                     </label>
                     
                     <div className="grid grid-cols-2 gap-4">
@@ -433,11 +433,14 @@ export default function AdminDashboard() {
                         </div>
                       ))}
                       
-                      {/* Add more button if less than 4 additional images */}
-                      {formData.images.length < 4 && (
-                        <label className="h-32 border-2 border-dashed border-white/10 rounded-xl flex flex-col items-center justify-center gap-2 hover:border-primary hover:bg-primary/5 transition-all cursor-pointer">
+                      {/* Add more button if less than 10 additional images */}
+                      {formData.images.length < 10 && (
+                        <label className="h-32 border-2 border-dashed border-white/10 rounded-xl flex flex-col items-center justify-center gap-2 hover:border-primary hover:bg-primary/5 transition-all cursor-pointer text-center px-4">
                           <Plus size={24} className="text-white/20" />
-                          <span className="text-[10px] font-bold uppercase tracking-widest text-white/20">Add Images</span>
+                          <div>
+                            <span className="text-[10px] font-bold uppercase tracking-widest text-white/20 block">Add Images</span>
+                            <span className="text-[8px] text-white/10 uppercase tracking-tighter">(Optional)</span>
+                          </div>
                           <input
                             type="file"
                             multiple
