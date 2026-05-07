@@ -67,7 +67,7 @@ export default function Cart() {
     const orderList = cart
       .map(
         (item, index) =>
-          `*${index + 1}. ${item.name}* (x${item.quantity})\nPrice: GHS ${(item.price * item.quantity).toFixed(2)}\n🔗 ${window.location.origin}/product/${item.id}`,
+          `*${index + 1}. ${item.name}* (x${item.quantity})\nPrice: GHS ${(item.price * item.quantity).toFixed(2)}\nView Product: ${window.location.origin}/product/${item.id}`,
       )
       .join("\n\n");
 
