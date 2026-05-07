@@ -67,9 +67,9 @@ export default function Cart() {
     const orderList = cart
       .map(
         (item, index) =>
-          `${index + 1}. ${item.name} x${item.quantity} - GHS ${(item.price * item.quantity).toFixed(2)}`,
+          `${index + 1}. ${item.name} x${item.quantity} - GHS ${(item.price * item.quantity).toFixed(2)}\n   Link: ${window.location.origin}/product/${item.id}`,
       )
-      .join("\n");
+      .join("\n\n");
 
     const promoDetails = appliedPromo 
       ? `\n*Promo Code:* ${appliedPromo.code} (-GHS ${discount.toFixed(2)})`
