@@ -19,7 +19,7 @@ export default function Footer() {
           </p>
           <div className="flex gap-4">
             {[
-              { Icon: Instagram, href: "https://www.instagram.com/pleasuretoys_gh", target: "_blank" },
+              { Icon: Instagram, href: "https://www.instagram.com/pleasuretoys.gh", target: "_blank" },
               { Icon: Twitter, href: "#", target: undefined },
               { Icon: Facebook, href: "#", target: undefined },
             ].map(({ Icon, href, target }, i) => (
