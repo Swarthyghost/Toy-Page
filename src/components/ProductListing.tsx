@@ -71,8 +71,14 @@ export default function ProductListing() {
   };
 
   const filteredProducts = useMemo(() => {
-    if (activeCategory === "All") return products;
-    return products.filter((p) => p.category?.trim() === activeCategory);
+    let result = activeCategory === "All" 
+      ? [...products] 
+      : products.filter((p) => p.category?.trim() === activeCategory);
+      
+    return result.sort((a, b) => {
+      if (a.isOutOfStock === b.isOutOfStock) return 0;
+      return a.isOutOfStock ? 1 : -1;
+    });
   }, [activeCategory, products]);
 
   return (
