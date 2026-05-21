@@ -1,4 +1,4 @@
-import { Instagram, Twitter, Facebook } from 'lucide-react';
+import { Instagram, Twitter, Facebook, Phone } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export default function Footer() {
@@ -17,22 +17,30 @@ export default function Footer() {
           <p className="text-white/40 max-w-sm leading-relaxed mb-8">
             Ghana's premier destination for high-quality adult toys and sensual accessories. We prioritize your pleasure and privacy with 100% discreet packaging and delivery.
           </p>
-          <div className="flex gap-4">
-            {[
-              { Icon: Instagram, href: "https://www.instagram.com/pleasuretoys.gh", target: "_blank" },
-              { Icon: Twitter, href: "#", target: undefined },
-              { Icon: Facebook, href: "#", target: undefined },
-            ].map(({ Icon, href, target }, i) => (
-              <a
-                key={i}
-                href={href}
-                target={target}
-                rel={target === "_blank" ? "noopener noreferrer" : undefined}
-                className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-primary hover:border-primary transition-all"
-              >
-                <Icon size={18} />
-              </a>
-            ))}
+          <div className="flex flex-col gap-6">
+            <div className="flex gap-4">
+              {[
+                { Icon: Instagram, href: "https://www.instagram.com/pleasuretoys.gh", target: "_blank" },
+                { Icon: Twitter, href: "#", target: undefined },
+                { Icon: Facebook, href: "#", target: undefined },
+              ].map(({ Icon, href, target }, i) => (
+                <a
+                  key={i}
+                  href={href}
+                  target={target}
+                  rel={target === "_blank" ? "noopener noreferrer" : undefined}
+                  className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-primary hover:border-primary transition-all"
+                >
+                  <Icon size={18} />
+                </a>
+              ))}
+            </div>
+            <a href="tel:0266181581" className="inline-flex items-center gap-3 text-white/60 hover:text-primary transition-colors group">
+              <div className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-primary group-hover:border-primary transition-all">
+                <Phone size={18} />
+              </div>
+              <span className="font-medium tracking-wide">0266181581</span>
+            </a>
           </div>
         </div>
 
