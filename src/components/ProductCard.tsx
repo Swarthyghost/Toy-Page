@@ -3,6 +3,7 @@ import { motion } from 'motion/react';
 import { ShoppingCart, Eye } from 'lucide-react';
 import { Product, useCart } from '../context/CartContext';
 import { Link } from 'react-router-dom';
+import { flyToCart } from '../utils/animations';
 
 interface ProductCardProps {
   product: Product;
@@ -38,7 +39,10 @@ export default function ProductCard({ product }: ProductCardProps) {
               <Eye size={20} />
             </Link>
             <button
-              onClick={() => addToCart(product)}
+              onClick={(e) => {
+                flyToCart(e);
+                addToCart(product);
+              }}
               className="p-3 bg-primary text-white rounded-full hover:bg-white hover:text-black transition-colors"
             >
               <ShoppingCart size={20} />
@@ -72,7 +76,10 @@ export default function ProductCard({ product }: ProductCardProps) {
             </span>
           ) : (
             <button
-              onClick={() => addToCart(product)}
+              onClick={(e) => {
+                flyToCart(e);
+                addToCart(product);
+              }}
               className="w-full md:w-auto px-2 py-1 md:px-4 md:py-2 bg-white/5 hover:bg-primary text-white text-[10px] md:text-sm font-bold rounded-xl transition-all border border-white/10 hover:border-primary"
             >
               Add to Cart

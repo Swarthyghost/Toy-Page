@@ -71,13 +71,13 @@ export default function Navbar() {
 
         {/* Actions */}
         <div className="flex items-center gap-4">
-          <Link to="/cart" className="relative p-2 hover:bg-white/10 rounded-full transition-colors">
+          <Link to="/cart" id="navbar-cart-icon" className="relative p-2 hover:bg-white/10 rounded-full transition-colors origin-center">
             <ShoppingCart size={22} />
             {totalItems > 0 && (
               <motion.span
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
-                className="absolute top-0 right-0 w-5 h-5 bg-primary text-white text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-black"
+                className="cart-badge absolute top-0 right-0 w-5 h-5 bg-primary text-white text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-black origin-center"
               >
                 {totalItems}
               </motion.span>

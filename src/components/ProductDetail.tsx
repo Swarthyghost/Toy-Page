@@ -11,6 +11,7 @@ import {
 import { useCart, Product } from "../context/CartContext";
 import { fetchProductById } from "../services/firebaseApi";
 import { useSEO } from "../hooks/useSEO";
+import { flyToCart } from "../utils/animations";
 
 export default function ProductDetail() {
   const { id } = useParams();
@@ -160,8 +161,11 @@ export default function ProductDetail() {
             </div>
           ) : (
             <button
-              onClick={() => addToCart(product)}
-              className="w-full py-5 bg-primary text-white font-bold rounded-2xl flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-primary/20"
+              onClick={(e) => {
+                flyToCart(e);
+                addToCart(product);
+              }}
+              className="w-full py-5 bg-primary text-white font-bold rounded-2xl flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-primary/20 group"
             >
               <ShoppingCart size={24} />
               Add to Collection
