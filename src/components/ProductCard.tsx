@@ -14,9 +14,7 @@ interface ProductCardProps {
 export default function ProductCard({ product }: ProductCardProps) {
   const { addToCart } = useCart();
   const { siteSettings } = useSiteSettings();
-  const hasGlobalSale = siteSettings?.isDiscountTagsActive;
-  const hasSpecificDiscount = product.originalPrice && product.originalPrice > product.price;
-  const showDiscount = hasGlobalSale || hasSpecificDiscount;
+  const showDiscount = siteSettings?.isDiscountTagsActive !== false && product.originalPrice && product.originalPrice > product.price;
 
   return (
     <motion.div
@@ -79,14 +77,14 @@ export default function ProductCard({ product }: ProductCardProps) {
         </p>
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 md:gap-0">
           <div className="flex flex-col">
-            <span className={`text-xl font-display font-bold ${product.isOutOfStock ? 'text-white/20' : ''}`}>
-              GHS {product.price.toFixed(2)}
-            </span>
-            {hasSpecificDiscount && (
+            {showDiscount && (
               <span className="text-sm font-bold text-white/40 line-through">
                 GHS {product.originalPrice!.toFixed(2)}
               </span>
             )}
+            <span className={`text-xl font-display font-bold ${product.isOutOfStock ? 'text-white/20' : 'text-emerald-400'}`}>
+              GHS {product.price.toFixed(2)}
+            </span>
           </div>
           {product.isOutOfStock ? (
             <span className="w-full md:w-auto text-center px-2 py-1 md:px-4 md:py-2 bg-white/5 text-primary text-[10px] md:text-sm font-bold uppercase tracking-widest rounded-xl border border-white/10">

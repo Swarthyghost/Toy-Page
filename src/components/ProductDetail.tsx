@@ -21,6 +21,7 @@ export default function ProductDetail() {
   const [activeImage, setActiveImage] = useState<string>("");
   const { addToCart } = useCart();
   const { siteSettings } = useSiteSettings();
+  const showDiscount = siteSettings?.isDiscountTagsActive !== false && product?.originalPrice && product.originalPrice > product.price;
 
   useEffect(() => {
     if (id) {
@@ -118,11 +119,9 @@ export default function ProductDetail() {
             {product.category}
           </div>
 
-          {(siteSettings?.isDiscountTagsActive || (product.originalPrice && product.originalPrice > product.price)) && (
+          {showDiscount && (
             <div className="inline-flex ml-3 px-3 py-1 bg-red-600/20 border border-red-500 text-red-500 text-xs font-bold uppercase tracking-widest rounded-full w-fit mb-6 animate-pulse">
-              {product.originalPrice && product.originalPrice > product.price 
-                ? `${Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}% OFF` 
-                : 'SALE'}
+              {`${Math.round(((product.originalPrice! - product.price) / product.originalPrice!) * 100)}% OFF`}
             </div>
           )}
 
@@ -131,14 +130,14 @@ export default function ProductDetail() {
           </h1>
           <div className="flex items-center gap-4 mb-8">
             <div className="flex flex-col">
+              {showDiscount && (
+                <p className="text-lg font-bold text-white/40 line-through">
+                  GHS {product.originalPrice!.toFixed(2)}
+                </p>
+              )}
               <p className={`text-3xl font-display font-bold ${product.isOutOfStock ? 'text-white/20' : 'text-primary'}`}>
                 GHS {product.price.toFixed(2)}
               </p>
-              {product.originalPrice && product.originalPrice > product.price && (
-                <p className="text-lg font-bold text-white/40 line-through">
-                  GHS {product.originalPrice.toFixed(2)}
-                </p>
-              )}
             </div>
             {product.isOutOfStock && (
               <div className="px-4 py-1 bg-primary/10 border border-primary/20 text-primary text-[10px] font-bold uppercase tracking-widest rounded-full">

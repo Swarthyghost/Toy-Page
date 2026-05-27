@@ -51,10 +51,19 @@ export default function AdminDashboard() {
     try {
       console.log('Submitting product:', formData);
       
+      let parsedPrice = parseFloat(formData.price);
+      let parsedOriginalPrice = formData.originalPrice ? parseFloat(formData.originalPrice) : null;
+
+      if (parsedOriginalPrice !== null && parsedOriginalPrice < parsedPrice) {
+        const temp = parsedPrice;
+        parsedPrice = parsedOriginalPrice;
+        parsedOriginalPrice = temp;
+      }
+
       const payload = {
         name: formData.name,
-        price: parseFloat(formData.price),
-        originalPrice: formData.originalPrice ? parseFloat(formData.originalPrice) : null,
+        price: parsedPrice,
+        originalPrice: parsedOriginalPrice,
         image: formData.image.startsWith('data:') ? '' : formData.image,
         images: formData.images.filter(img => !img.startsWith('data:')),
         category: formData.category,
@@ -367,7 +376,7 @@ export default function AdminDashboard() {
                   
                   <div className="space-y-2">
                     <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-white/40 ml-1">
-                      <DollarSign size={14} /> Price (GHS)
+                      <DollarSign size={14} /> Final Selling Price (GHS)
                     </label>
                     <input
                       required
@@ -383,7 +392,7 @@ export default function AdminDashboard() {
                 <div className="grid md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-white/40 ml-1">
-                      <DollarSign size={14} /> Original Price (GHS) (Optional - For Discounts)
+                      <DollarSign size={14} /> Original Price (GHS) (Higher price for strikethrough. Leave empty to turn off sale)
                     </label>
                     <input
                       type="number"
