@@ -41,8 +41,19 @@ function Layout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen flex flex-col selection:bg-primary selection:text-white">
       {!isAdminPage && siteSettings?.isSalesNotificationActive && (
-        <div className="fixed top-0 left-0 right-0 bg-primary text-white text-center py-2 px-4 text-xs md:text-sm font-bold tracking-widest uppercase z-50 shadow-md h-8 md:h-9 flex items-center justify-center">
-          <div className="animate-pulse w-full truncate">{siteSettings.salesNotificationText}</div>
+        <div className="fixed top-0 left-0 right-0 bg-primary text-white py-2 text-xs md:text-sm font-bold tracking-widest uppercase z-50 shadow-md h-8 md:h-9 overflow-hidden flex items-center">
+          <motion.div 
+            className="flex gap-8 whitespace-nowrap"
+            animate={{ x: ["0%", "-50%"] }}
+            transition={{ repeat: Infinity, duration: 25, ease: "linear" }}
+          >
+            {[...Array(20)].map((_, i) => (
+              <span key={i} className="inline-flex items-center gap-8">
+                {siteSettings.salesNotificationText}
+                <span className="w-1.5 h-1.5 rounded-full bg-white/50 inline-block" />
+              </span>
+            ))}
+          </motion.div>
         </div>
       )}
       {!isAdminPage && <Navbar />}
