@@ -22,8 +22,8 @@ import Footer from "./components/Footer";
 import TrustBand from "./components/TrustBand";
 import { CartProvider } from "./context/CartContext";
 import { AdminAuthProvider } from "./context/AdminAuthContext";
+import { SiteSettingsProvider, useSiteSettings } from "./context/SiteSettingsContext";
 import { motion, AnimatePresence } from "motion/react";
-import { fetchSiteSettings, SiteSettings } from "./services/firebaseApi";
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -36,11 +36,7 @@ function ScrollToTop() {
 function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const isAdminPage = location.pathname.startsWith("/admin") || location.pathname === "/admin-login";
-  const [siteSettings, setSiteSettings] = useState<SiteSettings | null>(null);
-
-  useEffect(() => {
-    fetchSiteSettings().then(setSiteSettings);
-  }, []);
+  const { siteSettings } = useSiteSettings();
 
   return (
     <div className="min-h-screen flex flex-col selection:bg-primary selection:text-white">
@@ -101,13 +97,15 @@ function AppRoutes() {
 
 export default function App() {
   return (
-    <AdminAuthProvider>
-      <CartProvider>
-        <Router>
-          <ScrollToTop />
-          <AppRoutes />
-        </Router>
-      </CartProvider>
-    </AdminAuthProvider>
+    <SiteSettingsProvider>
+      <AdminAuthProvider>
+        <CartProvider>
+          <Router>
+            <ScrollToTop />
+            <AppRoutes />
+          </Router>
+        </CartProvider>
+      </AdminAuthProvider>
+    </SiteSettingsProvider>
   );
 }

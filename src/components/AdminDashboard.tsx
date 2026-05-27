@@ -36,7 +36,7 @@ export default function AdminDashboard() {
   const loadSettings = async () => {
     const data = await fetchSiteSettings();
     if (data) setSiteSettings(data);
-    else setSiteSettings({ isSalesNotificationActive: false, salesNotificationText: '' });
+    else setSiteSettings({ isSalesNotificationActive: false, salesNotificationText: '', isDiscountTagsActive: true });
   };
 
   const loadProducts = async () => {
@@ -600,6 +600,19 @@ export default function AdminDashboard() {
                     className="w-full px-6 py-4 bg-white/5 border border-white/10 rounded-2xl focus:border-primary focus:outline-none transition-colors"
                     placeholder="e.g., CATCHY SALES SALES SALES!!! 🔥"
                   />
+                </div>
+
+                <div className="flex items-center gap-3 pt-4 border-t border-white/10">
+                  <input
+                    type="checkbox"
+                    id="isDiscountTagsActive"
+                    checked={siteSettings.isDiscountTagsActive}
+                    onChange={(e) => setSiteSettings({ ...siteSettings, isDiscountTagsActive: e.target.checked })}
+                    className="w-5 h-5 rounded border-white/20 bg-white/10 text-primary focus:ring-primary focus:ring-offset-0"
+                  />
+                  <label htmlFor="isDiscountTagsActive" className="text-white/80 font-bold">
+                    Enable Discount Sales Tags on Products
+                  </label>
                 </div>
 
                 <button

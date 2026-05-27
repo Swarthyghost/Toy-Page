@@ -5,7 +5,7 @@ import { useCart } from '../context/CartContext';
 import { motion, AnimatePresence } from 'motion/react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import { fetchSiteSettings, SiteSettings } from '../services/firebaseApi';
+import { useSiteSettings } from '../context/SiteSettingsContext';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -22,13 +22,9 @@ const categories = [
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [siteSettings, setSiteSettings] = useState<SiteSettings | null>(null);
+  const { siteSettings } = useSiteSettings();
   const { totalItems } = useCart();
   const location = useLocation();
-
-  useEffect(() => {
-    fetchSiteSettings().then(setSiteSettings);
-  }, []);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);

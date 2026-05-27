@@ -8,7 +8,9 @@ import {
   getDoc,
   query, 
   orderBy,
-  Timestamp 
+  Timestamp,
+  onSnapshot,
+  setDoc
 } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { uploadImage } from '../config/cloudinary';
@@ -43,6 +45,7 @@ export interface PromoCode {
 export interface SiteSettings {
   isSalesNotificationActive: boolean;
   salesNotificationText: string;
+  isDiscountTagsActive: boolean;
 }
 
 const PRODUCTS_COLLECTION = 'products';
@@ -216,9 +219,30 @@ export const fetchSiteSettings = async (): Promise<SiteSettings | null> => {
   const docSnap = await getDoc(docRef);
   
   if (docSnap.exists()) {
-    return docSnap.data() as SiteSettings;
+    const data = docSnap.data();
+    return {
+      isSalesNotificationActive: data.isSalesNotificationActive || false,
+      salesNotificationText: data.salesNotificationText || '',
+      isDiscountTagsActive: data.isDiscountTagsActive !== undefined ? data.isDiscountTagsActive : true
+    };
   }
   return null;
+};
+
+export const subscribeToSiteSettings = (callback: (settings: SiteSettings | null) => void) => {
+  const docRef = doc(db, SETTINGS_COLLECTION, 'global');
+  return onSnapshot(docRef, (docSnap) => {
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      callback({
+        isSalesNotificationActive: data.isSalesNotificationActive || false,
+        salesNotificationText: data.salesNotificationText || '',
+        isDiscountTagsActive: data.isDiscountTagsActive !== undefined ? data.isDiscountTagsActive : true
+      });
+    } else {
+      callback(null);
+    }
+  });
 };
 
 export const updateSiteSettings = async (settingsData: SiteSettings): Promise<void> => {
@@ -228,8 +252,6 @@ export const updateSiteSettings = async (settingsData: SiteSettings): Promise<vo
   if (docSnap.exists()) {
     await updateDoc(docRef, { ...settingsData });
   } else {
-    // If it doesn't exist, create it
-    const { setDoc } = await import('firebase/firestore');
     await setDoc(docRef, settingsData);
   }
 };

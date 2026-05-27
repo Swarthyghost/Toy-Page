@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'motion/react';
 import { ShoppingCart, Eye } from 'lucide-react';
 import { Product, useCart } from '../context/CartContext';
+import { useSiteSettings } from '../context/SiteSettingsContext';
 import { Link } from 'react-router-dom';
 import { flyToCart } from '../utils/animations';
 
@@ -12,6 +13,8 @@ interface ProductCardProps {
 
 export default function ProductCard({ product }: ProductCardProps) {
   const { addToCart } = useCart();
+  const { siteSettings } = useSiteSettings();
+  const showDiscount = siteSettings?.isDiscountTagsActive !== false && product.originalPrice && product.originalPrice > product.price;
 
   return (
     <motion.div
@@ -55,7 +58,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         </div>
         
         {/* SALE Badge */}
-        {product.originalPrice && product.originalPrice > product.price && (
+        {showDiscount && (
           <div className="absolute top-4 right-4 px-3 py-1 bg-red-600/90 backdrop-blur-md border border-red-500 rounded-full text-[10px] font-bold uppercase tracking-widest text-white shadow-lg animate-pulse">
             Sale
           </div>
@@ -77,9 +80,9 @@ export default function ProductCard({ product }: ProductCardProps) {
             <span className={`text-xl font-display font-bold ${product.isOutOfStock ? 'text-white/20' : ''}`}>
               GHS {product.price.toFixed(2)}
             </span>
-            {product.originalPrice && product.originalPrice > product.price && (
+            {showDiscount && (
               <span className="text-sm font-bold text-white/40 line-through">
-                GHS {product.originalPrice.toFixed(2)}
+                GHS {product.originalPrice!.toFixed(2)}
               </span>
             )}
           </div>

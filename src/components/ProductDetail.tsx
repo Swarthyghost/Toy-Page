@@ -9,16 +9,18 @@ import {
   Package,
 } from "lucide-react";
 import { useCart, Product } from "../context/CartContext";
+import { useSiteSettings } from "../context/SiteSettingsContext";
 import { fetchProductById } from "../services/firebaseApi";
 import { useSEO } from "../hooks/useSEO";
 import { flyToCart } from "../utils/animations";
 
 export default function ProductDetail() {
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeImage, setActiveImage] = useState<string>("");
   const { addToCart } = useCart();
+  const { siteSettings } = useSiteSettings();
 
   useEffect(() => {
     if (id) {
@@ -116,7 +118,7 @@ export default function ProductDetail() {
             {product.category}
           </div>
 
-          {product.originalPrice && product.originalPrice > product.price && (
+          {siteSettings?.isDiscountTagsActive !== false && product.originalPrice && product.originalPrice > product.price && (
             <div className="inline-flex ml-3 px-3 py-1 bg-red-600/20 border border-red-500 text-red-500 text-xs font-bold uppercase tracking-widest rounded-full w-fit mb-6 animate-pulse">
               {Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}% OFF
             </div>
@@ -130,7 +132,7 @@ export default function ProductDetail() {
               <p className={`text-3xl font-display font-bold ${product.isOutOfStock ? 'text-white/20' : 'text-primary'}`}>
                 GHS {product.price.toFixed(2)}
               </p>
-              {product.originalPrice && product.originalPrice > product.price && (
+              {siteSettings?.isDiscountTagsActive !== false && product.originalPrice && product.originalPrice > product.price && (
                 <p className="text-lg font-bold text-white/40 line-through">
                   GHS {product.originalPrice.toFixed(2)}
                 </p>
