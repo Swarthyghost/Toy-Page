@@ -45,7 +45,7 @@ function Layout({ children }: { children: React.ReactNode }) {
           <motion.div 
             className="flex gap-8 whitespace-nowrap"
             animate={{ x: ["0%", "-50%"] }}
-            transition={{ repeat: Infinity, duration: 25, ease: "linear" }}
+            transition={{ repeat: Infinity, duration: 60, ease: "linear" }}
           >
             {[...Array(20)].map((_, i) => (
               <span key={i} className="inline-flex items-center gap-8">
