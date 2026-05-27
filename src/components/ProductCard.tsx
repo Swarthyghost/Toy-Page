@@ -14,7 +14,9 @@ interface ProductCardProps {
 export default function ProductCard({ product }: ProductCardProps) {
   const { addToCart } = useCart();
   const { siteSettings } = useSiteSettings();
-  const showDiscount = siteSettings?.isDiscountTagsActive !== false && product.originalPrice && product.originalPrice > product.price;
+  const hasGlobalSale = siteSettings?.isDiscountTagsActive;
+  const hasSpecificDiscount = product.originalPrice && product.originalPrice > product.price;
+  const showDiscount = hasGlobalSale || hasSpecificDiscount;
 
   return (
     <motion.div
@@ -80,7 +82,7 @@ export default function ProductCard({ product }: ProductCardProps) {
             <span className={`text-xl font-display font-bold ${product.isOutOfStock ? 'text-white/20' : ''}`}>
               GHS {product.price.toFixed(2)}
             </span>
-            {showDiscount && (
+            {hasSpecificDiscount && (
               <span className="text-sm font-bold text-white/40 line-through">
                 GHS {product.originalPrice!.toFixed(2)}
               </span>

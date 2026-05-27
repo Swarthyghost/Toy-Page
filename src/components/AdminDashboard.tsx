@@ -54,7 +54,7 @@ export default function AdminDashboard() {
       const payload = {
         name: formData.name,
         price: parseFloat(formData.price),
-        originalPrice: formData.originalPrice ? parseFloat(formData.originalPrice) : undefined,
+        originalPrice: formData.originalPrice ? parseFloat(formData.originalPrice) : null,
         image: formData.image.startsWith('data:') ? '' : formData.image,
         images: formData.images.filter(img => !img.startsWith('data:')),
         category: formData.category,

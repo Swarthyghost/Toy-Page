@@ -118,9 +118,11 @@ export default function ProductDetail() {
             {product.category}
           </div>
 
-          {siteSettings?.isDiscountTagsActive !== false && product.originalPrice && product.originalPrice > product.price && (
+          {(siteSettings?.isDiscountTagsActive || (product.originalPrice && product.originalPrice > product.price)) && (
             <div className="inline-flex ml-3 px-3 py-1 bg-red-600/20 border border-red-500 text-red-500 text-xs font-bold uppercase tracking-widest rounded-full w-fit mb-6 animate-pulse">
-              {Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}% OFF
+              {product.originalPrice && product.originalPrice > product.price 
+                ? `${Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}% OFF` 
+                : 'SALE'}
             </div>
           )}
 
@@ -132,7 +134,7 @@ export default function ProductDetail() {
               <p className={`text-3xl font-display font-bold ${product.isOutOfStock ? 'text-white/20' : 'text-primary'}`}>
                 GHS {product.price.toFixed(2)}
               </p>
-              {siteSettings?.isDiscountTagsActive !== false && product.originalPrice && product.originalPrice > product.price && (
+              {product.originalPrice && product.originalPrice > product.price && (
                 <p className="text-lg font-bold text-white/40 line-through">
                   GHS {product.originalPrice.toFixed(2)}
                 </p>
