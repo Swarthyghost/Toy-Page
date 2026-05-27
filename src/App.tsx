@@ -5,7 +5,7 @@ import {
   Route,
   useLocation,
 } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Navbar from "./components/Navbar";
 import Hero from "./components/Hero";
 import ProductListing from "./components/ProductListing";
@@ -23,6 +23,7 @@ import TrustBand from "./components/TrustBand";
 import { CartProvider } from "./context/CartContext";
 import { AdminAuthProvider } from "./context/AdminAuthContext";
 import { motion, AnimatePresence } from "motion/react";
+import { fetchSiteSettings, SiteSettings } from "./services/firebaseApi";
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -35,9 +36,19 @@ function ScrollToTop() {
 function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const isAdminPage = location.pathname.startsWith("/admin") || location.pathname === "/admin-login";
+  const [siteSettings, setSiteSettings] = useState<SiteSettings | null>(null);
+
+  useEffect(() => {
+    fetchSiteSettings().then(setSiteSettings);
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col selection:bg-primary selection:text-white">
+      {!isAdminPage && siteSettings?.isSalesNotificationActive && (
+        <div className="fixed top-0 left-0 right-0 bg-primary text-white text-center py-2 px-4 text-xs md:text-sm font-bold tracking-widest uppercase z-50 shadow-md h-8 md:h-9 flex items-center justify-center">
+          <div className="animate-pulse w-full truncate">{siteSettings.salesNotificationText}</div>
+        </div>
+      )}
       {!isAdminPage && <Navbar />}
       <main className="flex-grow">{children}</main>
       {!isAdminPage && <TrustBand />}

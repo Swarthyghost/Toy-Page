@@ -49,11 +49,17 @@ export default function ProductCard({ product }: ProductCardProps) {
             </button>
           </div>
         )}
-        
         {/* Category Badge */}
         <div className="absolute top-4 left-4 px-3 py-1 bg-black/60 backdrop-blur-md border border-white/10 rounded-full text-[10px] font-bold uppercase tracking-widest">
           {product.category}
         </div>
+        
+        {/* SALE Badge */}
+        {product.originalPrice && product.originalPrice > product.price && (
+          <div className="absolute top-4 right-4 px-3 py-1 bg-red-600/90 backdrop-blur-md border border-red-500 rounded-full text-[10px] font-bold uppercase tracking-widest text-white shadow-lg animate-pulse">
+            Sale
+          </div>
+        )}
       </div>
 
       {/* Content */}
@@ -67,9 +73,16 @@ export default function ProductCard({ product }: ProductCardProps) {
           {product.description}
         </p>
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 md:gap-0">
-          <span className={`text-xl font-display font-bold ${product.isOutOfStock ? 'text-white/20' : ''}`}>
-            GHS {product.price.toFixed(2)}
-          </span>
+          <div className="flex flex-col">
+            <span className={`text-xl font-display font-bold ${product.isOutOfStock ? 'text-white/20' : ''}`}>
+              GHS {product.price.toFixed(2)}
+            </span>
+            {product.originalPrice && product.originalPrice > product.price && (
+              <span className="text-sm font-bold text-white/40 line-through">
+                GHS {product.originalPrice.toFixed(2)}
+              </span>
+            )}
+          </div>
           {product.isOutOfStock ? (
             <span className="w-full md:w-auto text-center px-2 py-1 md:px-4 md:py-2 bg-white/5 text-primary text-[10px] md:text-sm font-bold uppercase tracking-widest rounded-xl border border-white/10">
               Restocking soon

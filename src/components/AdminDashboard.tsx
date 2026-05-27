@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Plus, Edit2, Trash2, X, Image as ImageIcon, DollarSign, Tag, FileText, Upload, LogOut, Gift } from 'lucide-react';
+import { Plus, Edit2, Trash2, X, Image as ImageIcon, DollarSign, Tag, FileText, Upload, LogOut, Gift, Settings } from 'lucide-react';
 import { useAdminAuth } from '../context/AdminAuthContext';
-import { fetchProducts, createProduct, updateProduct, deleteProduct, Product } from '../services/firebaseApi';
+import { fetchProducts, createProduct, updateProduct, deleteProduct, Product, SiteSettings, fetchSiteSettings, updateSiteSettings } from '../services/firebaseApi';
 import { uploadImage } from '../config/cloudinary';
 import PromoManagement from './PromoManagement';
 
@@ -11,10 +11,13 @@ export default function AdminDashboard() {
   const [products, setProducts] = useState<Product[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  const [activeTab, setActiveTab] = useState<'products' | 'promos'>('products');
+  const [activeTab, setActiveTab] = useState<'products' | 'promos' | 'settings'>('products');
+  const [siteSettings, setSiteSettings] = useState<SiteSettings | null>(null);
+  const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     price: '',
+    originalPrice: '',
     image: '',
     images: [] as string[],
     category: 'Vibrators',
@@ -27,7 +30,14 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     loadProducts();
+    loadSettings();
   }, []);
+
+  const loadSettings = async () => {
+    const data = await fetchSiteSettings();
+    if (data) setSiteSettings(data);
+    else setSiteSettings({ isSalesNotificationActive: false, salesNotificationText: '' });
+  };
 
   const loadProducts = async () => {
     const data = await fetchProducts();
@@ -44,6 +54,7 @@ export default function AdminDashboard() {
       const payload = {
         name: formData.name,
         price: parseFloat(formData.price),
+        originalPrice: formData.originalPrice ? parseFloat(formData.originalPrice) : undefined,
         image: formData.image.startsWith('data:') ? '' : formData.image,
         images: formData.images.filter(img => !img.startsWith('data:')),
         category: formData.category,
@@ -63,7 +74,7 @@ export default function AdminDashboard() {
       setEditingProduct(null);
       setImageFile(null);
       setAdditionalImageFiles([]);
-      setFormData({ name: '', price: '', image: '', images: [], category: 'Vibrators', description: '', isOutOfStock: false });
+      setFormData({ name: '', price: '', originalPrice: '', image: '', images: [], category: 'Vibrators', description: '', isOutOfStock: false });
       loadProducts();
     } catch (error) {
       console.error('Error saving product:', error);
@@ -78,6 +89,7 @@ export default function AdminDashboard() {
     setFormData({
       name: product.name,
       price: product.price.toString(),
+      originalPrice: product.originalPrice ? product.originalPrice.toString() : '',
       image: product.image,
       images: product.images || [],
       category: product.category,
@@ -215,6 +227,17 @@ export default function AdminDashboard() {
               <Gift size={18} />
               Promo Codes
             </button>
+            <button
+              onClick={() => setActiveTab('settings')}
+              className={`py-4 border-b-2 transition-colors flex items-center gap-2 ${
+                activeTab === 'settings'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-white/60 hover:text-white'
+              }`}
+            >
+              <Settings size={18} />
+              Site Settings
+            </button>
             <div className="ml-auto flex items-center gap-4">
               <a
                 href="/"
@@ -240,7 +263,7 @@ export default function AdminDashboard() {
                 setEditingProduct(null);
                 setImageFile(null);
                 setAdditionalImageFiles([]);
-                setFormData({ name: '', price: '', image: '', images: [], category: 'Vibrators', description: '', isOutOfStock: false });
+                setFormData({ name: '', price: '', originalPrice: '', image: '', images: [], category: 'Vibrators', description: '', isOutOfStock: false });
                 setIsModalOpen(true);
               }}
               className="px-6 py-3 bg-primary text-white font-bold rounded-2xl flex items-center gap-2 hover:scale-105 transition-transform"
@@ -353,6 +376,22 @@ export default function AdminDashboard() {
                       value={formData.price}
                       onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                       className="w-full px-6 py-4 bg-white/5 border border-white/10 rounded-2xl focus:border-primary focus:outline-none transition-colors"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-white/40 ml-1">
+                      <DollarSign size={14} /> Original Price (GHS) (Optional - For Discounts)
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={formData.originalPrice}
+                      onChange={(e) => setFormData({ ...formData, originalPrice: e.target.value })}
+                      className="w-full px-6 py-4 bg-white/5 border border-white/10 rounded-2xl focus:border-primary focus:outline-none transition-colors"
+                      placeholder="Leave empty if no discount"
                     />
                   </div>
                 </div>
@@ -511,8 +550,69 @@ export default function AdminDashboard() {
         )}
       </AnimatePresence>
         </div>
-      ) : (
+      ) : activeTab === 'promos' ? (
         <PromoManagement />
+      ) : (
+        <div className="max-w-7xl mx-auto px-6 py-8">
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold mb-2">Site Settings</h2>
+            <p className="text-white/40">Manage global settings like sales notifications.</p>
+          </div>
+          
+          {siteSettings && (
+            <div className="max-w-2xl bg-zinc-900 border border-white/10 rounded-[2.5rem] p-10">
+              <form onSubmit={async (e) => {
+                e.preventDefault();
+                setIsSavingSettings(true);
+                try {
+                  await updateSiteSettings(siteSettings);
+                  alert('Settings saved successfully!');
+                } catch (error) {
+                  console.error(error);
+                  alert('Failed to save settings.');
+                } finally {
+                  setIsSavingSettings(false);
+                }
+              }} className="space-y-6">
+                
+                <div className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    id="isSalesNotificationActive"
+                    checked={siteSettings.isSalesNotificationActive}
+                    onChange={(e) => setSiteSettings({ ...siteSettings, isSalesNotificationActive: e.target.checked })}
+                    className="w-5 h-5 rounded border-white/20 bg-white/10 text-primary focus:ring-primary focus:ring-offset-0"
+                  />
+                  <label htmlFor="isSalesNotificationActive" className="text-white/80 font-bold">
+                    Enable Global Sales Notification Banner
+                  </label>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-white/40 ml-1">
+                    <FileText size={14} /> Notification Banner Text
+                  </label>
+                  <input
+                    type="text"
+                    required={siteSettings.isSalesNotificationActive}
+                    value={siteSettings.salesNotificationText}
+                    onChange={(e) => setSiteSettings({ ...siteSettings, salesNotificationText: e.target.value })}
+                    className="w-full px-6 py-4 bg-white/5 border border-white/10 rounded-2xl focus:border-primary focus:outline-none transition-colors"
+                    placeholder="e.g., CATCHY SALES SALES SALES!!! 🔥"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isSavingSettings}
+                  className="w-full py-5 bg-primary text-white font-bold rounded-2xl hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-primary/20 disabled:opacity-50"
+                >
+                  {isSavingSettings ? 'Saving...' : 'Save Settings'}
+                </button>
+              </form>
+            </div>
+          )}
+        </div>
       )}
     </div>
   );

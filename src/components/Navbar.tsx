@@ -5,6 +5,7 @@ import { useCart } from '../context/CartContext';
 import { motion, AnimatePresence } from 'motion/react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { fetchSiteSettings, SiteSettings } from '../services/firebaseApi';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -21,8 +22,13 @@ const categories = [
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [siteSettings, setSiteSettings] = useState<SiteSettings | null>(null);
   const { totalItems } = useCart();
   const location = useLocation();
+
+  useEffect(() => {
+    fetchSiteSettings().then(setSiteSettings);
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -35,10 +41,13 @@ export default function Navbar() {
     setIsOpen(false);
   }, [location]);
 
+  const hasBanner = siteSettings?.isSalesNotificationActive;
+
   return (
     <nav
       className={cn(
-        'fixed top-0 left-0 right-0 z-50 transition-all duration-300 px-6 py-4',
+        'fixed left-0 right-0 z-[40] transition-all duration-300 px-6 py-4',
+        hasBanner ? 'top-8 md:top-9' : 'top-0',
         scrolled ? 'bg-black/80 backdrop-blur-md border-b border-white/10 py-3' : 'bg-transparent'
       )}
     >

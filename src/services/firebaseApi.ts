@@ -17,6 +17,7 @@ export interface Product {
   id: string;
   name: string;
   price: number;
+  originalPrice?: number;
   image: string;
   images?: string[];
   category: string;
@@ -39,8 +40,14 @@ export interface PromoCode {
   createdAt: Timestamp;
 }
 
+export interface SiteSettings {
+  isSalesNotificationActive: boolean;
+  salesNotificationText: string;
+}
+
 const PRODUCTS_COLLECTION = 'products';
 const PROMOS_COLLECTION = 'promoCodes';
+const SETTINGS_COLLECTION = 'settings';
 
 // Products API
 export const fetchProducts = async (): Promise<Product[]> => {
@@ -200,5 +207,29 @@ export const usePromoCode = async (id: string): Promise<void> => {
   if (docSnap.exists()) {
     const currentUses = docSnap.data().currentUses || 0;
     await updateDoc(docRef, { currentUses: currentUses + 1 });
+  }
+};
+
+// Site Settings API
+export const fetchSiteSettings = async (): Promise<SiteSettings | null> => {
+  const docRef = doc(db, SETTINGS_COLLECTION, 'global');
+  const docSnap = await getDoc(docRef);
+  
+  if (docSnap.exists()) {
+    return docSnap.data() as SiteSettings;
+  }
+  return null;
+};
+
+export const updateSiteSettings = async (settingsData: SiteSettings): Promise<void> => {
+  const docRef = doc(db, SETTINGS_COLLECTION, 'global');
+  const docSnap = await getDoc(docRef);
+  
+  if (docSnap.exists()) {
+    await updateDoc(docRef, { ...settingsData });
+  } else {
+    // If it doesn't exist, create it
+    const { setDoc } = await import('firebase/firestore');
+    await setDoc(docRef, settingsData);
   }
 };

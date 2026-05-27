@@ -116,13 +116,26 @@ export default function ProductDetail() {
             {product.category}
           </div>
 
+          {product.originalPrice && product.originalPrice > product.price && (
+            <div className="inline-flex ml-3 px-3 py-1 bg-red-600/20 border border-red-500 text-red-500 text-xs font-bold uppercase tracking-widest rounded-full w-fit mb-6 animate-pulse">
+              {Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}% OFF
+            </div>
+          )}
+
           <h1 className="text-5xl font-display font-bold mb-4">
             {product.name}
           </h1>
           <div className="flex items-center gap-4 mb-8">
-            <p className={`text-3xl font-display font-bold ${product.isOutOfStock ? 'text-white/20' : 'text-primary'}`}>
-              GHS {product.price.toFixed(2)}
-            </p>
+            <div className="flex flex-col">
+              <p className={`text-3xl font-display font-bold ${product.isOutOfStock ? 'text-white/20' : 'text-primary'}`}>
+                GHS {product.price.toFixed(2)}
+              </p>
+              {product.originalPrice && product.originalPrice > product.price && (
+                <p className="text-lg font-bold text-white/40 line-through">
+                  GHS {product.originalPrice.toFixed(2)}
+                </p>
+              )}
+            </div>
             {product.isOutOfStock && (
               <div className="px-4 py-1 bg-primary/10 border border-primary/20 text-primary text-[10px] font-bold uppercase tracking-widest rounded-full">
                 Restocking soon
