@@ -38,6 +38,13 @@ function Layout({ children }: { children: React.ReactNode }) {
   const isAdminPage = location.pathname.startsWith("/admin") || location.pathname === "/admin-login";
   const { siteSettings } = useSiteSettings();
 
+  // Make the marquee perfectly responsive to text length and screen size
+  const text = siteSettings?.salesNotificationText || '';
+  const itemWidth = text.length * 8 + 32; // Approximate width in pixels
+  const halfN = Math.max(10, Math.ceil(3000 / Math.max(itemWidth, 50))); // Ensure it covers at least 3000px per half
+  const totalN = halfN * 2;
+  const marqueeDuration = (halfN * itemWidth) / 40; // 40 pixels per second constant speed
+
   return (
     <div className="min-h-screen flex flex-col selection:bg-primary selection:text-white">
       {!isAdminPage && siteSettings?.isSalesNotificationActive && (
@@ -45,11 +52,11 @@ function Layout({ children }: { children: React.ReactNode }) {
           <motion.div 
             className="flex gap-8 whitespace-nowrap"
             animate={{ x: ["0%", "-50%"] }}
-            transition={{ repeat: Infinity, duration: 60, ease: "linear" }}
+            transition={{ repeat: Infinity, duration: marqueeDuration, ease: "linear" }}
           >
-            {[...Array(20)].map((_, i) => (
+            {[...Array(totalN)].map((_, i) => (
               <span key={i} className="inline-flex items-center gap-8">
-                {siteSettings.salesNotificationText}
+                {text}
                 <span className="w-1.5 h-1.5 rounded-full bg-white/50 inline-block" />
               </span>
             ))}
