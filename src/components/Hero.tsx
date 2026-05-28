@@ -309,21 +309,21 @@ export default function Hero() {
           {[
             {
               name: "Vibrators",
-              emoji: "💜",
+              emoji: "🍑💦",
               desc: "Solo & couples",
               path: "/category/Vibrators",
               accent: "from-purple-900/30",
             },
             {
               name: "BDSM",
-              emoji: "🖤",
+              emoji: "👙⛓️‍💥",
               desc: "Restraints & more",
               path: "/category/BDSM",
               accent: "from-red-900/30",
             },
             {
               name: "Lubricants",
-              emoji: "✨",
+              emoji: "💦",
               desc: "Smooth & safe",
               path: "/category/Lubricants",
               accent: "from-blue-900/30",
