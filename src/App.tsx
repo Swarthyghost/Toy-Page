@@ -20,6 +20,7 @@ import AdminLogin from "./components/AdminLogin";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Footer from "./components/Footer";
 import TrustBand from "./components/TrustBand";
+import LocationPage from "./components/LocationPage";
 import { CartProvider } from "./context/CartContext";
 import { AdminAuthProvider } from "./context/AdminAuthContext";
 import { SiteSettingsProvider, useSiteSettings } from "./context/SiteSettingsContext";
@@ -99,6 +100,9 @@ function AppRoutes() {
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/shipping" element={<Shipping />} />
           <Route path="/admin-login" element={<AdminLogin />} />
+          {["accra", "ablekuma", "east-legon", "madina", "spintex", "tema", "kumasi", "cape-coast", "koforidua"].map(city => (
+            <Route key={city} path={`/${city}`} element={<LocationPage city={city} />} />
+          ))}
           <Route
             path="/admin"
             element={

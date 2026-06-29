@@ -90,11 +90,11 @@
     }
     </script>
 
-    <!-- ── Structured Data: Online Store ── -->
+    <!-- ── Structured Data: Online Store & Local Business ── -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
-      "@type": "Store",
+      "@type": ["Store", "LocalBusiness"],
       "name": "PleasureToys GH",
       "image": "https://pleasuretoysgh.com/toy-og.png",
       "url": "https://pleasuretoysgh.com",
@@ -105,6 +105,17 @@
         "addressLocality": "Accra",
         "addressCountry": "GH"
       },
+      "areaServed": [
+        { "@type": "City", "name": "Accra" },
+        { "@type": "City", "name": "Ablekuma" },
+        { "@type": "City", "name": "East Legon" },
+        { "@type": "City", "name": "Madina" },
+        { "@type": "City", "name": "Spintex" },
+        { "@type": "City", "name": "Tema" },
+        { "@type": "City", "name": "Kumasi" },
+        { "@type": "City", "name": "Cape Coast" },
+        { "@type": "City", "name": "Koforidua" }
+      ],
       "openingHoursSpecification": {
         "@type": "OpeningHoursSpecification",
         "dayOfWeek": [
