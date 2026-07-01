@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { ShoppingCart, Trash2, Plus, Minus, ArrowRight, X } from "lucide-react";
+import { ShoppingCart, Trash2, Plus, Minus, ArrowRight, X, CreditCard } from "lucide-react";
 import { useCart } from "../context/CartContext";
+import { usePaystackPayment } from "react-paystack";
 import { Link } from "react-router-dom";
 import { useSEO } from "../hooks/useSEO";
 import { validatePromoCode, usePromoCode } from "../services/firebaseApi";
@@ -33,6 +34,7 @@ export default function Cart() {
 
   const [formData, setFormData] = useState({
     name: "",
+    email: "",
     phone: "",
     location: "",
   });
@@ -103,6 +105,33 @@ Please confirm my order. Thank you!`;
     const whatsappUrl = `https://wa.me/233266181581?text=${encodedMessage}`;
 
     window.open(whatsappUrl, "_blank");
+  };
+
+  const paystackConfig = {
+    reference: new Date().getTime().toString(),
+    email: formData.email || "customer@toy-page.com",
+    amount: Math.round(finalPrice * 100), // amount in pesewas
+    publicKey: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY || "pk_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+  };
+
+  const initializePayment = usePaystackPayment(paystackConfig);
+
+  const handlePaystackSuccessAction = (reference: any) => {
+    console.log("Payment successful", reference);
+    alert("Payment successful! Your order has been placed.");
+    setIsCheckoutOpen(false);
+  };
+
+  const handlePaystackCloseAction = () => {
+    console.log("Payment modal closed");
+  };
+
+  const handleDebitCardClick = () => {
+    if (!formData.name || !formData.email || !formData.phone || !formData.location) {
+      alert("Please fill in all details before paying with card.");
+      return;
+    }
+    initializePayment({ onSuccess: handlePaystackSuccessAction, onClose: handlePaystackCloseAction });
   };
 
   if (cart.length === 0) {
@@ -285,7 +314,7 @@ Please confirm my order. Thank you!`;
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="relative w-full max-w-md bg-zinc-900 border border-white/10 rounded-[2.5rem] p-8 shadow-2xl"
+              className="relative w-full max-w-md bg-zinc-900 border border-white/10 rounded-[2.5rem] p-6 sm:p-8 shadow-2xl max-h-[90vh] overflow-y-auto"
             >
               <button
                 onClick={() => setIsCheckoutOpen(false)}
@@ -299,7 +328,7 @@ Please confirm my order. Thank you!`;
                 Please provide your details to complete the order via WhatsApp.
               </p>
 
-              <form onSubmit={handleWhatsAppOrder} className="space-y-6">
+              <form onSubmit={handleWhatsAppOrder} className="space-y-4 sm:space-y-6">
                 <div className="space-y-2">
                   <label className="text-xs font-bold uppercase tracking-widest text-white/40 ml-1">
                     Full Name
@@ -312,7 +341,23 @@ Please confirm my order. Thank you!`;
                     onChange={(e) =>
                       setFormData({ ...formData, name: e.target.value })
                     }
-                    className="w-full px-6 py-4 bg-white/5 border border-white/10 rounded-2xl focus:border-primary focus:outline-none transition-colors"
+                    className="w-full px-4 py-3 sm:px-6 sm:py-4 bg-white/5 border border-white/10 rounded-2xl focus:border-primary focus:outline-none transition-colors"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-widest text-white/40 ml-1">
+                    Email Address
+                  </label>
+                  <input
+                    required
+                    type="email"
+                    placeholder="john@example.com"
+                    value={formData.email}
+                    onChange={(e) =>
+                      setFormData({ ...formData, email: e.target.value })
+                    }
+                    className="w-full px-4 py-3 sm:px-6 sm:py-4 bg-white/5 border border-white/10 rounded-2xl focus:border-primary focus:outline-none transition-colors"
                   />
                 </div>
 
@@ -328,7 +373,7 @@ Please confirm my order. Thank you!`;
                     onChange={(e) =>
                       setFormData({ ...formData, phone: e.target.value })
                     }
-                    className="w-full px-6 py-4 bg-white/5 border border-white/10 rounded-2xl focus:border-primary focus:outline-none transition-colors"
+                    className="w-full px-4 py-3 sm:px-6 sm:py-4 bg-white/5 border border-white/10 rounded-2xl focus:border-primary focus:outline-none transition-colors"
                   />
                 </div>
 
@@ -343,17 +388,83 @@ Please confirm my order. Thank you!`;
                     onChange={(e) =>
                       setFormData({ ...formData, location: e.target.value })
                     }
-                    className="w-full px-6 py-4 bg-white/5 border border-white/10 rounded-2xl focus:border-primary focus:outline-none transition-colors min-h-[100px] resize-none"
+                    className="w-full px-4 py-3 sm:px-6 sm:py-4 bg-white/5 border border-white/10 rounded-2xl focus:border-primary focus:outline-none transition-colors min-h-[80px] sm:min-h-[100px] resize-none"
                   />
                 </div>
 
-                <button
-                  type="submit"
-                  className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-2xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-600/20"
-                >
-                  Order via WhatsApp
-                  <ArrowRight size={20} />
-                </button>
+                <div className="flex flex-col gap-4 pt-2">
+                  <button
+                    type="submit"
+                    className="w-full py-3 sm:py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-2xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-600/20"
+                  >
+                    Order via WhatsApp
+                    <ArrowRight size={20} />
+                  </button>
+                  
+                  <div className="relative flex items-center py-2">
+                    <div className="flex-grow border-t border-white/10"></div>
+                    <span className="flex-shrink-0 mx-4 text-white/40 text-xs font-bold uppercase tracking-widest">Or</span>
+                    <div className="flex-grow border-t border-white/10"></div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleDebitCardClick}
+                    className="w-full py-3 sm:py-4 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-2xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-indigo-600/20"
+                  >
+                    Pay with Debit Card
+                    <CreditCard size={20} />
+                  </button>
+
+                  <div className="pt-6 mt-2 border-t border-white/10 text-center">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-white/40 mb-4">
+                      Secured Payments &amp; Accepted Methods
+                    </p>
+                    <div className="flex flex-wrap items-center justify-center gap-2 opacity-80 hover:opacity-100 transition-opacity">
+                      {/* Visa - card style matching provided image */}
+                      <div className="h-8 rounded-md overflow-hidden flex items-center justify-center" title="Visa">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 86 54" className="h-8 w-auto" aria-label="Visa">
+                          <rect width="86" height="54" rx="4" fill="white" stroke="#1A1F71" strokeWidth="2"/>
+                          <rect x="0" y="8" width="86" height="12" fill="#1A1F71"/>
+                          <rect x="0" y="42" width="86" height="10" rx="0" fill="#F7A800"/>
+                          <text x="43" y="37" textAnchor="middle" fill="#1A1F71" fontFamily="Arial Black, Arial" fontWeight="900" fontSize="18" letterSpacing="1">VISA</text>
+                        </svg>
+                      </div>
+                      {/* Mastercard - overlapping circles with text matching provided image */}
+                      <div className="h-8 rounded-md overflow-hidden flex items-center justify-center bg-white px-1" title="Mastercard">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 90 54" className="h-8 w-auto" aria-label="Mastercard">
+                          <circle cx="32" cy="27" r="22" fill="#CC0000"/>
+                          <circle cx="58" cy="27" r="22" fill="#FF9900"/>
+                          <path d="M45 10.2a22 22 0 010 33.6A22 22 0 0145 10.2z" fill="#FF6600"/>
+                          {/* Stripes in overlap */}
+                          <clipPath id="mc-overlap">
+                            <path d="M45 10.2a22 22 0 010 33.6A22 22 0 0145 10.2z"/>
+                          </clipPath>
+                          <g clipPath="url(#mc-overlap)">
+                            {[12,16,20,24,28,32,36,40].map((y, i) => (
+                              <rect key={i} x="34" y={y} width="12" height="2" fill={i % 2 === 0 ? "#FF6600" : "#FF8800"} opacity="0.6"/>
+                            ))}
+                          </g>
+                          <text x="45" y="30" textAnchor="middle" fill="white" fontFamily="Arial, sans-serif" fontWeight="bold" fontSize="10" letterSpacing="0.3">MasterCard</text>
+                        </svg>
+                      </div>
+                      {/* MTN MoMo - local image */}
+                      <div className="h-8 bg-[#ffcc00] rounded-md px-2 flex items-center justify-center" title="MTN MoMo">
+                        <img src="/mtn.jpg" alt="MTN MoMo" className="h-6 w-auto object-contain rounded" />
+                      </div>
+                      <div className="h-8 bg-[#e60000] rounded-md px-3 flex items-center justify-center shadow-inner" title="Telecel Cash">
+                        <span className="text-white text-[11px] font-black whitespace-nowrap tracking-tighter">Telecel Cash</span>
+                      </div>
+                      {/* AirtelTigo Money - using actual logo image */}
+                      <div className="h-8 bg-white rounded-md px-2 flex items-center justify-center" title="AirtelTigo Money">
+                        <img src="/airteltigo.jpg" alt="AirtelTigo Money" className="h-7 w-auto object-contain" />
+                      </div>
+                      <div className="h-8 bg-[#09A5DB] rounded-md px-3 flex items-center justify-center shadow-inner" title="Paystack">
+                        <span className="text-white text-[11px] font-black whitespace-nowrap tracking-tighter">Paystack Secured</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </form>
             </motion.div>
           </div>
