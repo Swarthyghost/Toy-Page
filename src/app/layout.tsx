@@ -151,7 +151,7 @@ export default function RootLayout({
                 { "@type": "City", "name": "Teshie" },
                 { "@type": "City", "name": "Nungua" },
                 { "@type": "City", "name": "Ashaiman" },
-                { "@type": "City", "name": "Sakumono" }
+                { "@type": "City", "name": "Sakumono" },
                 { "@type": "City", "name": "Wa" }
               ],
               "openingHoursSpecification": {
