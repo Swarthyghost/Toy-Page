@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Plus, Edit2, Trash2, X, Image as ImageIcon, DollarSign, Tag, FileText, Upload, LogOut, Gift, Settings } from 'lucide-react';
 import { useAdminAuth } from '../context/AdminAuthContext';
-import { fetchProducts, createProduct, updateProduct, deleteProduct, Product, SiteSettings, fetchSiteSettings, updateSiteSettings, fetchOrders, CustomerOrder } from '../services/firebaseApi';
+import { fetchProducts, createProduct, updateProduct, deleteProduct, Product, SiteSettings, fetchSiteSettings, updateSiteSettings, fetchOrders, CustomerOrder, updateOrder, deleteOrder } from '../services/firebaseApi';
 import { uploadImage } from '../config/cloudinary';
 import PromoManagement from './PromoManagement';
 
@@ -28,6 +28,14 @@ export default function AdminDashboard() {
     description: '',
     isOutOfStock: false,
   });
+  const [editingOrder, setEditingOrder] = useState<CustomerOrder | null>(null);
+  const [orderFormData, setOrderFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    location: '',
+  });
+  const [isSavingOrder, setIsSavingOrder] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [additionalImageFiles, setAdditionalImageFiles] = useState<(File | null)[]>([]);
   const [isUploading, setIsUploading] = useState(false);
@@ -47,6 +55,35 @@ export default function AdminDashboard() {
       console.error("Failed to load orders:", error);
     } finally {
       setLoadingOrders(false);
+    }
+  };
+
+  const handleDeleteOrder = async (orderId: string) => {
+    if (!window.confirm("Are you sure you want to delete this order?")) return;
+    try {
+      await deleteOrder(orderId);
+      alert("Order deleted successfully!");
+      loadOrders();
+    } catch (error) {
+      console.error(error);
+      alert("Failed to delete order.");
+    }
+  };
+
+  const handleUpdateOrder = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingOrder || !editingOrder.id) return;
+    setIsSavingOrder(true);
+    try {
+      await updateOrder(editingOrder.id, orderFormData);
+      alert("Order contact details updated successfully!");
+      setEditingOrder(null);
+      loadOrders();
+    } catch (error) {
+      console.error(error);
+      alert("Failed to update order details.");
+    } finally {
+      setIsSavingOrder(false);
     }
   };
 
@@ -649,6 +686,29 @@ export default function AdminDashboard() {
                       >
                         Copy Contact
                       </button>
+                      <div className="flex gap-2 mt-2">
+                        <button
+                          onClick={() => {
+                            setEditingOrder(order);
+                            setOrderFormData({
+                              name: order.name,
+                              email: order.email,
+                              phone: order.phone,
+                              location: order.location,
+                            });
+                          }}
+                          className="flex-grow py-2 bg-white/5 border border-white/10 hover:bg-white/10 text-white text-[10px] font-bold uppercase tracking-widest rounded-xl transition-all flex items-center justify-center gap-1"
+                        >
+                          <Edit2 size={12} /> Edit
+                        </button>
+                        <button
+                          onClick={() => handleDeleteOrder(order.id!)}
+                          className="py-2 px-3 bg-red-900/20 border border-red-500/30 hover:bg-red-900/40 text-red-400 text-[10px] font-bold rounded-xl transition-all flex items-center justify-center"
+                          title="Delete Order"
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      </div>
                     </div>
 
                     {/* Order Details */}
@@ -695,6 +755,88 @@ export default function AdminDashboard() {
               ))}
             </div>
           )}
+
+          {/* Edit Order Modal */}
+          <AnimatePresence>
+            {editingOrder && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  onClick={() => setEditingOrder(null)}
+                  className="absolute inset-0 bg-black/85 backdrop-blur-sm"
+                />
+
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                  className="relative w-full max-w-md bg-zinc-900 border border-white/10 rounded-[2.5rem] p-8 shadow-2xl z-10"
+                >
+                  <button
+                    onClick={() => setEditingOrder(null)}
+                    className="absolute top-6 right-6 p-2 hover:bg-white/10 rounded-full transition-colors"
+                  >
+                    <X size={20} />
+                  </button>
+
+                  <h3 className="text-2xl font-bold mb-2">Edit Contact Details</h3>
+                  <p className="text-white/40 mb-6 text-sm">Update customer details for Order ID: {editingOrder.id}</p>
+
+                  <form onSubmit={handleUpdateOrder} className="space-y-4">
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold uppercase tracking-widest text-white/40 ml-1">Name</label>
+                      <input
+                        type="text"
+                        required
+                        value={orderFormData.name}
+                        onChange={(e) => setOrderFormData({ ...orderFormData, name: e.target.value })}
+                        className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl focus:border-primary focus:outline-none transition-colors"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold uppercase tracking-widest text-white/40 ml-1">Email</label>
+                      <input
+                        type="email"
+                        required
+                        value={orderFormData.email}
+                        onChange={(e) => setOrderFormData({ ...orderFormData, email: e.target.value })}
+                        className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl focus:border-primary focus:outline-none transition-colors"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold uppercase tracking-widest text-white/40 ml-1">Phone</label>
+                      <input
+                        type="text"
+                        required
+                        value={orderFormData.phone}
+                        onChange={(e) => setOrderFormData({ ...orderFormData, phone: e.target.value })}
+                        className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl focus:border-primary focus:outline-none transition-colors font-mono"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold uppercase tracking-widest text-white/40 ml-1">Location</label>
+                      <textarea
+                        required
+                        value={orderFormData.location}
+                        onChange={(e) => setOrderFormData({ ...orderFormData, location: e.target.value })}
+                        className="w-full px-5 py-3 bg-white/5 border border-white/10 rounded-2xl focus:border-primary focus:outline-none transition-colors min-h-[80px] resize-none"
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={isSavingOrder}
+                      className="w-full py-4 bg-primary text-white font-bold rounded-2xl hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-primary/20 disabled:opacity-50 mt-4"
+                    >
+                      {isSavingOrder ? 'Saving...' : 'Save Changes'}
+                    </button>
+                  </form>
+                </motion.div>
+              </div>
+            )}
+          </AnimatePresence>
         </div>
       ) : (
         <div className="max-w-7xl mx-auto px-6 py-8">

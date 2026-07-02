@@ -301,3 +301,23 @@ export const fetchOrders = async (): Promise<CustomerOrder[]> => {
     throw error;
   }
 };
+
+export const updateOrder = async (orderId: string, orderData: Partial<CustomerOrder>): Promise<void> => {
+  try {
+    const docRef = doc(db, "orders", orderId);
+    await updateDoc(docRef, orderData);
+  } catch (error) {
+    console.error("Error in updateOrder:", error);
+    throw error;
+  }
+};
+
+export const deleteOrder = async (orderId: string): Promise<void> => {
+  try {
+    const docRef = doc(db, "orders", orderId);
+    await deleteDoc(docRef);
+  } catch (error) {
+    console.error("Error in deleteOrder:", error);
+    throw error;
+  }
+};
