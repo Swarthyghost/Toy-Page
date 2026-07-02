@@ -99,6 +99,9 @@ ${promoDetails}
 
 Please confirm my order. Thank you!`;
 
+    // Pre-open the tab synchronously to bypass browser popup blockers
+    const whatsappWindow = window.open("", "_blank");
+
     try {
       // Save order details to Firestore
       await saveOrder({
@@ -130,7 +133,12 @@ Please confirm my order. Thank you!`;
     const encodedMessage = encodeURIComponent(message);
     const whatsappUrl = `https://wa.me/233266181581?text=${encodedMessage}`;
 
-    window.open(whatsappUrl, "_blank");
+    if (whatsappWindow) {
+      whatsappWindow.location.href = whatsappUrl;
+    } else {
+      // Fallback if window creation failed completely
+      window.location.href = whatsappUrl;
+    }
     clearCart();
     setIsSubmitting(false);
     setIsCheckoutOpen(false);
