@@ -214,12 +214,12 @@ Please confirm my order. Thank you!`;
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-24">
-      <h1 className="text-4xl font-display font-bold mb-12">Your Collection</h1>
+    <div className="max-w-7xl mx-auto px-4 md:px-6 pt-24 pb-12 md:py-24">
+      <h1 className="text-2xl md:text-4xl font-display font-bold mb-8 md:mb-12">Your Collection</h1>
 
-      <div className="grid lg:grid-cols-3 gap-12">
+      <div className="grid lg:grid-cols-3 gap-6 md:gap-12">
         {/* Cart Items */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-4 md:space-y-6">
           <AnimatePresence mode="popLayout">
             {cart.map((item) => (
               <motion.div
@@ -285,17 +285,17 @@ Please confirm my order. Thank you!`;
 
         {/* Summary */}
         <div className="lg:col-span-1">
-          <div className="sticky top-24 p-8 bg-white/5 border border-white/10 rounded-[2rem]">
-            <h2 className="text-2xl font-bold mb-6">Order Summary</h2>
+          <div className="sticky top-24 p-4 sm:p-8 bg-white/5 border border-white/10 rounded-2xl sm:rounded-[2rem]">
+            <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Order Summary</h2>
 
             <div className="space-y-4 mb-8">
-              <div className="flex justify-between text-white/60">
+              <div className="flex justify-between text-xs sm:text-sm text-white/60">
                 <span>Subtotal ({totalItems} items)</span>
                 <span>GHS {totalPrice.toFixed(2)}</span>
               </div>
               
               {appliedPromo ? (
-                <div className="flex justify-between text-emerald-500 animate-in fade-in slide-in-from-top-1">
+                <div className="flex justify-between text-xs sm:text-sm text-emerald-500 animate-in fade-in slide-in-from-top-1">
                   <div className="flex items-center gap-2">
                     <span>Discount ({appliedPromo.code})</span>
                     <button onClick={removePromo} className="p-1 hover:text-primary transition-colors">
@@ -312,12 +312,12 @@ Please confirm my order. Thank you!`;
                       placeholder="Promo Code"
                       value={promoInput}
                       onChange={(e) => setPromoInput(e.target.value.toUpperCase())}
-                      className="flex-grow px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-sm focus:border-primary focus:outline-none transition-colors"
+                      className="flex-grow px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-xs sm:text-sm focus:border-primary focus:outline-none transition-colors"
                     />
                     <button
                       onClick={handleApplyPromo}
                       disabled={isValidating || !promoInput}
-                      className="px-4 py-2 bg-white/10 hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold uppercase tracking-widest rounded-xl transition-all"
+                      className="px-3 py-2 bg-white/10 hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed text-white text-[10px] sm:text-xs font-bold uppercase tracking-widest rounded-xl transition-all"
                     >
                       {isValidating ? "..." : "Apply"}
                     </button>
@@ -330,13 +330,13 @@ Please confirm my order. Thank you!`;
                 </div>
               )}
 
-              <div className="flex justify-between text-white/60">
+              <div className="flex justify-between text-xs sm:text-sm text-white/60">
                 <span>Delivery</span>
                 <span className="text-emerald-500">Calculated at checkout</span>
               </div>
               <div className="pt-4 border-t border-white/10 flex justify-between items-end">
-                <span className="font-bold">Total</span>
-                <span className="text-3xl font-display font-bold text-primary">
+                <span className="text-xs sm:text-sm font-bold">Total</span>
+                <span className="text-2xl sm:text-3xl font-display font-bold text-primary">
                   GHS {finalPrice.toFixed(2)}
                 </span>
               </div>
@@ -344,13 +344,13 @@ Please confirm my order. Thank you!`;
 
             <button
               onClick={() => setIsCheckoutOpen(true)}
-              className="w-full py-4 bg-primary text-white font-bold rounded-2xl flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-95 transition-all shadow-lg shadow-primary/20"
+              className="w-full py-3 sm:py-4 bg-primary text-white text-sm sm:text-base font-bold rounded-xl sm:rounded-2xl flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-95 transition-all shadow-lg shadow-primary/20"
             >
               Proceed to Order
-              <ArrowRight size={20} />
+              <ArrowRight size={18} className="sm:w-5 sm:h-5" />
             </button>
 
-            <p className="mt-4 text-[10px] text-center text-white/30 uppercase tracking-widest">
+            <p className="mt-4 text-[9px] sm:text-[10px] text-center text-white/30 uppercase tracking-widest">
               Secure Checkout via WhatsApp
             </p>
           </div>
