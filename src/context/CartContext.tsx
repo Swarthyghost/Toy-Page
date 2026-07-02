@@ -34,16 +34,27 @@ interface CartContextType {
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider = ({ children }: { children: ReactNode }) => {
-  const [cart, setCart] = useState<CartItem[]>(() => {
-    const savedCart = localStorage.getItem('pleasuretoys_cart');
-    return savedCart ? JSON.parse(savedCart) : [];
-  });
-
+  const [cart, setCart] = useState<CartItem[]>([]);
+  const [isInitialized, setIsInitialized] = useState(false);
   const [appliedPromo, setAppliedPromo] = useState<any | null>(null);
 
   useEffect(() => {
-    localStorage.setItem('pleasuretoys_cart', JSON.stringify(cart));
-  }, [cart]);
+    const savedCart = localStorage.getItem('pleasuretoys_cart');
+    if (savedCart) {
+      try {
+        setCart(JSON.parse(savedCart));
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    setIsInitialized(true);
+  }, []);
+
+  useEffect(() => {
+    if (isInitialized) {
+      localStorage.setItem('pleasuretoys_cart', JSON.stringify(cart));
+    }
+  }, [cart, isInitialized]);
 
   const addToCart = (product: Product) => {
     setCart((prev) => {

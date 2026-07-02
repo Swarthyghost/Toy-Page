@@ -1,9 +1,11 @@
+"use client";
+
 import React from 'react';
 import { motion } from 'motion/react';
 import { ShoppingCart, Eye } from 'lucide-react';
 import { Product, useCart } from '../context/CartContext';
 import { useSiteSettings } from '../context/SiteSettingsContext';
-import { Link } from 'react-router-dom';
+import Link from 'next/link';
 import { flyToCart } from '../utils/animations';
 
 interface ProductCardProps {
@@ -36,7 +38,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         {!product.isOutOfStock && (
           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
             <Link
-              to={`/product/${product.id}`}
+              href={`/product/${product.id}`}
               className="p-3 bg-white text-black rounded-full hover:bg-primary hover:text-white transition-colors"
             >
               <Eye size={20} />
@@ -67,7 +69,7 @@ export default function ProductCard({ product }: ProductCardProps) {
 
       {/* Content */}
       <div className="p-6">
-        <Link to={`/product/${product.id}`}>
+        <Link href={`/product/${product.id}`}>
           <h3 className="text-lg font-bold mb-1 truncate group-hover:text-primary transition-colors">
             {product.name}
           </h3>

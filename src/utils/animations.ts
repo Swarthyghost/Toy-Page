@@ -75,7 +75,7 @@ export const flyToCart = (event: React.MouseEvent<Element>) => {
     cartIcon.classList.add('animate-cart-bounce');
     
     // Also pulse the badge if we can find it
-    const badge = cartIcon.querySelector('.cart-badge');
+    const badge = cartIcon.querySelector('.cart-badge') as HTMLElement | null;
     if (badge) {
        badge.classList.remove('animate-pulse-fast');
        void badge.offsetWidth;

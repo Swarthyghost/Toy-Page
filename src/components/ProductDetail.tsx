@@ -1,5 +1,8 @@
+"use client";
+
 import React, { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import Link from "next/link";
+import { useParams } from "next/navigation";
 import { motion } from "motion/react";
 import {
   ShoppingCart,
@@ -15,7 +18,8 @@ import { useSEO } from "../hooks/useSEO";
 import { flyToCart } from "../utils/animations";
 
 export default function ProductDetail() {
-  const { id } = useParams<{ id: string }>();
+  const params = useParams();
+  const id = params?.id as string | undefined;
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeImage, setActiveImage] = useState<string>("");
@@ -66,7 +70,7 @@ export default function ProductDetail() {
   return (
     <div className="max-w-7xl mx-auto px-6 py-24">
       <Link
-        to="/"
+        href="/"
         className="inline-flex items-center gap-2 text-white/40 hover:text-primary mb-12 transition-colors"
       >
         <ArrowLeft size={20} />

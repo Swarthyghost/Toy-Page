@@ -1,8 +1,10 @@
+"use client";
+
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Plus, Edit2, Trash2, X, Image as ImageIcon, DollarSign, Tag, FileText, Upload, LogOut, Gift, Settings } from 'lucide-react';
 import { useAdminAuth } from '../context/AdminAuthContext';
-import { fetchProducts, createProduct, updateProduct, deleteProduct, Product, SiteSettings, fetchSiteSettings, updateSiteSettings } from '../services/firebaseApi';
+import { fetchProducts, createProduct, updateProduct, deleteProduct, Product, SiteSettings, fetchSiteSettings, updateSiteSettings, fetchOrders, CustomerOrder } from '../services/firebaseApi';
 import { uploadImage } from '../config/cloudinary';
 import PromoManagement from './PromoManagement';
 
@@ -11,9 +13,11 @@ export default function AdminDashboard() {
   const [products, setProducts] = useState<Product[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  const [activeTab, setActiveTab] = useState<'products' | 'promos' | 'settings'>('products');
+  const [activeTab, setActiveTab] = useState<'products' | 'promos' | 'settings' | 'orders'>('products');
   const [siteSettings, setSiteSettings] = useState<SiteSettings | null>(null);
   const [isSavingSettings, setIsSavingSettings] = useState(false);
+  const [orders, setOrders] = useState<CustomerOrder[]>([]);
+  const [loadingOrders, setLoadingOrders] = useState(true);
   const [formData, setFormData] = useState({
     name: '',
     price: '',
@@ -31,7 +35,20 @@ export default function AdminDashboard() {
   useEffect(() => {
     loadProducts();
     loadSettings();
+    loadOrders();
   }, []);
+
+  const loadOrders = async () => {
+    setLoadingOrders(true);
+    try {
+      const data = await fetchOrders();
+      setOrders(data);
+    } catch (error) {
+      console.error("Failed to load orders:", error);
+    } finally {
+      setLoadingOrders(false);
+    }
+  };
 
   const loadSettings = async () => {
     const data = await fetchSiteSettings();
@@ -235,6 +252,20 @@ export default function AdminDashboard() {
             >
               <Gift size={18} />
               Promo Codes
+            </button>
+            <button
+              onClick={() => {
+                setActiveTab('orders');
+                loadOrders();
+              }}
+              className={`py-4 border-b-2 transition-colors flex items-center gap-2 ${
+                activeTab === 'orders'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-white/60 hover:text-white'
+              }`}
+            >
+              <FileText size={18} />
+              Customer Orders
             </button>
             <button
               onClick={() => setActiveTab('settings')}
@@ -561,6 +592,110 @@ export default function AdminDashboard() {
         </div>
       ) : activeTab === 'promos' ? (
         <PromoManagement />
+      ) : activeTab === 'orders' ? (
+        <div className="max-w-7xl mx-auto px-6 py-8">
+          <div className="flex justify-between items-end mb-8">
+            <div>
+              <h2 className="text-2xl font-bold mb-2">Customer & Order Management</h2>
+              <p className="text-white/40">View and copy customer contact details and order histories.</p>
+            </div>
+            <button
+              onClick={loadOrders}
+              className="px-6 py-3 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 text-white font-bold transition-all"
+            >
+              Refresh Orders
+            </button>
+          </div>
+
+          {loadingOrders ? (
+            <div className="py-24 text-center text-white/40">Loading orders...</div>
+          ) : orders.length === 0 ? (
+            <div className="py-24 text-center text-white/40 bg-zinc-900 border border-white/10 rounded-[2.5rem]">
+              No orders found. Once customers checkout or pay, their details will appear here.
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {orders.map((order) => (
+                <div
+                  key={order.id}
+                  className="bg-zinc-900 border border-white/10 rounded-[2.5rem] p-8 hover:border-primary/50 transition-colors"
+                >
+                  <div className="grid md:grid-cols-4 gap-8">
+                    {/* Customer Info */}
+                    <div className="space-y-4 md:border-r border-white/10 pr-4">
+                      <div>
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">Name</span>
+                        <p className="text-lg font-bold">{order.name}</p>
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">Email</span>
+                        <p className="text-sm text-white/80 select-all">{order.email}</p>
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">Phone</span>
+                        <p className="text-sm text-white/80 select-all font-mono">{order.phone}</p>
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">Location</span>
+                        <p className="text-sm text-white/80">{order.location}</p>
+                      </div>
+                      <button
+                        onClick={() => {
+                          const contactInfo = `Name: ${order.name}\nPhone: ${order.phone}\nEmail: ${order.email}\nLocation: ${order.location}`;
+                          navigator.clipboard.writeText(contactInfo);
+                          alert("Contact info copied to clipboard!");
+                        }}
+                        className="w-full mt-2 py-2 bg-primary/20 border border-primary/30 text-primary text-xs font-bold uppercase tracking-widest rounded-xl hover:bg-primary/30 transition-all"
+                      >
+                        Copy Contact
+                      </button>
+                    </div>
+
+                    {/* Order Details */}
+                    <div className="md:col-span-2 space-y-4">
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">Items Ordered</span>
+                      <div className="space-y-2 max-h-[160px] overflow-y-auto pr-2">
+                        {order.items?.map((item, idx) => (
+                          <div key={idx} className="flex justify-between text-sm py-1 border-b border-white/5">
+                            <span className="text-white/80">
+                              {item.name} <span className="text-primary font-bold">x{item.quantity}</span>
+                            </span>
+                            <span className="font-mono">GHS {(item.price * item.quantity).toFixed(2)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Metadata */}
+                    <div className="flex flex-col justify-between items-end text-right md:border-l border-white/10 pl-4">
+                      <div>
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-white/40 block">Order ID</span>
+                        <span className="font-mono text-xs text-white/40 select-all">{order.id}</span>
+                      </div>
+                      <div className="my-2">
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-white/40 block">Payment Method</span>
+                        <span className={`inline-block px-3 py-1 rounded-full text-[10px] font-bold mt-1 uppercase tracking-wider ${
+                          order.paymentMethod === 'Paystack' 
+                            ? 'bg-indigo-600/20 text-indigo-400 border border-indigo-500/30' 
+                            : 'bg-emerald-600/20 text-emerald-400 border border-emerald-500/30'
+                        }`}>
+                          {order.paymentMethod}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-white/40 block">Total Price</span>
+                        <span className="text-2xl font-display font-bold text-primary">GHS {order.totalPrice.toFixed(2)}</span>
+                      </div>
+                      <div className="mt-2 text-xs text-white/30 uppercase tracking-wider">
+                        {order.createdAt ? order.createdAt.toDate().toLocaleString() : "Date N/A"}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       ) : (
         <div className="max-w-7xl mx-auto px-6 py-8">
           <div className="mb-8">

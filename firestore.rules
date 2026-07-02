@@ -46,6 +46,12 @@ service cloud.firestore {
       allow create, update, delete: if isAdmin();
     }
     
+    // Orders collection - public create, admin read/write
+    match /orders/{orderId} {
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
+    }
+    
     // Deny all other access
     match /{document=**} {
       allow read, write: if false;

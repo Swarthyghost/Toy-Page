@@ -41,7 +41,8 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
       if (user) {
         // Check if user is admin
-        if (ADMIN_CREDENTIALS[user.email || '']) {
+        const emailToCheck = (user.email || '').trim().toLowerCase();
+        if (ADMIN_CREDENTIALS[emailToCheck]) {
           const adminData: AdminUser = {
             uid: user.uid,
             email: user.email!,
@@ -80,13 +81,16 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   }, []);
 
   const signInWithEmail = async (email: string, pin: string) => {
-    console.log('signInWithEmail called with:', { email, pin });
+    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedPin = pin.trim();
+
+    console.log('signInWithEmail called with:', { normalizedEmail, normalizedPin });
     console.log('Checking ADMIN_CREDENTIALS:', ADMIN_CREDENTIALS);
-    console.log('Email exists in credentials:', email in ADMIN_CREDENTIALS);
-    console.log('PIN matches:', ADMIN_CREDENTIALS[email] === pin);
+    console.log('Email exists in credentials:', normalizedEmail in ADMIN_CREDENTIALS);
+    console.log('PIN matches:', ADMIN_CREDENTIALS[normalizedEmail] === normalizedPin);
     
     // Check credentials first
-    if (!ADMIN_CREDENTIALS[email] || ADMIN_CREDENTIALS[email] !== pin) {
+    if (!ADMIN_CREDENTIALS[normalizedEmail] || ADMIN_CREDENTIALS[normalizedEmail] !== normalizedPin) {
       console.log('Credential check failed');
       throw new Error('Invalid credentials');
     }

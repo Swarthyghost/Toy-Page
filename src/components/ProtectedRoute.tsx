@@ -1,5 +1,7 @@
-import React from 'react';
-import { Navigate } from 'react-router-dom';
+"use client";
+
+import React, { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAdminAuth } from '../context/AdminAuthContext';
 
 interface ProtectedRouteProps {
@@ -8,6 +10,13 @@ interface ProtectedRouteProps {
 
 export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { adminUser, loading } = useAdminAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && !adminUser) {
+      router.replace('/admin-login');
+    }
+  }, [adminUser, loading, router]);
 
   if (loading) {
     return (
@@ -18,7 +27,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   }
 
   if (!adminUser) {
-    return <Navigate to="/admin-login" replace />;
+    return null;
   }
 
   return <>{children}</>;

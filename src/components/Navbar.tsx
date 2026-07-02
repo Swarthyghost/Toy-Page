@@ -1,5 +1,8 @@
+"use client";
+
 import { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { ShoppingCart, Menu, X } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { motion, AnimatePresence } from 'motion/react';
@@ -24,7 +27,7 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const { siteSettings } = useSiteSettings();
   const { totalItems } = useCart();
-  const location = useLocation();
+  const pathname = usePathname();
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -35,7 +38,7 @@ export default function Navbar() {
   // Close menu on route change
   useEffect(() => {
     setIsOpen(false);
-  }, [location]);
+  }, [pathname]);
 
   const hasBanner = siteSettings?.isSalesNotificationActive;
 
@@ -49,7 +52,7 @@ export default function Navbar() {
     >
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-2 group">
+        <Link href="/" className="flex items-center gap-2 group">
           <div className="w-10 h-10 rounded-xl overflow-hidden border border-white/10 group-hover:rotate-12 transition-transform">
             <img src="/toy.jpg" alt="Logo" className="w-full h-full object-cover" />
           </div>
@@ -63,10 +66,10 @@ export default function Navbar() {
           {categories.map((cat) => (
             <Link
               key={cat.name}
-              to={cat.path}
+              href={cat.path}
               className={cn(
                 "text-sm font-medium transition-colors hover:text-primary",
-                location.pathname === cat.path ? "text-primary" : "text-white/70"
+                pathname === cat.path ? "text-primary" : "text-white/70"
               )}
             >
               {cat.name}
@@ -76,7 +79,7 @@ export default function Navbar() {
 
         {/* Actions */}
         <div className="flex items-center gap-4">
-          <Link to="/cart" id="navbar-cart-icon" className="relative p-2 hover:bg-white/10 rounded-full transition-colors origin-center">
+          <Link href="/cart" id="navbar-cart-icon" className="relative p-2 hover:bg-white/10 rounded-full transition-colors origin-center">
             <ShoppingCart size={22} />
             {totalItems > 0 && (
               <motion.span
@@ -110,7 +113,7 @@ export default function Navbar() {
               {categories.map((cat) => (
                 <Link
                   key={cat.name}
-                  to={cat.path}
+                  href={cat.path}
                   className="text-lg font-medium hover:text-primary transition-colors"
                 >
                   {cat.name}
@@ -118,7 +121,7 @@ export default function Navbar() {
               ))}
 
               <Link
-                to="/cart"
+                href="/cart"
                 className="flex items-center justify-between p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-colors"
               >
                 <span className="font-medium">View Cart</span>

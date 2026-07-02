@@ -1,5 +1,7 @@
+"use client";
+
 import React from "react";
-import { Link } from "react-router-dom";
+import Link from "next/link";
 import { motion } from "motion/react";
 import { ArrowRight, MapPin, Sparkles, Shield, Package, Truck } from "lucide-react";
 import { useSEO } from "../hooks/useSEO";
@@ -53,7 +55,7 @@ export default function LocationPage({ city }: { city: string }) {
 
           <div className="flex flex-wrap justify-center gap-4">
             <Link
-              to="/"
+              href="/"
               className="group flex items-center gap-3 px-8 py-4 bg-primary text-white font-bold rounded-2xl hover:bg-primary/90 transition-all hover:scale-105 active:scale-95 shadow-xl shadow-primary/20"
             >
               Shop All Products

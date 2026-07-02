@@ -1,11 +1,13 @@
+"use client";
+
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { ShoppingCart, Trash2, Plus, Minus, ArrowRight, X, CreditCard } from "lucide-react";
 import { useCart } from "../context/CartContext";
 import { usePaystackPayment } from "react-paystack";
-import { Link } from "react-router-dom";
+import Link from "next/link";
 import { useSEO } from "../hooks/useSEO";
-import { validatePromoCode, usePromoCode } from "../services/firebaseApi";
+import { validatePromoCode, usePromoCode, saveOrder } from "../services/firebaseApi";
 
 export default function Cart() {
   const { 
@@ -18,12 +20,14 @@ export default function Cart() {
     finalPrice,
     appliedPromo,
     applyPromo,
-    removePromo
+    removePromo,
+    clearCart
   } = useCart();
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [promoInput, setPromoInput] = useState("");
   const [promoError, setPromoError] = useState("");
   const [isValidating, setIsValidating] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // SEO optimization for cart page
   useSEO({
@@ -65,6 +69,7 @@ export default function Cart() {
 
   const handleWhatsAppOrder = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
 
     const orderList = cart
       .map(
@@ -94,6 +99,27 @@ ${promoDetails}
 
 Please confirm my order. Thank you!`;
 
+    try {
+      // Save order details to Firestore
+      await saveOrder({
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        location: formData.location,
+        items: cart.map(item => ({
+          id: item.id,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity
+        })),
+        totalPrice: finalPrice,
+        paymentMethod: "WhatsApp"
+      });
+    } catch (error) {
+      console.error("Error saving WhatsApp order to Firestore:", error);
+      alert("Note: There was a system error saving your contact details, but we are opening WhatsApp to place your order now.");
+    }
+
     // Increment promo usage if applicable (Fire and forget to avoid blocking UI)
     if (appliedPromo) {
       usePromoCode(appliedPromo.id).catch((error) => {
@@ -105,21 +131,45 @@ Please confirm my order. Thank you!`;
     const whatsappUrl = `https://wa.me/233266181581?text=${encodedMessage}`;
 
     window.open(whatsappUrl, "_blank");
+    clearCart();
+    setIsSubmitting(false);
+    setIsCheckoutOpen(false);
   };
 
   const paystackConfig = {
     reference: new Date().getTime().toString(),
     email: formData.email || "customer@toy-page.com",
     amount: Math.round(finalPrice * 100), // amount in pesewas
-    publicKey: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY || "pk_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    publicKey: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || "pk_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
   };
 
   const initializePayment = usePaystackPayment(paystackConfig);
 
   const handlePaystackSuccessAction = (reference: any) => {
     console.log("Payment successful", reference);
-    alert("Payment successful! Your order has been placed.");
-    setIsCheckoutOpen(false);
+    saveOrder({
+      name: formData.name,
+      email: formData.email,
+      phone: formData.phone,
+      location: formData.location,
+      items: cart.map(item => ({
+        id: item.id,
+        name: item.name,
+        price: item.price,
+        quantity: item.quantity
+      })),
+      totalPrice: finalPrice,
+      paymentMethod: "Paystack"
+    }).then(() => {
+      alert("Payment successful! Your order has been placed.");
+      setIsCheckoutOpen(false);
+      clearCart();
+    }).catch(error => {
+      console.error("Error saving Paystack order to Firestore:", error);
+      alert("Payment successful! Your order has been placed.");
+      setIsCheckoutOpen(false);
+      clearCart();
+    });
   };
 
   const handlePaystackCloseAction = () => {
@@ -145,7 +195,7 @@ Please confirm my order. Thank you!`;
           Looks like you haven't added anything to your pleasure collection yet.
         </p>
         <Link
-          to="/"
+          href="/"
           className="px-8 py-4 bg-primary text-white font-bold rounded-2xl hover:scale-105 transition-transform"
         >
           Start Shopping
@@ -395,9 +445,10 @@ Please confirm my order. Thank you!`;
                 <div className="flex flex-col gap-4 pt-2">
                   <button
                     type="submit"
-                    className="w-full py-3 sm:py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-2xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-600/20"
+                    disabled={isSubmitting}
+                    className="w-full py-3 sm:py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-2xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-600/20 disabled:opacity-50"
                   >
-                    Order via WhatsApp
+                    {isSubmitting ? "Processing..." : "Order via WhatsApp"}
                     <ArrowRight size={20} />
                   </button>
                   

@@ -1,5 +1,7 @@
+"use client";
+
 import React, { useState, useMemo, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useRouter } from "next/navigation";
 import { fetchProducts } from "../services/firebaseApi";
 import ProductCard from "./ProductCard";
 import { motion, AnimatePresence } from "motion/react";
@@ -8,8 +10,9 @@ import { Product } from "../context/CartContext";
 import { useSEO } from "../hooks/useSEO";
 
 export default function ProductListing() {
-  const { categoryName } = useParams();
-  const navigate = useNavigate();
+  const params = useParams();
+  const categoryName = params?.categoryName as string | undefined;
+  const router = useRouter();
   const [products, setProducts] = useState<Product[]>([]);
   const [activeCategory, setActiveCategory] = useState(categoryName || "All");
 
@@ -64,9 +67,9 @@ export default function ProductListing() {
   const handleCategoryChange = (cat: string) => {
     setActiveCategory(cat);
     if (cat === "All") {
-      navigate("/");
+      router.push("/");
     } else {
-      navigate(`/category/${cat}`);
+      router.push(`/category/${cat}`);
     }
   };
 
@@ -146,7 +149,7 @@ export default function ProductListing() {
               View All Products
             </button>
             <button
-              onClick={() => navigate("/contact")}
+              onClick={() => router.push("/contact")}
               className="px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold rounded-2xl transition-colors"
             >
               Request Special Order

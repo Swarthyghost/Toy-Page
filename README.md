@@ -4,8 +4,7 @@ A premium, modern e-commerce platform for PleasureToys GH featuring a dark aesth
 
 ## Features
 
-- **Full-Stack Architecture**: Express.js backend with Vite frontend integration.
-- **Database**: SQLite (better-sqlite3) for persistent product management.
+- **Next.js 15 App Router**: Server-side rendering, dynamic routes, and fast client navigation.
 - **Admin Dashboard**: Full CRUD capabilities for products.
 - **WhatsApp Ordering**: Automated message generation for orders.
 - **Responsive Design**: Mobile-first UI using Tailwind CSS 4.
@@ -21,15 +20,14 @@ A premium, modern e-commerce platform for PleasureToys GH featuring a dark aesth
 ### Installation
 
 1. Open the project folder in VS Code.
-2. Open the terminal (`Ctrl + ` ` or `Cmd + ` `).
-3. Install dependencies:
+2. Install dependencies:
    ```bash
-   npm install
+   npm install --legacy-peer-deps
    ```
 
 ### Running the Application
 
-To start the development server (both backend and frontend):
+To start the development server:
 
 ```bash
 npm run dev
@@ -39,13 +37,11 @@ The application will be available at `http://localhost:3000`.
 
 ### Project Structure
 
-- `server.ts`: Express server and API endpoints.
-- `src/`: React frontend source code.
-  - `components/`: Reusable UI components.
-  - `context/`: State management (Cart).
-  - `services/`: API communication layer.
-  - `data/`: Initial seed data.
-- `pleasuretoys.db`: SQLite database file (generated on first run).
+- `src/app/`: Next.js page components, layout, and API route handlers.
+- `src/components/`: Reusable UI components.
+- `src/context/`: State management (Cart, Admin Auth, Site Settings).
+- `src/services/`: Firebase API communication layer.
+- `src/utils/`: Shared utilities and animations.
 
 ## Admin Access
 
@@ -53,7 +49,7 @@ You can access the Admin Portal by clicking the "Admin Portal" link in the foote
 
 ## Deployment
 
-To build the application for production:
+To build and start the application for production:
 
 ```bash
 npm run build

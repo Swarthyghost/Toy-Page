@@ -255,3 +255,49 @@ export const updateSiteSettings = async (settingsData: SiteSettings): Promise<vo
     await setDoc(docRef, settingsData);
   }
 };
+
+// Customer Orders API
+export interface CustomerOrder {
+  id?: string;
+  name: string;
+  email: string;
+  phone: string;
+  location: string;
+  items: {
+    id: string;
+    name: string;
+    price: number;
+    quantity: number;
+  }[];
+  totalPrice: number;
+  paymentMethod: "WhatsApp" | "Paystack";
+  createdAt?: Timestamp;
+}
+
+export const saveOrder = async (orderData: Omit<CustomerOrder, "createdAt">): Promise<string> => {
+  try {
+    const order = {
+      ...orderData,
+      createdAt: Timestamp.now(),
+    };
+    const docRef = await addDoc(collection(db, "orders"), order);
+    return docRef.id;
+  } catch (error) {
+    console.error("Error in saveOrder:", error);
+    throw error;
+  }
+};
+
+export const fetchOrders = async (): Promise<CustomerOrder[]> => {
+  try {
+    const q = query(collection(db, "orders"), orderBy("createdAt", "desc"));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    } as CustomerOrder));
+  } catch (error) {
+    console.error("Error in fetchOrders:", error);
+    throw error;
+  }
+};

@@ -1,6 +1,8 @@
+"use client";
+
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/navigation';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { Lock, Mail, AlertCircle, Eye, EyeOff } from 'lucide-react';
 
@@ -11,13 +13,13 @@ export default function AdminLogin() {
   const [isLoading, setIsLoading] = useState(false);
   const [showPin, setShowPin] = useState(false);
   const { signInWithEmail, adminUser } = useAdminAuth();
-  const navigate = useNavigate();
+  const router = useRouter();
 
   useEffect(() => {
     if (adminUser) {
-      navigate('/admin', { replace: true });
+      router.replace('/admin');
     }
-  }, [adminUser, navigate]);
+  }, [adminUser, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,7 +34,7 @@ export default function AdminLogin() {
 
     try {
       await signInWithEmail(email, pin);
-      navigate('/admin', { replace: true });
+      router.replace('/admin');
     } catch (error) {
       console.error('Login error:', error);
       setError('Invalid email or PIN. Please try again.');

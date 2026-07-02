@@ -1,6 +1,8 @@
+"use client";
+
 import { motion, useScroll, useTransform } from "motion/react";
 import { ArrowRight, Sparkles, Shield, Package, Truck } from "lucide-react";
-import { Link } from "react-router-dom";
+import Link from "next/link";
 import { useRef } from "react";
 import { useSEO } from "../hooks/useSEO";
 
@@ -147,7 +149,7 @@ export default function Hero() {
                 className="flex flex-wrap gap-4 mb-14"
               >
                 <Link
-                  to="/category/Vibrators"
+                  href="/category/Vibrators"
                   className="group flex items-center gap-3 px-8 py-4 bg-primary text-white font-bold rounded-2xl hover:bg-primary/90 transition-all hover:scale-105 active:scale-95 shadow-xl shadow-primary/20"
                 >
                   Shop Collection
@@ -157,7 +159,7 @@ export default function Hero() {
                   />
                 </Link>
                 <Link
-                  to="/category/BDSM"
+                  href="/category/BDSM"
                   className="flex items-center gap-3 px-8 py-4 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 text-white font-bold rounded-2xl transition-all"
                 >
                   Explore BDSM
@@ -237,7 +239,7 @@ export default function Hero() {
                       GHS 450
                     </span>
                     <Link
-                      to="/product/pcNPkD2LuoQ8hdODSntW"
+                      href="/product/pcNPkD2LuoQ8hdODSntW"
                       className="group flex items-center gap-2 px-5 py-3 bg-white text-black text-sm font-bold rounded-xl hover:bg-primary hover:text-white transition-all"
                     >
                       View
@@ -351,7 +353,7 @@ export default function Hero() {
               transition={{ duration: 0.5, delay: i * 0.08 }}
             >
               <Link
-                to={cat.path}
+                href={cat.path}
                 className={`group block relative overflow-hidden bg-gradient-to-br ${cat.accent} to-white/[0.03] border border-white/10 rounded-3xl p-6 hover:border-white/20 hover:bg-white/5 transition-all duration-300`}
               >
                 <div className="text-4xl mb-4">{cat.emoji}</div>
