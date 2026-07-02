@@ -56,8 +56,49 @@ export default function ProductDetail() {
 
   if (loading)
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        Loading...
+      <div className="max-w-7xl mx-auto px-6 py-24 animate-pulse">
+        {/* Back Link Placeholder */}
+        <div className="h-6 bg-white/5 rounded-lg w-32 mb-12" />
+
+        <div className="grid lg:grid-cols-2 gap-16">
+          {/* Left Column: Images */}
+          <div className="space-y-6">
+            <div className="rounded-[2.5rem] bg-white/10 aspect-square w-full" />
+            <div className="grid grid-cols-5 gap-4">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="aspect-square rounded-xl bg-white/5" />
+              ))}
+            </div>
+          </div>
+
+          {/* Right Column: Info */}
+          <div className="flex flex-col justify-center">
+            {/* Category */}
+            <div className="h-4 bg-white/5 rounded-md w-24 mb-4" />
+            {/* Title */}
+            <div className="h-12 bg-white/10 rounded-2xl w-3/4 mb-6" />
+            {/* Description Lines */}
+            <div className="space-y-3 mb-8">
+              <div className="h-4 bg-white/5 rounded-lg w-full" />
+              <div className="h-4 bg-white/5 rounded-lg w-full" />
+              <div className="h-4 bg-white/5 rounded-lg w-2/3" />
+            </div>
+            {/* Price */}
+            <div className="h-8 bg-white/10 rounded-xl w-32 mb-8" />
+            {/* Button */}
+            <div className="h-14 bg-white/10 rounded-2xl w-full sm:w-48 mb-12" />
+
+            {/* Info Grid */}
+            <div className="grid grid-cols-3 gap-6 pt-8 border-t border-white/10">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="flex flex-col items-center text-center space-y-2">
+                  <div className="w-10 h-10 rounded-full bg-white/5" />
+                  <div className="h-4 bg-white/5 rounded w-16" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
     );
   if (!product)

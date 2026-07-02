@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { SiteSettingsProvider, useSiteSettings } from "../context/SiteSettingsContext";
 import { AdminAuthProvider } from "../context/AdminAuthContext";
 import { CartProvider } from "../context/CartContext";
+import { ProductProvider } from "../context/ProductContext";
 import Navbar from "../components/Navbar";
 import TrustBand from "../components/TrustBand";
 import Footer from "../components/Footer";
@@ -51,9 +52,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <SiteSettingsProvider>
       <AdminAuthProvider>
-        <CartProvider>
-          <ClientLayout>{children}</ClientLayout>
-        </CartProvider>
+        <ProductProvider>
+          <CartProvider>
+            <ClientLayout>{children}</ClientLayout>
+          </CartProvider>
+        </ProductProvider>
       </AdminAuthProvider>
     </SiteSettingsProvider>
   );

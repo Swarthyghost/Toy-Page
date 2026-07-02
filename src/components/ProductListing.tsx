@@ -2,23 +2,40 @@
 
 import React, { useState, useMemo, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { fetchProducts } from "../services/firebaseApi";
+import { useProducts } from "../context/ProductContext";
 import ProductCard from "./ProductCard";
 import { motion, AnimatePresence } from "motion/react";
 import { SlidersHorizontal } from "lucide-react";
 import { Product } from "../context/CartContext";
 import { useSEO } from "../hooks/useSEO";
 
+const ProductCardSkeleton = () => {
+  return (
+    <div className="bg-white/5 border border-white/10 rounded-3xl overflow-hidden animate-pulse">
+      {/* Aspect-square image area */}
+      <div className="relative aspect-square bg-white/10" />
+      {/* Content area */}
+      <div className="p-6 space-y-4">
+        <div>
+          <div className="h-5 bg-white/10 rounded-lg w-3/4 mb-2" />
+          <div className="h-4 bg-white/5 rounded-lg w-full" />
+        </div>
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 md:gap-0 pt-2">
+          <div className="h-5 bg-white/10 rounded-lg w-1/3" />
+          <div className="h-9 bg-white/10 rounded-xl w-full md:w-24" />
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export default function ProductListing() {
   const params = useParams();
-  const categoryName = params?.categoryName as string | undefined;
+  const rawCategoryName = params?.categoryName as string | undefined;
+  const categoryName = rawCategoryName ? decodeURIComponent(rawCategoryName) : undefined;
   const router = useRouter();
-  const [products, setProducts] = useState<Product[]>([]);
+  const { products, loading } = useProducts();
   const [activeCategory, setActiveCategory] = useState(categoryName || "All");
-
-  useEffect(() => {
-    fetchProducts().then(setProducts);
-  }, []);
 
   useEffect(() => {
     if (categoryName) {
@@ -85,25 +102,25 @@ export default function ProductListing() {
   }, [activeCategory, products]);
 
   return (
-    <div id="collection" className="max-w-7xl mx-auto px-6 py-24">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-12">
+    <div id="collection" className="max-w-7xl mx-auto px-4 md:px-6 pt-28 pb-12 md:py-24">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-12 max-w-full overflow-hidden">
         <div>
-          <h1 className="text-5xl font-display font-bold mb-4">
+          <h1 className="text-3xl md:text-5xl font-display font-bold mb-4">
             {activeCategory === "All" ? "Our Collection" : activeCategory}
           </h1>
-          <p className="text-white/40 max-w-md">
+          <p className="text-white/40 max-w-md text-sm md:text-base">
             Browse our premium selection of {activeCategory.toLowerCase()} and
             find your next favorite pleasure tool.
           </p>
         </div>
 
-        <div className="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar">
+        <div className="w-full max-w-full flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar">
           <div className="flex items-center gap-2 p-1 bg-white/5 rounded-2xl border border-white/10">
             {categories.map((cat) => (
               <button
                 key={cat}
                 onClick={() => handleCategoryChange(cat)}
-                className={`px-6 py-2 rounded-xl text-sm font-bold transition-all ${
+                className={`px-4 py-1.5 md:px-6 md:py-2 rounded-xl text-xs md:text-sm font-bold transition-all ${
                   activeCategory === cat
                     ? "bg-primary text-white shadow-lg shadow-primary/20"
                     : "text-white/40 hover:text-white hover:bg-white/5"
@@ -113,24 +130,30 @@ export default function ProductListing() {
               </button>
             ))}
           </div>
-          <button className="p-3 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 transition-colors">
-            <SlidersHorizontal size={20} />
+          <button className="p-2.5 md:p-3 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 transition-colors">
+            <SlidersHorizontal size={18} />
           </button>
         </div>
       </div>
 
       <motion.div
         layout
-        className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8"
+        className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8"
       >
         <AnimatePresence mode="popLayout">
-          {filteredProducts.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
+          {loading ? (
+            Array.from({ length: 8 }).map((_, i) => (
+              <ProductCardSkeleton key={`skeleton-${i}`} />
+            ))
+          ) : (
+            filteredProducts.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))
+          )}
         </AnimatePresence>
       </motion.div>
 
-      {filteredProducts.length === 0 && (
+      {!loading && filteredProducts.length === 0 && (
         <div className="py-32 text-center">
           <p className="text-white/20 text-xl mb-4">
             {activeCategory === "All"
