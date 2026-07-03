@@ -574,8 +574,19 @@ Please confirm receipt of payment and process my order. Thank you!`;
                           }`}
                         >
                           <div className="flex items-center justify-between">
-                            <span className="p-1.5 bg-indigo-500/20 text-indigo-400 rounded-lg">
-                              <CreditCard className="w-4 h-4" />
+                            <span className="p-1 bg-white rounded-lg flex items-center justify-center gap-0.5 shadow-inner">
+                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 86 54" className="h-3 w-auto" aria-label="Visa">
+                                <rect width="86" height="54" rx="4" fill="white" stroke="#1A1F71" strokeWidth="2"/>
+                                <rect x="0" y="8" width="86" height="12" fill="#1A1F71"/>
+                                <rect x="0" y="42" width="86" height="10" fill="#F7A800"/>
+                                <text x="43" y="37" textAnchor="middle" fill="#1A1F71" fontFamily="Arial Black, Arial" fontWeight="900" fontSize="18" letterSpacing="1">VISA</text>
+                              </svg>
+                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 90 54" className="h-3 w-auto" aria-label="Mastercard">
+                                <circle cx="32" cy="27" r="22" fill="#CC0000"/>
+                                <circle cx="58" cy="27" r="22" fill="#FF9900"/>
+                                <path d="M45 10.2a22 22 0 010 33.6A22 22 0 0145 10.2z" fill="#FF6600"/>
+                                <text x="45" y="30" textAnchor="middle" fill="white" fontFamily="Arial, sans-serif" fontWeight="bold" fontSize="10" letterSpacing="0.3">MasterCard</text>
+                              </svg>
                             </span>
                             {paymentMethod === "Paystack" && <Check className="w-4 h-4 text-indigo-400" />}
                           </div>

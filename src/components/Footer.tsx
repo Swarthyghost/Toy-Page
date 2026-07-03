@@ -1,4 +1,4 @@
-import { Instagram, Send, Phone } from 'lucide-react';
+import { Instagram, Send, Phone, CreditCard, Landmark } from 'lucide-react';
 import Link from 'next/link';
 
 export default function Footer() {
@@ -60,13 +60,12 @@ export default function Footer() {
             <li><Link href="/shipping" className="hover:text-primary transition-colors">Shipping & Returns</Link></li>
             <li><Link href="/privacy" className="hover:text-primary transition-colors">Privacy Policy</Link></li>
             <li><Link href="/contact" className="hover:text-primary transition-colors">Contact Us</Link></li>
-            <li><Link href="/admin" className="hover:text-primary transition-colors">Admin Portal</Link></li>
           </ul>
         </div>
 
         <div>
           <h4 className="font-bold mb-6 uppercase tracking-widest text-xs text-white/40">Secure Payments</h4>
-          <p className="text-white/40 text-[10px] uppercase tracking-widest mb-4">We accept Mobile Money</p>
+          <p className="text-white/40 text-[10px] uppercase tracking-widest mb-4">Cards, MoMo & Bank Transfer</p>
           <div className="flex flex-col gap-3">
             <div className="flex items-center gap-3 p-2.5 bg-white/5 border border-white/10 rounded-2xl hover:border-white/20 transition-colors group">
               <div className="w-14 h-10 bg-white rounded-lg overflow-hidden flex-shrink-0 flex items-center justify-center p-1 shadow-inner">
@@ -79,6 +78,29 @@ export default function Footer() {
                 <img src="/airteltigo.jpg" alt="Airtel Tigo Money" className="w-full h-full object-contain transition-transform group-hover:scale-110" />
               </div>
               <span className="text-xs font-bold text-white/60 uppercase tracking-wider group-hover:text-white transition-colors">AT Money</span>
+            </div>
+            <div className="flex items-center gap-3 p-2.5 bg-white/5 border border-white/10 rounded-2xl hover:border-white/20 transition-colors group">
+              <div className="w-14 h-10 bg-white rounded-lg overflow-hidden flex-shrink-0 flex items-center justify-center p-1 shadow-inner gap-0.5">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 86 54" className="h-3.5 w-auto" aria-label="Visa">
+                  <rect width="86" height="54" rx="4" fill="white" stroke="#1A1F71" strokeWidth="2"/>
+                  <rect x="0" y="8" width="86" height="12" fill="#1A1F71"/>
+                  <rect x="0" y="42" width="86" height="10" fill="#F7A800"/>
+                  <text x="43" y="37" textAnchor="middle" fill="#1A1F71" fontFamily="Arial Black, Arial" fontWeight="900" fontSize="18" letterSpacing="1">VISA</text>
+                </svg>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 90 54" className="h-3.5 w-auto" aria-label="Mastercard">
+                  <circle cx="32" cy="27" r="22" fill="#CC0000"/>
+                  <circle cx="58" cy="27" r="22" fill="#FF9900"/>
+                  <path d="M45 10.2a22 22 0 010 33.6A22 22 0 0145 10.2z" fill="#FF6600"/>
+                  <text x="45" y="30" textAnchor="middle" fill="white" fontFamily="Arial, sans-serif" fontWeight="bold" fontSize="10" letterSpacing="0.3">MasterCard</text>
+                </svg>
+              </div>
+              <span className="text-xs font-bold text-white/60 uppercase tracking-wider group-hover:text-white transition-colors">Cards / Paystack</span>
+            </div>
+            <div className="flex items-center gap-3 p-2.5 bg-white/5 border border-white/10 rounded-2xl hover:border-white/20 transition-colors group">
+              <div className="w-14 h-10 bg-emerald-500/10 text-emerald-400 rounded-lg overflow-hidden flex-shrink-0 flex items-center justify-center shadow-inner">
+                <Landmark className="w-5 h-5" />
+              </div>
+              <span className="text-xs font-bold text-white/60 uppercase tracking-wider group-hover:text-white transition-colors">Bank Transfer</span>
             </div>
           </div>
         </div>
