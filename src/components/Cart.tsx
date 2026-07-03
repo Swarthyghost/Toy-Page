@@ -161,6 +161,10 @@ Please confirm my order. Thank you!`;
 
   const handlePaystackSuccessAction = (reference: any) => {
     console.log("Payment successful", reference);
+
+    const refString = reference.reference || reference.trxref || (typeof reference === 'string' ? reference : new Date().getTime().toString());
+
+    // Save order details to Firestore
     saveOrder({
       name: formData.name,
       email: formData.email,
@@ -174,16 +178,58 @@ Please confirm my order. Thank you!`;
       })),
       totalPrice: finalPrice,
       paymentMethod: "Paystack"
-    }).then(() => {
-      alert("Payment successful! Your order has been placed.");
-      setIsCheckoutOpen(false);
-      clearCart();
     }).catch(error => {
       console.error("Error saving Paystack order to Firestore:", error);
-      alert("Payment successful! Your order has been placed.");
-      setIsCheckoutOpen(false);
-      clearCart();
     });
+
+    // Increment promo usage if applicable (Fire and forget to avoid blocking UI)
+    if (appliedPromo) {
+      usePromoCode(appliedPromo.id).catch((error) => {
+        console.error("Error updating promo use:", error);
+      });
+    }
+
+    const orderList = cart
+      .map(
+        (item, index) =>
+          `*${index + 1}. ${item.name}* (x${item.quantity})\nPrice: GHS ${(item.price * item.quantity).toFixed(2)}\nView Product: ${window.location.origin}/product/${item.id}`,
+      )
+      .join("\n\n");
+
+    const promoDetails = appliedPromo 
+      ? `\n*Promo Code:* ${appliedPromo.code} (-GHS ${discount.toFixed(2)})`
+      : "";
+
+    const message = `Hello, I have placed an order and paid successfully via Paystack.
+
+*Payment Reference:* ${refString}
+
+*Customer Details:*
+Name: ${formData.name}
+Phone: ${formData.phone}
+Location: ${formData.location}
+
+*Order Summary:*
+${orderList}
+${promoDetails}
+
+*Subtotal: GHS ${totalPrice.toFixed(2)}*
+*Discount: GHS ${discount.toFixed(2)}*
+*Total Payable (Paid): GHS ${finalPrice.toFixed(2)}*
+
+Please confirm receipt of payment and process my order. Thank you!`;
+
+    const encodedMessage = encodeURIComponent(message);
+    const whatsappUrl = `https://wa.me/233266181581?text=${encodedMessage}`;
+
+    alert("Payment successful! Redirecting you to WhatsApp to confirm your order details.");
+    
+    // Clear cart and close checkout modal before redirect
+    clearCart();
+    setIsCheckoutOpen(false);
+
+    // Redirect to WhatsApp
+    window.location.href = whatsappUrl;
   };
 
   const handlePaystackCloseAction = () => {
