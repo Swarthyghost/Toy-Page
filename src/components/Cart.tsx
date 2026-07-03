@@ -154,6 +154,7 @@ Please confirm my order. Thank you!`;
     email: formData.email || "customer@toy-page.com",
     amount: Math.round(finalPrice * 100), // amount in pesewas
     publicKey: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || "pk_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    currency: "GHS",
   };
 
   const initializePayment = usePaystackPayment(paystackConfig);
