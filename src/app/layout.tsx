@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Providers } from "./providers";
 import "../index.css";
+import WhatsAppFloating from "../components/WhatsAppFloating";
 
 export const metadata: Metadata = {
   title: "PleasureToys GH | Premium Adult Toys & Accessories in Ghana",
@@ -121,7 +122,10 @@ export default function RootLayout({
         />
       </head>
       <body>
-        <Providers>{children}</Providers>
+        <Providers>
+          {children}
+          <WhatsAppFloating />
+        </Providers>
       </body>
     </html>
   );

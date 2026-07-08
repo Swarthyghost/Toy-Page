@@ -122,7 +122,7 @@ export default function Hero() {
               >
                 Buy <span className="text-gradient">Vibrators</span> Online,
                 <br />
-                Discover <span className="text-gradient">Pleasure,</span> Redefined. <span className="text-white/90">Fast Delivery Across Accra & Ghana.</span>
+                Discover <span className="text-gradient">Pleasure,</span> Redefined. <span className="text-white/90"></span>
               </motion.h1>
 
               {/* Subtext */}
