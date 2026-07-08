@@ -160,6 +160,7 @@ export default function FloatingWhatsApp() {
       dragMomentum={false}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
+      initial={{ x: initialPos.x, y: initialPos.y }}
       animate={controls}
       style={{
         position: "fixed",
