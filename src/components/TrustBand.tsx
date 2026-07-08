@@ -16,7 +16,7 @@ const trustItems = [
   {
     icon: Truck,
     title: "Same-Day Accra",
-    desc: "Order before noon for same-day delivery within Accra. Nationwide in 2–3 days.",
+    desc: "Order before 8pm for same-day delivery within Accra. Nationwide next day.",
   },
 ];
 

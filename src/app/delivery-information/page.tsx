@@ -11,7 +11,7 @@ const deliveryFaq = [
   },
   {
     q: "How long does delivery take?",
-    a: "Delivery times depend on your location. Accra orders are delivered same-day if ordered early, while deliveries outside Accra take 24 to 72 hours."
+    a: "Delivery times depend on your location. Accra orders are delivered same-day if ordered early, while deliveries outside Accra take 24 hours."
   },
   {
     q: "How much is delivery?",
@@ -144,26 +144,26 @@ export default function DeliveryInformationPage() {
               <tbody className="divide-y divide-white/5">
                 <tr>
                   <td className="py-4 px-4 font-semibold text-white">Accra (Greater Accra)</td>
-                  <td className="py-4 px-4">Same-day (orders before 3 PM)</td>
-                  <td className="py-4 px-4">GHS 30 - GHS 50</td>
+                  <td className="py-4 px-4">Same-day (orders before 8 PM)</td>
+                  <td className="py-4 px-4">GHS 20 - GHS 60</td>
                   <td className="py-4 px-4 text-emerald-400">Yes</td>
                 </tr>
                 <tr>
                   <td className="py-4 px-4 font-semibold text-white">Kumasi &amp; Eastern Region</td>
-                  <td className="py-4 px-4">Next-day (within 24-48 hours)</td>
-                  <td className="py-4 px-4">GHS 60</td>
+                  <td className="py-4 px-4">Next-day 24 hours (via Courier/Bus)</td>
+                  <td className="py-4 px-4">GHS 40 - GHS 50 </td>
                   <td className="py-4 px-4 text-red-500">No (Pre-pay)</td>
                 </tr>
                 <tr>
                   <td className="py-4 px-4 font-semibold text-white">Takoradi &amp; Cape Coast</td>
-                  <td className="py-4 px-4">Within 48 hours</td>
-                  <td className="py-4 px-4">GHS 60</td>
+                  <td className="py-4 px-4">Next-day 24 hours (via Courier/Bus)</td>
+                  <td className="py-4 px-4">GHS 40 - GHS 50</td>
                   <td className="py-4 px-4 text-red-500">No (Pre-pay)</td>
                 </tr>
                 <tr>
                   <td className="py-4 px-4 font-semibold text-white">Northern, Remote, or other regions</td>
-                  <td className="py-4 px-4">48-72 hours (via Courier/Bus)</td>
-                  <td className="py-4 px-4">GHS 70</td>
+                  <td className="py-4 px-4">Next-day 24 hours (via Courier/Bus)</td>
+                  <td className="py-4 px-4">GHS 40 - GHS 50</td>
                   <td className="py-4 px-4 text-red-500">No (Pre-pay)</td>
                 </tr>
               </tbody>
