@@ -138,7 +138,7 @@ export default function DeliveryInformationPage() {
                   <th className="py-3 px-4">Region / Location</th>
                   <th className="py-3 px-4">Delivery Window</th>
                   <th className="py-3 px-4">Estimated Fee</th>
-                  <th className="py-3 px-4">Pay on Delivery Option</th>
+                  <th className="py-3 px-4">Pay on Delivery</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
