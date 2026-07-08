@@ -20,6 +20,7 @@ const categories = [
   { name: 'Lubricants', path: '/category/Lubricants' },
   { name: 'Mens Toy', path: '/category/Mens Toy' },
   { name: 'Accessories', path: '/category/Accessories' },
+  { name: 'Guides', path: '/guides' },
 ];
 
 export default function Navbar() {

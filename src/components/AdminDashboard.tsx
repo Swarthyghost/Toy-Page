@@ -2,18 +2,19 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Plus, Edit2, Trash2, X, Image as ImageIcon, DollarSign, Tag, FileText, Upload, LogOut, Gift, Settings } from 'lucide-react';
+import { Plus, Edit2, Trash2, X, Image as ImageIcon, DollarSign, Tag, FileText, Upload, LogOut, Gift, Settings, BookOpen } from 'lucide-react';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { fetchProducts, createProduct, updateProduct, deleteProduct, Product, SiteSettings, fetchSiteSettings, updateSiteSettings, fetchOrders, CustomerOrder, updateOrder, deleteOrder } from '../services/firebaseApi';
 import { uploadImage } from '../config/cloudinary';
 import PromoManagement from './PromoManagement';
+import GuidesManagement from './GuidesManagement';
 
 export default function AdminDashboard() {
   const { adminUser, logout } = useAdminAuth();
   const [products, setProducts] = useState<Product[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  const [activeTab, setActiveTab] = useState<'products' | 'promos' | 'settings' | 'orders'>('products');
+  const [activeTab, setActiveTab] = useState<'products' | 'promos' | 'settings' | 'orders' | 'guides'>('products');
   const [siteSettings, setSiteSettings] = useState<SiteSettings | null>(null);
   const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [orders, setOrders] = useState<CustomerOrder[]>([]);
@@ -303,6 +304,17 @@ export default function AdminDashboard() {
             >
               <FileText size={18} />
               Customer Orders
+            </button>
+            <button
+              onClick={() => setActiveTab('guides')}
+              className={`py-4 border-b-2 transition-colors flex items-center gap-2 ${
+                activeTab === 'guides'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-white/60 hover:text-white'
+              }`}
+            >
+              <BookOpen size={18} />
+              Guides
             </button>
             <button
               onClick={() => setActiveTab('settings')}
@@ -838,6 +850,8 @@ export default function AdminDashboard() {
             )}
           </AnimatePresence>
         </div>
+      ) : activeTab === 'guides' ? (
+        <GuidesManagement />
       ) : (
         <div className="max-w-7xl mx-auto px-6 py-8">
           <div className="mb-8">
