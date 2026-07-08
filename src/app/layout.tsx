@@ -73,7 +73,8 @@ export default function RootLayout({
               },
               "sameAs": [
                 "https://www.instagram.com/pleasuretoys.gh",
-                "https://t.me/pleasuretoysgh"
+                "https://t.me/pleasuretoysgh",
+                "https://facebook.com/AdultToysGhana"
               ]
             })
           }}

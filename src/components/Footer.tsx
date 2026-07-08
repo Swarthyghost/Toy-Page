@@ -1,4 +1,4 @@
-import { Instagram, Send, Phone, CreditCard, Landmark } from 'lucide-react';
+import { Instagram, Send, Facebook, Phone, CreditCard, Landmark } from 'lucide-react';
 import Link from 'next/link';
 
 export default function Footer() {
@@ -29,6 +29,7 @@ export default function Footer() {
               {[
                 { Icon: Instagram, href: "https://www.instagram.com/pleasuretoys.gh", target: "_blank" },
                 { Icon: Send, href: "https://t.me/pleasuretoysgh", target: "_blank" },
+                { Icon: Facebook, href: "https://facebook.com/AdultToysGhana", target: "_blank" },
               ].map(({ Icon, href, target }, i) => (
                 <a
                   key={i}
