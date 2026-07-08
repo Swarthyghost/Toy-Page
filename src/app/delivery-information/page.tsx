@@ -23,7 +23,7 @@ const deliveryFaq = [
   },
   {
     q: "Can I track my order?",
-    a: "Yes. Once your order has been processed, we will provide SMS or WhatsApp updates with dispatcher details or bus tracking numbers."
+    a: "Yes. Once your order has been processed, we will provide SMS or WhatsApp updates with dispatcher details or bus tracking details."
   },
   {
     q: "Is the packaging discreet during shipping?",
@@ -138,7 +138,7 @@ export default function DeliveryInformationPage() {
                   <th className="py-3 px-4">Region / Location</th>
                   <th className="py-3 px-4">Delivery Window</th>
                   <th className="py-3 px-4">Estimated Fee</th>
-                  <th className="py-3 px-4">COD Option</th>
+                  <th className="py-3 px-4">Pay on Delivery Option</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
