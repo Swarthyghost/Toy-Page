@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { motion } from "motion/react";
@@ -43,16 +43,102 @@ export default function ProductDetail() {
     ? `${product.name}, ${product.category} Ghana, adult toys Accra, ${product.name} price Ghana, discreet delivery, pleasure toys, sex toys Ghana, ${product.name} review`
     : undefined;
 
+  const seoDetails = useMemo(() => {
+    if (!product) return { title: undefined, description: undefined };
+    const name = product.name;
+    const category = product.category;
+    const description = product.description || "";
+    const cleanName = name.toLowerCase().trim();
+    
+    let seoTitle = `${name} Ghana — Discreet ${category} Delivery Accra`;
+    let seoDescription = `${name} - ${description.substring(0, 140)}... Discreet delivery in Accra and across Ghana.`;
+
+    // Specific product keyword mappings
+    if (cleanName.includes('rose toy')) {
+      seoTitle = "Rose Vibrator — Discreet Clitoral Stimulator | Buy Online Ghana";
+      seoDescription = "Shop the popular Rose Toy clitoral vibrator in Ghana. 100% private shopping and same-day discreet delivery in Accra. Payment on delivery available.";
+    } else if (cleanName.includes('sucking') || cleanName.includes('air pulse')) {
+      seoTitle = `${name} — Sucking Vibrator Ghana | Discreet Delivery Accra`;
+      seoDescription = `Buy the ultimate sucking vibrator online in Ghana. Discreet same-day delivery in Accra. 100% confidential packaging and fast shipping.`;
+    } else if (cleanName.includes('thrusting') || cleanName.includes('telescopic')) {
+      seoTitle = `${name} — Thrusting Vibrator | Buy Online Ghana | Fast Discreet Shipping`;
+      seoDescription = `Shop high-quality thrusting vibrators. Private adult toy shopping in Ghana with fast nationwide delivery and payment on delivery options.`;
+    } else if (category.toLowerCase().includes('vibrator') && cleanName.includes('g-spot')) {
+      seoTitle = `${name} — Rechargeable G-Spot Vibrator Ghana | Nationwide Delivery`;
+      seoDescription = `Find the best rechargeable G-Spot vibrators in Ghana. Fast, discreet adult toys delivery in Accra and nationwide. Shop in complete privacy.`;
+    } else if (cleanName.includes('bdsm') || cleanName.includes('bondage') || cleanName.includes('leather')) {
+      seoTitle = `${name} — BDSM Gear Ghana | Discreet Adult Shop Accra`;
+      seoDescription = `Explore premium BDSM gear and bondage kits. Secure private sex toy shopping in Ghana. 100% discreet packaging and delivery.`;
+    } else if (cleanName.includes('handcuff')) {
+      seoTitle = `${name} — Bondage Handcuffs | Buy Online Ghana`;
+      seoDescription = `Shop high-quality bondage restraints and handcuffs online. Fast, discreet shipping in Accra and across Ghana. Secure payment on delivery.`;
+    } else if (cleanName.includes('butt plug') || cleanName.includes('anal')) {
+      seoTitle = `${name} — Butt Plugs Ghana | Discreet Packaging & Delivery`;
+      seoDescription = `Buy premium silicone butt plugs and anal toys in Ghana. 100% confidential packaging and same-day discreet delivery in Accra.`;
+    } else if (cleanName.includes('masturbator') || cleanName.includes('pocket pussy') || cleanName.includes('fleshlight')) {
+      seoTitle = `${name} — Male Masturbator Ghana | Private Shopping, Discreet Delivery`;
+      seoDescription = `Purchase premium male masturbators and pocket pussies in Accra, Ghana. 100% private shopping, discreet shipping, payment on delivery.`;
+    } else if (cleanName.includes('dildo') || cleanName.includes('jelly dildo')) {
+      seoTitle = `${name} — Jelly Dildo Ghana | Buy Online, Nationwide Delivery`;
+      seoDescription = `Buy realistic jelly dildos online in Ghana. Fast, confidential packaging and safe sex toys delivery in Accra and other regions.`;
+    } else if (category.toLowerCase().includes('lubricant') || cleanName.includes('lube')) {
+      seoTitle = `${name} — Water-Based Lubricant Ghana | Buy Online, Discreet Shipping`;
+      seoDescription = `Shop premium body-safe lubricants in Ghana. Long-lasting water-based lube with 100% discreet delivery. Buy online today.`;
+    }
+
+    return { title: seoTitle, description: seoDescription };
+  }, [product]);
+
   useSEO({
-    title: product?.name,
-    description: product 
-      ? `${product.name} - ${product.description.substring(0, 150)}... Shop premium adult toys in Ghana with discreet delivery.`
-      : undefined,
+    title: seoDetails.title,
+    description: seoDetails.description,
     keywords: productKeywords,
     image: product?.image,
     url: id ? `/product/${id}` : undefined,
     type: "product",
   });
+
+  const richDescription = useMemo(() => {
+    if (!product) return "";
+    let desc = product.description || "";
+    if (desc.split(/\s+/).length >= 150) return desc;
+
+    const name = product.name;
+    const category = product.category;
+    const cleanName = name.toLowerCase().trim();
+    
+    let extension = "";
+    if (cleanName.includes('rose toy')) {
+      extension = ` This premium clitoral stimulator is designed for maximum body-safe comfort and intense pleasure. As a top choice at PleasureToysGH, our discreet adult shop in Accra provides direct access to the popular rose toy and couples toys in Accra with complete confidentiality. Enjoy private sex toy shopping in Ghana with fast delivery. We prioritize safe materials and whisper-quiet motors, making it perfect for both beginners and experienced users.`;
+    } else if (cleanName.includes('sucking') || cleanName.includes('air pulse')) {
+      extension = ` Experience the ultimate in pinpoint stimulation with advanced air-pulse sucking technology. We provide fast, discreet shipping for Ghana sex toys, ensuring your order arrives in 100% confidential packaging. Buy sex toys in Ghana with same-day delivery in Accra. This product features medical-grade body-safe silicone and rechargeable waterproof designs, making it a premium addition to your self-care routine.`;
+    } else if (cleanName.includes('thrusting') || cleanName.includes('telescopic')) {
+      extension = ` Elevate your solo play or partner intimacy with deep-reaching automated thrusting sensations. This rechargeable vibrator is crafted from premium body-safe materials and designed to satisfy. Order online with same-day delivery in Accra. With PleasureToysGH, buy vibrators online in Ghana and enjoy confidential packaging for all pleasure products nationwide.`;
+    } else if (category.toLowerCase().includes('vibrator') && cleanName.includes('g-spot')) {
+      extension = ` This ergonomically curved G-spot vibrator targets your most sensitive areas with powerful, multi-speed vibration patterns. Perfect for private sex toy shopping in Ghana, we offer payment on delivery options. Buy vibrators online in Ghana today. Features a body-safe, rechargeable design and waterproof silicone finish for easy maintenance and safe usage.`;
+    } else if (cleanName.includes('bdsm') || cleanName.includes('bondage') || cleanName.includes('leather')) {
+      extension = ` Crafted for adventurous couples and sensory exploration, this BDSM and bondage gear set is both durable and comfortable. We ensure secure private sex toy shopping in Ghana with confidential packaging and discreet adult shop delivery in Accra. Safe for direct skin contact and designed for adjustable, secure fits for both beginners and enthusiasts.`;
+    } else if (cleanName.includes('handcuff')) {
+      extension = ` Expand your restraint play with comfortable, adjustable wrist cuffs. Designed for safe, exciting bedroom bondage, these cuffs feature quick-release buckles for safety. Order sex toys online in Ghana with fast, same-day delivery and private packaging. Ideal for couples seeking to build trust and play in absolute privacy.`;
+    } else if (cleanName.includes('butt plug') || cleanName.includes('anal')) {
+      extension = ` This smooth, tapered silicone butt plug is ideal for temperature play and deep pressure. Features a flared safety base for worry-free exploration and body-safe compatibility. Enjoy 100% confidential packaging and fast sex toys delivery in Accra. Shop securely at PleasureToysGH and explore anal play comfortably.`;
+    } else if (cleanName.includes('masturbator') || cleanName.includes('pocket pussy')) {
+      extension = ` Experience realistic, textured inner chambers designed for high-sensation male pleasure. Crafted from durable, easy-to-clean body-safe TPE. PleasureToysGH provides private shopping and discreet shipping of male adult toys in Ghana. Pay on delivery is available for same-day Accra orders.`;
+    } else if (cleanName.includes('dildo')) {
+      extension = ` This realistic dildo is crafted from high-quality silicone for firm yet flexible play. Featuring a sturdy suction cup base, it is compatible with harnesses and flat surfaces. Order sex toys in Ghana with discreet shipping. Every package is sealed in plain wrappers for complete customer privacy.`;
+    } else if (category.toLowerCase().includes('lubricant') || cleanName.includes('lube')) {
+      extension = ` Formulated to match natural moisture, this body-safe personal lubricant reduces friction and enhances overall comfort. Compatible with natural rubber latex and silicone toys, it washes off easily with warm water. Buy personal lube online in Ghana with fast, private packaging and delivery.`;
+    } else {
+      extension = ` Enhance your personal wellness collection with this premium ${category.toLowerCase()} product. Built with high-quality body-safe components, we assure 100% discreet shipping for Ghana sex toys. Buy sex toys online in Ghana with fast same-day delivery in Accra and payment on delivery options nationwide.`;
+    }
+
+    return desc + " " + extension.trim();
+  }, [product]);
+
+  const imageAltText = useMemo(() => {
+    if (!product) return "";
+    return `${product.name} - rechargeable ${product.category.toLowerCase()} Ghana - PleasureToysGH`;
+  }, [product]);
 
   if (loading)
     return (
@@ -110,6 +196,60 @@ export default function ProductDetail() {
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-24">
+      {/* Product JSON-LD Structured Data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Product",
+            "name": product.name,
+            "image": [product.image, ...(product.images || [])],
+            "description": richDescription,
+            "sku": product.id,
+            "offers": {
+              "@type": "Offer",
+              "url": `https://pleasuretoysgh.com/product/${product.id}`,
+              "priceCurrency": "GHS",
+              "price": product.price,
+              "availability": product.isOutOfStock 
+                ? "https://schema.org/OutOfStock" 
+                : "https://schema.org/InStock",
+              "priceValidUntil": "2030-12-31"
+            }
+          })
+        }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+              {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "Home",
+                "item": "https://pleasuretoysgh.com"
+              },
+              {
+                "@type": "ListItem",
+                "position": 2,
+                "name": product.category,
+                "item": `https://pleasuretoysgh.com/category/${product.category}`
+              },
+              {
+                "@type": "ListItem",
+                "position": 3,
+                "name": product.name,
+                "item": `https://pleasuretoysgh.com/product/${product.id}`
+              }
+            ]
+          })
+        }}
+      />
+
       <Link
         href="/"
         className="inline-flex items-center gap-2 text-white/40 hover:text-primary mb-12 transition-colors"
@@ -128,7 +268,7 @@ export default function ProductDetail() {
           >
             <img
               src={activeImage}
-              alt={product.name}
+              alt={imageAltText}
               className="w-full aspect-square object-cover"
               referrerPolicy="no-referrer"
             />
@@ -142,7 +282,7 @@ export default function ProductDetail() {
                   activeImage === product.image ? 'border-primary' : 'border-transparent hover:border-white/20'
                 }`}
               >
-                <img src={product.image} alt="" className="w-full h-full object-cover" />
+                <img src={product.image} alt={`${product.name} main view thumbnail`} className="w-full h-full object-cover" />
               </button>
               {product.images.map((img, idx) => (
                 <button
@@ -152,7 +292,7 @@ export default function ProductDetail() {
                     activeImage === img ? 'border-primary' : 'border-transparent hover:border-white/20'
                   }`}
                 >
-                  <img src={img} alt="" className="w-full h-full object-cover" />
+                  <img src={img} alt={`${product.name} detail view ${idx + 1} thumbnail`} className="w-full h-full object-cover" />
                 </button>
               ))}
             </div>
@@ -192,7 +332,7 @@ export default function ProductDetail() {
           </div>
 
           <p className="text-white/60 text-lg leading-relaxed mb-10">
-            {product.description}
+            {richDescription}
           </p>
 
           <div className="grid grid-cols-3 gap-4 mb-10">

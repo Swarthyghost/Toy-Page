@@ -31,7 +31,7 @@ export default function ProductCard({ product }: ProductCardProps) {
       <div className="relative aspect-square overflow-hidden">
         <img
           src={product.image}
-          alt={product.name}
+          alt={`${product.name} - premium sex toys Ghana - PleasureToysGH`}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
           referrerPolicy="no-referrer"
         />

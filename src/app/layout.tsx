@@ -68,10 +68,12 @@ export default function RootLayout({
                 "@type": "ContactPoint",
                 "telephone": "+233-26-618-1581",
                 "contactType": "customer service",
-                "availableLanguage": "English",
-                "contactOption": "TollFree"
+                "availableLanguage": "English"
               },
-              "sameAs": []
+              "sameAs": [
+                "https://www.instagram.com/pleasuretoys.gh",
+                "https://t.me/pleasuretoysgh"
+              ]
             })
           }}
         />
@@ -99,73 +101,21 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{
             __html: JSON.stringify({
               "@context": "https://schema.org",
-              "@type": ["Store", "LocalBusiness"],
-              "name": "PleasureToys GH",
+              "@type": "Store",
+              "name": "PleasureToysGH",
               "image": "https://pleasuretoysgh.com/toy-og.png",
               "url": "https://pleasuretoysgh.com",
               "telephone": "+233266181581",
               "address": {
                 "@type": "PostalAddress",
-                "streetAddress": "Ablekuma",
+                "streetAddress": "Majesty Road (GA-577), off Olebu Amamoley Road, Ablekuma",
                 "addressLocality": "Accra",
+                "addressRegion": "Greater Accra",
                 "addressCountry": "GH"
               },
-              "areaServed": [
-                { "@type": "City", "name": "Accra" },
-                { "@type": "City", "name": "Ablekuma" },
-                { "@type": "City", "name": "East Legon" },
-                { "@type": "City", "name": "Airport Residential Area" },
-                { "@type": "City", "name": "Cantonments" },
-                { "@type": "City", "name": "Osu" },
-                { "@type": "City", "name": "Tesano" },
-                { "@type": "City", "name": "North Ridge" },
-                { "@type": "City", "name": "Adabraka" },
-                { "@type": "City", "name": "Dzorwulu" },
-                { "@type": "City", "name": "Madina" },
-                { "@type": "City", "name": "Abelemkpe" },
-                { "@type": "City", "name": "Ridge" },
-                { "@type": "City", "name": "Spintex" },
-                { "@type": "City", "name": "East Airport" },
-                { "@type": "City", "name": "Tema Community 25" },
-                { "@type": "City", "name": "Tema Community 18" },
-                { "@type": "City", "name": "Tema" },
-                { "@type": "City", "name": "Labone" },
-                { "@type": "City", "name": "Kumasi" },
-                { "@type": "City", "name": "Cape Coast" },
-                { "@type": "City", "name": "Koforidua" },
-                { "@type": "City", "name": "Takoradi" },
-                { "@type": "City", "name": "Tamale" },
-                { "@type": "City", "name": "Sunyani" },
-                { "@type": "City", "name": "Ho" },
-                { "@type": "City", "name": "Bolgatanga" },
-                { "@type": "City", "name": "Madina" },
-                { "@type": "City", "name": "Adenta" },
-                { "@type": "City", "name": "Achimota" },
-                { "@type": "City", "name": "Dansoman" },
-                { "@type": "City", "name": "Kasoa" },
-                { "@type": "City", "name": "Haatso" },
-                { "@type": "City", "name": "Dome" },
-                { "@type": "City", "name": "Taifa" },
-                { "@type": "City", "name": "Lapaz" },
-                { "@type": "City", "name": "Weija" },
-                { "@type": "City", "name": "Teshie" },
-                { "@type": "City", "name": "Nungua" },
-                { "@type": "City", "name": "Ashaiman" },
-                { "@type": "City", "name": "Sakumono" },
-                { "@type": "City", "name": "Wa" }
-              ],
-              "openingHoursSpecification": {
-                "@type": "OpeningHoursSpecification",
-                "dayOfWeek": [
-                  "Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"
-                ],
-                "opens": "08:00",
-                "closes": "21:00"
-              },
-              "priceRange": "GHS 35 - GHS 500",
-              "currenciesAccepted": "GHS",
-              "paymentAccepted": "Mobile Money, Cash on Delivery",
-              "hasMap": "https://maps.google.com/?q=Ablekuma,Accra,Ghana"
+              "hasMap": "https://www.google.com/maps?q=Majesty+Road+GA-577+Ablekuma+Accra",
+              "priceRange": "GH₵",
+              "areaServed": "Ghana"
             })
           }}
         />

@@ -118,15 +118,11 @@ export default function Hero() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.7, delay: 0.1 }}
                 className="font-display font-bold leading-[1.05] mb-6"
-                style={{ fontSize: "clamp(3rem, 7vw, 5.5rem)" }}
+                style={{ fontSize: "clamp(3.2rem, 6.5vw, 5.2rem)" }}
               >
-                Explore
+                Buy <span className="text-gradient">Vibrators</span> Online,
                 <br />
-                <span className="relative inline-block">
-                  <span className="text-gradient">Pleasure</span>
-                </span>
-                <br />
-                <span className="text-white/90">Without Limits.</span>
+                Discreet Adult Shop <span className="text-white/90">Accra</span>
               </motion.h1>
 
               {/* Subtext */}
@@ -136,9 +132,7 @@ export default function Hero() {
                 transition={{ duration: 0.6, delay: 0.2 }}
                 className="text-white/50 text-lg leading-relaxed mb-10 max-w-lg"
               >
-                A curated collection of premium toys, elegant restraints and
-                sensual accessories - delivered with complete privacy across
-                Ghana.
+                Ghana's trusted store for private sex toy shopping. Discover couples toys in Accra with discreet packaging, secure payment options, and fast adult toys nationwide delivery across Ghana.
               </motion.p>
 
               {/* CTAs */}

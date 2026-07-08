@@ -217,7 +217,9 @@ export default function GuideDetailPage() {
                       />
                       <div className="min-w-0 flex-grow">
                         <h4 className="font-bold text-sm truncate group-hover:text-primary transition-colors">
-                          {product.name}
+                          <Link href={`/product/${product.id}`}>
+                            {product.name}
+                          </Link>
                         </h4>
                         <p className="text-xs text-white/40 line-clamp-1 mb-2">
                           {product.description}
@@ -228,7 +230,7 @@ export default function GuideDetailPage() {
                             href={`/product/${product.id}`}
                             className="text-[10px] font-bold text-primary uppercase tracking-widest hover:underline"
                           >
-                            Shop Now
+                            View {product.name}
                           </Link>
                         </div>
                       </div>

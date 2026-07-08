@@ -17,6 +17,13 @@ export default function Footer() {
           <p className="text-white/40 max-w-sm leading-relaxed mb-8">
             Ghana's premier destination for high-quality adult toys and sensual accessories. We prioritize your pleasure and privacy with 100% discreet packaging and delivery.
           </p>
+          <address className="not-italic text-white/40 text-xs leading-relaxed mb-8 block">
+            <span className="font-bold text-white block mb-1">PleasureToysGH</span>
+            Majesty Road (GA-577), off Olebu Amamoley Road, Ablekuma,<br />
+            Accra, Ga Central Municipal District, Greater Accra, Ghana<br />
+            Digital Address: GW-0635-6571<br />
+            Phone: <a href="tel:+233266181581" className="text-white/60 hover:text-primary transition-colors">0266 181 581</a>
+          </address>
           <div className="flex flex-col gap-6">
             <div className="flex gap-4">
               {[
@@ -34,7 +41,7 @@ export default function Footer() {
                 </a>
               ))}
             </div>
-            <a href="tel:0266181581" className="inline-flex items-center gap-3 text-white/60 hover:text-primary transition-colors group">
+            <a href="tel:+233266181581" className="inline-flex items-center gap-3 text-white/60 hover:text-primary transition-colors group">
               <div className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-primary group-hover:border-primary transition-all">
                 <Phone size={18} />
               </div>

@@ -30,7 +30,7 @@ export function useSEO({
   type = "website",
 }: SEOProps = {}) {
   const fullTitle = title
-    ? `${title} | ${BASE_TITLE}`
+    ? (title.toLowerCase().includes("pleasuretoys") ? title : `${title} | ${BASE_TITLE}`)
     : `${BASE_TITLE} | Premium Adult Toys & Accessories in Ghana`;
   const fullUrl = url ? `${BASE_URL}${url}` : BASE_URL;
 
