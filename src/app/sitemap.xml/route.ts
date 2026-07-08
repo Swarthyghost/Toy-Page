@@ -18,7 +18,11 @@ export async function GET() {
     { loc: '/contact', changefreq: 'yearly', priority: '0.5' },
     { loc: '/shipping', changefreq: 'yearly', priority: '0.4' },
     { loc: '/privacy', changefreq: 'yearly', priority: '0.3' },
-    { loc: '/guides', changefreq: 'daily', priority: '0.8' }
+    { loc: '/guides', changefreq: 'daily', priority: '0.8' },
+    { loc: '/faq', changefreq: 'weekly', priority: '0.8' },
+    { loc: '/delivery-information', changefreq: 'weekly', priority: '0.8' },
+    { loc: '/privacy-policy', changefreq: 'weekly', priority: '0.8' },
+    { loc: '/adult-toy-safety-guide', changefreq: 'weekly', priority: '0.8' }
   ];
 
   let xml = `<?xml version="1.0" encoding="UTF-8"?>
