@@ -659,7 +659,7 @@ Please confirm receipt of payment and process my order. Thank you!`;
                         </div>
                       )}
                       <div className="flex justify-between text-xs text-white/40">
-                        <span>Discreet Delivery</span>
+                        <span>Discreet Package</span>
                         <span className="text-emerald-400">Free</span>
                       </div>
                       <div className="flex justify-between items-end border-t border-white/5 pt-3 mt-1">
