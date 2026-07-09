@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Plus, Edit2, Trash2, X, Image as ImageIcon, DollarSign, Tag, FileText, Upload, LogOut, Gift, Settings, BookOpen } from 'lucide-react';
+import { Plus, Edit2, Trash2, X, Image as ImageIcon, DollarSign, Tag, FileText, Upload, LogOut, Gift, Settings, BookOpen, List, LayoutGrid, Copy } from 'lucide-react';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { fetchProducts, createProduct, updateProduct, deleteProduct, Product, SiteSettings, fetchSiteSettings, updateSiteSettings, fetchOrders, CustomerOrder, updateOrder, deleteOrder } from '../services/firebaseApi';
 import { uploadImage } from '../config/cloudinary';
@@ -40,6 +40,23 @@ export default function AdminDashboard() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [additionalImageFiles, setAdditionalImageFiles] = useState<(File | null)[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [viewMode, setViewMode] = useState<'compact' | 'detailed'>('compact');
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedMode = localStorage.getItem('admin_orders_view_mode') as 'compact' | 'detailed';
+      if (savedMode === 'compact' || savedMode === 'detailed') {
+        setViewMode(savedMode);
+      }
+    }
+  }, []);
+
+  const handleSetViewMode = (mode: 'compact' | 'detailed') => {
+    setViewMode(mode);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('admin_orders_view_mode', mode);
+    }
+  };
 
   useEffect(() => {
     loadProducts();
@@ -643,17 +660,45 @@ export default function AdminDashboard() {
         <PromoManagement />
       ) : activeTab === 'orders' ? (
         <div className="max-w-7xl mx-auto px-6 py-8">
-          <div className="flex justify-between items-end mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
             <div>
               <h2 className="text-2xl font-bold mb-2">Customer & Order Management</h2>
               <p className="text-white/40">View and copy customer contact details and order histories.</p>
             </div>
-            <button
-              onClick={loadOrders}
-              className="px-6 py-3 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 text-white font-bold transition-all"
-            >
-              Refresh Orders
-            </button>
+            <div className="flex items-center gap-3">
+              {/* View Toggle */}
+              <div className="flex bg-white/5 border border-white/10 rounded-2xl p-1">
+                <button
+                  onClick={() => handleSetViewMode('compact')}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
+                    viewMode === 'compact'
+                      ? 'bg-primary text-white'
+                      : 'text-white/60 hover:text-white'
+                  }`}
+                >
+                  <List size={14} />
+                  Compact
+                </button>
+                <button
+                  onClick={() => handleSetViewMode('detailed')}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
+                    viewMode === 'detailed'
+                      ? 'bg-primary text-white'
+                      : 'text-white/60 hover:text-white'
+                  }`}
+                >
+                  <LayoutGrid size={14} />
+                  Detailed
+                </button>
+              </div>
+
+              <button
+                onClick={loadOrders}
+                className="px-6 py-3 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 text-white font-bold transition-all text-sm flex items-center gap-2"
+              >
+                Refresh Orders
+              </button>
+            </div>
           </div>
 
           {loadingOrders ? (
@@ -663,42 +708,68 @@ export default function AdminDashboard() {
               No orders found. Once customers checkout or pay, their details will appear here.
             </div>
           ) : (
-            <div className="space-y-6">
+            <div className={viewMode === 'compact' ? "space-y-3" : "space-y-6"}>
               {orders.map((order) => (
-                <div
-                  key={order.id}
-                  className="bg-zinc-900 border border-white/10 rounded-[2.5rem] p-8 hover:border-primary/50 transition-colors"
-                >
-                  <div className="grid md:grid-cols-4 gap-8">
-                    {/* Customer Info */}
-                    <div className="space-y-4 md:border-r border-white/10 pr-4">
-                      <div>
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">Name</span>
-                        <p className="text-lg font-bold">{order.name}</p>
+                viewMode === 'compact' ? (
+                  /* Compact horizontal row view */
+                  <div
+                    key={order.id}
+                    className="bg-zinc-900 border border-white/10 rounded-2xl p-4 hover:border-primary/50 transition-colors w-full"
+                  >
+                    <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+                      {/* Customer Info (Name + Phone) */}
+                      <div className="md:col-span-3 flex flex-col justify-center min-w-0">
+                        <p className="text-sm font-bold text-white truncate" title={order.name}>{order.name}</p>
+                        <p className="text-xs text-white/60 font-mono select-all truncate mt-0.5">{order.phone}</p>
                       </div>
-                      <div>
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">Email</span>
-                        <p className="text-sm text-white/80 select-all">{order.email}</p>
+
+                      {/* Items Ordered */}
+                      <div className="md:col-span-3 flex flex-col justify-center min-w-0">
+                        <div className="text-xs text-white/80 line-clamp-2" title={order.items?.map(i => `${i.name} x${i.quantity}`).join(', ')}>
+                          {order.items?.map((item, idx) => (
+                            <span key={idx}>
+                              {idx > 0 && ', '}
+                              {item.name} <span className="text-primary font-bold">x{item.quantity}</span>
+                            </span>
+                          ))}
+                        </div>
                       </div>
-                      <div>
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">Phone</span>
-                        <p className="text-sm text-white/80 select-all font-mono">{order.phone}</p>
+
+                      {/* Order Date & ID */}
+                      <div className="md:col-span-2 flex flex-col justify-center min-w-0">
+                        <p className="text-xs text-white/80">
+                          {order.createdAt ? order.createdAt.toDate().toLocaleDateString() : "Date N/A"}
+                        </p>
+                        <p className="text-[10px] text-white/30 font-mono select-all truncate mt-0.5" title={order.id}>
+                          ID: {order.id}
+                        </p>
                       </div>
-                      <div>
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">Location</span>
-                        <p className="text-sm text-white/80">{order.location}</p>
+
+                      {/* Total Price & Payment Badge */}
+                      <div className="md:col-span-2 flex flex-col md:items-end justify-center min-w-0">
+                        <p className="text-sm font-bold text-primary">GHS {order.totalPrice.toFixed(2)}</p>
+                        <span className={`inline-block px-2 py-0.5 rounded-full text-[9px] font-bold mt-1 uppercase tracking-wider w-fit ${
+                          order.paymentMethod === 'Paystack' 
+                            ? 'bg-indigo-600/20 text-indigo-400 border border-indigo-500/30' 
+                            : 'bg-emerald-600/20 text-emerald-400 border border-emerald-500/30'
+                        }`}>
+                          {order.paymentMethod}
+                        </span>
                       </div>
-                      <button
-                        onClick={() => {
-                          const contactInfo = `Name: ${order.name}\nPhone: ${order.phone}\nEmail: ${order.email}\nLocation: ${order.location}`;
-                          navigator.clipboard.writeText(contactInfo);
-                          alert("Contact info copied to clipboard!");
-                        }}
-                        className="w-full mt-2 py-2 bg-primary/20 border border-primary/30 text-primary text-xs font-bold uppercase tracking-widest rounded-xl hover:bg-primary/30 transition-all"
-                      >
-                        Copy Contact
-                      </button>
-                      <div className="flex gap-2 mt-2">
+
+                      {/* Actions */}
+                      <div className="md:col-span-2 flex justify-start md:justify-end items-center gap-1.5">
+                        <button
+                          onClick={() => {
+                            const contactInfo = `Name: ${order.name}\nPhone: ${order.phone}\nEmail: ${order.email}\nLocation: ${order.location}`;
+                            navigator.clipboard.writeText(contactInfo);
+                            alert("Contact info copied to clipboard!");
+                          }}
+                          className="p-2 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-lg transition-colors"
+                          title="Copy Contact Details"
+                        >
+                          <Copy size={13} />
+                        </button>
                         <button
                           onClick={() => {
                             setEditingOrder(order);
@@ -709,61 +780,123 @@ export default function AdminDashboard() {
                               location: order.location,
                             });
                           }}
-                          className="flex-grow py-2 bg-white/5 border border-white/10 hover:bg-white/10 text-white text-[10px] font-bold uppercase tracking-widest rounded-xl transition-all flex items-center justify-center gap-1"
+                          className="p-2 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-lg transition-colors"
+                          title="Edit Contact"
                         >
-                          <Edit2 size={12} /> Edit
+                          <Edit2 size={13} />
                         </button>
                         <button
                           onClick={() => handleDeleteOrder(order.id!)}
-                          className="py-2 px-3 bg-red-900/20 border border-red-500/30 hover:bg-red-900/40 text-red-400 text-[10px] font-bold rounded-xl transition-all flex items-center justify-center"
+                          className="p-2 bg-red-900/10 border border-red-500/20 hover:bg-red-900/30 text-red-400 rounded-lg transition-colors"
                           title="Delete Order"
                         >
-                          <Trash2 size={12} />
+                          <Trash2 size={13} />
                         </button>
                       </div>
                     </div>
+                  </div>
+                ) : (
+                  /* Detailed card view */
+                  <div
+                    key={order.id}
+                    className="bg-zinc-900 border border-white/10 rounded-[2.5rem] p-8 hover:border-primary/50 transition-colors"
+                  >
+                    <div className="grid md:grid-cols-4 gap-8">
+                      {/* Customer Info */}
+                      <div className="space-y-4 md:border-r border-white/10 pr-4">
+                        <div>
+                          <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">Name</span>
+                          <p className="text-lg font-bold">{order.name}</p>
+                        </div>
+                        <div>
+                          <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">Email</span>
+                          <p className="text-sm text-white/80 select-all">{order.email}</p>
+                        </div>
+                        <div>
+                          <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">Phone</span>
+                          <p className="text-sm text-white/80 select-all font-mono">{order.phone}</p>
+                        </div>
+                        <div>
+                          <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">Location</span>
+                          <p className="text-sm text-white/80">{order.location}</p>
+                        </div>
+                        <button
+                          onClick={() => {
+                            const contactInfo = `Name: ${order.name}\nPhone: ${order.phone}\nEmail: ${order.email}\nLocation: ${order.location}`;
+                            navigator.clipboard.writeText(contactInfo);
+                            alert("Contact info copied to clipboard!");
+                          }}
+                          className="w-full mt-2 py-2 bg-primary/20 border border-primary/30 text-primary text-xs font-bold uppercase tracking-widest rounded-xl hover:bg-primary/30 transition-all"
+                        >
+                          Copy Contact
+                        </button>
+                        <div className="flex gap-2 mt-2">
+                          <button
+                            onClick={() => {
+                              setEditingOrder(order);
+                              setOrderFormData({
+                                name: order.name,
+                                email: order.email,
+                                phone: order.phone,
+                                location: order.location,
+                              });
+                            }}
+                            className="flex-grow py-2 bg-white/5 border border-white/10 hover:bg-white/10 text-white text-[10px] font-bold uppercase tracking-widest rounded-xl transition-all flex items-center justify-center gap-1"
+                          >
+                            <Edit2 size={12} /> Edit
+                          </button>
+                          <button
+                            onClick={() => handleDeleteOrder(order.id!)}
+                            className="py-2 px-3 bg-red-900/20 border border-red-500/30 hover:bg-red-900/40 text-red-400 text-[10px] font-bold rounded-xl transition-all flex items-center justify-center"
+                            title="Delete Order"
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                        </div>
+                      </div>
 
-                    {/* Order Details */}
-                    <div className="md:col-span-2 space-y-4">
-                      <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">Items Ordered</span>
-                      <div className="space-y-2 max-h-[160px] overflow-y-auto pr-2">
-                        {order.items?.map((item, idx) => (
-                          <div key={idx} className="flex justify-between text-sm py-1 border-b border-white/5">
-                            <span className="text-white/80">
-                              {item.name} <span className="text-primary font-bold">x{item.quantity}</span>
-                            </span>
-                            <span className="font-mono">GHS {(item.price * item.quantity).toFixed(2)}</span>
-                          </div>
-                        ))}
+                      {/* Order Details */}
+                      <div className="md:col-span-2 space-y-4">
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">Items Ordered</span>
+                        <div className="space-y-2 max-h-[160px] overflow-y-auto pr-2">
+                          {order.items?.map((item, idx) => (
+                            <div key={idx} className="flex justify-between text-sm py-1 border-b border-white/5">
+                              <span className="text-white/80">
+                                {item.name} <span className="text-primary font-bold">x{item.quantity}</span>
+                              </span>
+                              <span className="font-mono">GHS {(item.price * item.quantity).toFixed(2)}</span>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                    </div>
 
-                    {/* Metadata */}
-                    <div className="flex flex-col justify-between items-end text-right md:border-l border-white/10 pl-4">
-                      <div>
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-white/40 block">Order ID</span>
-                        <span className="font-mono text-xs text-white/40 select-all">{order.id}</span>
-                      </div>
-                      <div className="my-2">
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-white/40 block">Payment Method</span>
-                        <span className={`inline-block px-3 py-1 rounded-full text-[10px] font-bold mt-1 uppercase tracking-wider ${
-                          order.paymentMethod === 'Paystack' 
-                            ? 'bg-indigo-600/20 text-indigo-400 border border-indigo-500/30' 
-                            : 'bg-emerald-600/20 text-emerald-400 border border-emerald-500/30'
-                        }`}>
-                          {order.paymentMethod}
-                        </span>
-                      </div>
-                      <div>
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-white/40 block">Total Price</span>
-                        <span className="text-2xl font-display font-bold text-primary">GHS {order.totalPrice.toFixed(2)}</span>
-                      </div>
-                      <div className="mt-2 text-xs text-white/30 uppercase tracking-wider">
-                        {order.createdAt ? order.createdAt.toDate().toLocaleString() : "Date N/A"}
+                      {/* Metadata */}
+                      <div className="flex flex-col justify-between items-end text-right md:border-l border-white/10 pl-4">
+                        <div>
+                          <span className="text-[10px] font-bold uppercase tracking-widest text-white/40 block">Order ID</span>
+                          <span className="font-mono text-xs text-white/40 select-all">{order.id}</span>
+                        </div>
+                        <div className="my-2">
+                          <span className="text-[10px] font-bold uppercase tracking-widest text-white/40 block">Payment Method</span>
+                          <span className={`inline-block px-3 py-1 rounded-full text-[10px] font-bold mt-1 uppercase tracking-wider ${
+                            order.paymentMethod === 'Paystack' 
+                              ? 'bg-indigo-600/20 text-indigo-400 border border-indigo-500/30' 
+                              : 'bg-emerald-600/20 text-emerald-400 border border-emerald-500/30'
+                          }`}>
+                            {order.paymentMethod}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-[10px] font-bold uppercase tracking-widest text-white/40 block">Total Price</span>
+                          <span className="text-2xl font-display font-bold text-primary">GHS {order.totalPrice.toFixed(2)}</span>
+                        </div>
+                        <div className="mt-2 text-xs text-white/30 uppercase tracking-wider">
+                          {order.createdAt ? order.createdAt.toDate().toLocaleString() : "Date N/A"}
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
+                )
               ))}
             </div>
           )}

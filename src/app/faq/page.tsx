@@ -12,7 +12,7 @@ const faqData = {
     },
     {
       q: "Do I need an account to buy from PleasureToysGH?",
-      a: "No. You can shop and place an order without creating an account. However, creating an account makes it track orders easily and enjoy a smoother shopping experience."
+      a: "No. You can shop and place an order without creating an account."
     },
     {
       q: "Are your products available for immediate delivery?",
