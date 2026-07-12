@@ -8,7 +8,10 @@ export default function Footer() {
         <div className="col-span-2">
           <Link href="/" className="flex items-center gap-2 mb-6">
             <div className="w-10 h-10 rounded-xl overflow-hidden border border-white/10">
-              <img src="/toy.jpg" alt="Logo" className="w-full h-full object-cover" />
+              <picture className="w-full h-full">
+                <source srcSet="/toy.webp" type="image/webp" />
+                <img src="/toy.jpg" alt="Logo" className="w-full h-full object-cover" width={40} height={40} loading="lazy" />
+              </picture>
             </div>
             <span className="text-2xl font-display font-bold tracking-tight">
               PleasureToys <span className="text-primary">GH</span>
@@ -80,13 +83,19 @@ export default function Footer() {
           <div className="flex flex-col gap-3">
             <div className="flex items-center gap-3 p-2.5 bg-white/5 border border-white/10 rounded-2xl hover:border-white/20 transition-colors group">
               <div className="w-14 h-10 bg-white rounded-lg overflow-hidden flex-shrink-0 flex items-center justify-center p-1 shadow-inner">
-                <img src="/mtn.jpg" alt="MTN MoMo" className="w-full h-full object-contain transition-transform group-hover:scale-110" />
+                <picture className="w-full h-full flex items-center justify-center">
+                  <source srcSet="/mtn.webp" type="image/webp" />
+                  <img src="/mtn.jpg" alt="MTN MoMo" className="w-full h-full object-contain transition-transform group-hover:scale-110" width={56} height={40} loading="lazy" />
+                </picture>
               </div>
               <span className="text-xs font-bold text-white/60 uppercase tracking-wider group-hover:text-white transition-colors">MTN MoMo</span>
             </div>
             <div className="flex items-center gap-3 p-2.5 bg-white/5 border border-white/10 rounded-2xl hover:border-white/20 transition-colors group">
               <div className="w-14 h-10 bg-white rounded-lg overflow-hidden flex-shrink-0 flex items-center justify-center p-1 shadow-inner">
-                <img src="/airteltigo.jpg" alt="Airtel Tigo Money" className="w-full h-full object-contain transition-transform group-hover:scale-110" />
+                <picture className="w-full h-full flex items-center justify-center">
+                  <source srcSet="/airteltigo.webp" type="image/webp" />
+                  <img src="/airteltigo.jpg" alt="Airtel Tigo Money" className="w-full h-full object-contain transition-transform group-hover:scale-110" width={56} height={40} loading="lazy" />
+                </picture>
               </div>
               <span className="text-xs font-bold text-white/60 uppercase tracking-wider group-hover:text-white transition-colors">AT Money</span>
             </div>

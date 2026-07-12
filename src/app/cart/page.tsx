@@ -1,10 +1,15 @@
-"use client";
-
 import React from "react";
-import dynamic from "next/dynamic";
+import CartClient from "./CartClient";
+import { Metadata } from "next";
 
-const Cart = dynamic(() => import("../../components/Cart"), { ssr: false });
+export const metadata: Metadata = {
+  title: "Your Intimate Collection | PleasureToys GH",
+  description: "View and checkout items in your PleasureToys GH shopping cart. Secure payment, discreet packaging, and fast same-day delivery.",
+  alternates: {
+    canonical: "https://pleasuretoysgh.com/cart",
+  },
+};
 
 export default function CartPage() {
-  return <Cart />;
+  return <CartClient />;
 }

@@ -148,19 +148,23 @@ export default function ProductListing() {
   }, [activeCategory, products]);
 
   return (
-    <div id="collection" className="max-w-7xl mx-auto px-4 md:px-6 pt-28 pb-12 md:py-24">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-12 max-w-full overflow-hidden">
+    <div id="collection" className="max-w-7xl mx-auto px-4 md:px-6 pt-12 md:pt-20 pb-12 md:pb-24">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 md:gap-8 mb-6 md:mb-12 max-w-full overflow-hidden">
         <div>
-          <h1 className="text-3xl md:text-5xl font-display font-bold mb-4">
-            {activeCategory === "All" 
-              ? (categoryName ? "Our Collection" : "Buy Vibrators Online Ghana") 
-              : `${activeCategory} Ghana`}
-          </h1>
-          <h2 className="text-white/40 max-w-md text-sm md:text-base font-normal">
+          {categoryName ? (
+            <h1 className="text-3xl md:text-5xl font-display font-bold mb-4">
+              {activeCategory === "All" ? "Our Collection" : `${activeCategory} Ghana`}
+            </h1>
+          ) : (
+            <h2 className="text-3xl md:text-5xl font-display font-bold mb-4">
+              {activeCategory === "All" ? "Buy Vibrators Online Ghana" : `${activeCategory} Ghana`}
+            </h2>
+          )}
+          <p className="text-white/40 max-w-md text-sm md:text-base font-normal">
             {activeCategory === "All"
               ? "Browse our premium selection of pleasure toys. Confidential packaging and same-day delivery."
               : `Discreet shipping Ghana sex toys same-day delivery. Explore premium ${activeCategory.toLowerCase()} in Accra.`}
-          </h2>
+          </p>
         </div>
 
         <div className="w-full max-w-full flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar">
@@ -185,22 +189,19 @@ export default function ProductListing() {
         </div>
       </div>
 
-      <motion.div
-        layout
+      <div
         className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8"
       >
-        <AnimatePresence mode="popLayout">
-          {loading ? (
-            Array.from({ length: 8 }).map((_, i) => (
-              <ProductCardSkeleton key={`skeleton-${i}`} />
-            ))
-          ) : (
-            filteredProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))
-          )}
-        </AnimatePresence>
-      </motion.div>
+        {loading ? (
+          Array.from({ length: 8 }).map((_, i) => (
+            <ProductCardSkeleton key={`skeleton-${i}`} />
+          ))
+        ) : (
+          filteredProducts.map((product, idx) => (
+            <ProductCard key={product.id} product={product} index={idx} />
+          ))
+        )}
+      </div>
 
       {!loading && filteredProducts.length === 0 && (
         <div className="py-32 text-center">

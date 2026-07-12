@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { motion } from "motion/react";
+import { getProductWebpUrl, getProductSrcSet } from "../utils/imageOptimizer";
 import {
   ShoppingCart,
   ArrowLeft,
@@ -194,6 +195,15 @@ export default function ProductDetail() {
       </div>
     );
 
+  const sku = product.name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+
+  const absoluteImages = [product.image, ...(product.images || [])].map((img) =>
+    img.startsWith("http") ? img : `https://pleasuretoysgh.com${img}`
+  );
+
   return (
     <div className="max-w-7xl mx-auto px-6 py-24">
       {/* Product JSON-LD Structured Data */}
@@ -204,18 +214,21 @@ export default function ProductDetail() {
             "@context": "https://schema.org",
             "@type": "Product",
             "name": product.name,
-            "image": [product.image, ...(product.images || [])],
-            "description": richDescription,
-            "sku": product.id,
+            "image": absoluteImages,
+            "description": product.description || "",
+            "sku": sku,
+            "brand": {
+              "@type": "Brand",
+              "name": "PleasureToys GH"
+            },
             "offers": {
               "@type": "Offer",
               "url": `https://pleasuretoysgh.com/product/${product.id}`,
               "priceCurrency": "GHS",
-              "price": product.price,
+              "price": product.price.toString(),
               "availability": product.isOutOfStock 
                 ? "https://schema.org/OutOfStock" 
-                : "https://schema.org/InStock",
-              "priceValidUntil": "2030-12-31"
+                : "https://schema.org/InStock"
             }
           })
         }}
@@ -260,6 +273,14 @@ export default function ProductDetail() {
 
       <div className="grid lg:grid-cols-2 gap-16">
         <div className="space-y-6">
+          {activeImage && (
+            <link
+              rel="preload"
+              href={getProductWebpUrl(activeImage, 800)}
+              as="image"
+              fetchPriority="high"
+            />
+          )}
           <motion.div
             key={activeImage}
             initial={{ opacity: 0, scale: 0.9 }}
@@ -267,10 +288,15 @@ export default function ProductDetail() {
             className="rounded-[2.5rem] overflow-hidden border border-white/10"
           >
             <img
-              src={activeImage}
+              src={getProductWebpUrl(activeImage, 800)}
+              srcSet={getProductSrcSet(activeImage)}
+              sizes="(max-width: 640px) 100vw, 800px"
               alt={imageAltText}
               className="w-full aspect-square object-cover"
               referrerPolicy="no-referrer"
+              width={800}
+              height={800}
+              fetchPriority="high"
             />
           </motion.div>
 
@@ -282,7 +308,14 @@ export default function ProductDetail() {
                   activeImage === product.image ? 'border-primary' : 'border-transparent hover:border-white/20'
                 }`}
               >
-                <img src={product.image} alt={`${product.name} main view thumbnail`} className="w-full h-full object-cover" />
+                <img
+                  src={getProductWebpUrl(product.image, 100)}
+                  alt={`${product.name} main view thumbnail`}
+                  className="w-full h-full object-cover"
+                  width={100}
+                  height={100}
+                  loading="lazy"
+                />
               </button>
               {product.images.map((img, idx) => (
                 <button
@@ -292,7 +325,14 @@ export default function ProductDetail() {
                     activeImage === img ? 'border-primary' : 'border-transparent hover:border-white/20'
                   }`}
                 >
-                  <img src={img} alt={`${product.name} detail view ${idx + 1} thumbnail`} className="w-full h-full object-cover" />
+                  <img
+                    src={getProductWebpUrl(img, 100)}
+                    alt={`${product.name} detail view ${idx + 1} thumbnail`}
+                    className="w-full h-full object-cover"
+                    width={100}
+                    height={100}
+                    loading="lazy"
+                  />
                 </button>
               ))}
             </div>

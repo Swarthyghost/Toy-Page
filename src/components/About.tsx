@@ -58,7 +58,7 @@ export default function About() {
             <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
               <item.icon className="text-primary" size={32} />
             </div>
-            <h3 className="text-xl font-bold mb-4">{item.title}</h3>
+            <h2 className="text-xl font-bold mb-4">{item.title}</h2>
             <p className="text-white/40 text-sm leading-relaxed">{item.desc}</p>
           </div>
         ))}

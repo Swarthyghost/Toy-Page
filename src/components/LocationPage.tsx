@@ -80,7 +80,7 @@ export default function LocationPage({ city }: { city: string }) {
               <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-6 text-primary">
                 <feature.icon size={32} />
               </div>
-              <h3 className="text-xl font-bold font-display mb-2">{feature.title}</h3>
+              <h2 className="text-xl font-bold font-display mb-2">{feature.title}</h2>
               <p className="text-white/40">{feature.desc}</p>
             </motion.div>
           ))}

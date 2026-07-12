@@ -41,7 +41,9 @@ function ClientLayout({ children }: { children: React.ReactNode }) {
         </div>
       )}
       {!isAdminPage && <Navbar />}
-      <main className="flex-grow">{children}</main>
+      <main className={`flex-grow ${pathname !== "/" && !isAdminPage ? "pt-24 md:pt-28" : ""}`}>
+        {children}
+      </main>
       {!isAdminPage && <TrustBand />}
       {!isAdminPage && <Footer />}
     </div>

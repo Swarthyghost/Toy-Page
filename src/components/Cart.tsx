@@ -8,6 +8,7 @@ import { usePaystackPayment } from "react-paystack";
 import Link from "next/link";
 import { useSEO } from "../hooks/useSEO";
 import { validatePromoCode, usePromoCode, saveOrder } from "../services/firebaseApi";
+import { getProductWebpUrl } from "../utils/imageOptimizer";
 
 export default function Cart() {
   const { 
@@ -283,17 +284,20 @@ Please confirm receipt of payment and process my order. Thank you!`;
               >
                 <div className="w-16 h-16 sm:w-24 sm:h-24 rounded-xl sm:rounded-2xl overflow-hidden flex-shrink-0">
                   <img
-                    src={item.image}
+                    src={getProductWebpUrl(item.image, 100)}
                     alt={item.name}
                     className="w-full h-full object-cover"
                     referrerPolicy="no-referrer"
+                    width={96}
+                    height={96}
+                    loading="lazy"
                   />
                 </div>
 
                 <div className="flex-grow min-w-0">
-                  <h3 className="font-bold text-sm sm:text-lg group-hover:text-primary transition-colors truncate">
+                  <h2 className="font-bold text-sm sm:text-lg group-hover:text-primary transition-colors truncate">
                     {item.name}
-                  </h3>
+                  </h2>
                   <p className="text-white/40 text-[10px] sm:text-sm mb-1.5 sm:mb-2">{item.category}</p>
                   <div className="flex items-center gap-2 sm:gap-4 flex-wrap sm:flex-nowrap">
                     <div className="flex items-center gap-2.5 sm:gap-3 bg-black/40 rounded-full px-2.5 py-0.5 sm:px-3 sm:py-1 border border-white/10">
@@ -559,7 +563,7 @@ Please confirm receipt of payment and process my order. Thank you!`;
                             {paymentMethod === "WhatsApp" && <Check className="w-4 h-4 text-emerald-400" />}
                           </div>
                           <div>
-                            <h4 className="font-bold text-xs">WhatsApp</h4>
+                            <h3 className="font-bold text-xs">WhatsApp</h3>
                             <p className="text-[9px] text-white/40 mt-0.5">Quick order placement</p>
                           </div>
                         </button>
@@ -591,7 +595,7 @@ Please confirm receipt of payment and process my order. Thank you!`;
                             {paymentMethod === "Paystack" && <Check className="w-4 h-4 text-indigo-400" />}
                           </div>
                           <div>
-                            <h4 className="font-bold text-xs">Card / MoMo</h4>
+                            <h3 className="font-bold text-xs">Card / MoMo</h3>
                             <p className="text-[9px] text-white/40 mt-0.5">Pay via Paystack</p>
                           </div>
                         </button>
@@ -632,10 +636,13 @@ Please confirm receipt of payment and process my order. Thank you!`;
                       {cart.map((item) => (
                         <div key={item.id} className="flex items-center gap-3 p-2 bg-white/5 rounded-xl border border-white/5">
                           <img 
-                            src={item.image} 
+                            src={getProductWebpUrl(item.image, 100)} 
                             alt={item.name} 
                             className="w-10 h-10 object-cover rounded-lg" 
                             referrerPolicy="no-referrer"
+                            width={40}
+                            height={40}
+                            loading="lazy"
                           />
                           <div className="flex-grow min-w-0">
                             <h4 className="text-xs font-bold truncate text-white">{item.name}</h4>
@@ -699,7 +706,10 @@ Please confirm receipt of payment and process my order. Thank you!`;
                       </div>
                       {/* MTN */}
                       <div className="h-6 bg-[#ffcc00] rounded px-1.5 flex items-center justify-center" title="MTN MoMo">
-                        <img src="/mtn.jpg" alt="MTN MoMo" className="h-4 w-auto object-contain rounded-sm" />
+                        <picture className="h-4 w-auto flex items-center justify-center">
+                          <source srcSet="/mtn.webp" type="image/webp" />
+                          <img src="/mtn.jpg" alt="MTN MoMo" className="h-4 w-auto object-contain rounded-sm" width={16} height={16} loading="lazy" />
+                        </picture>
                       </div>
                       {/* Telecel */}
                       <div className="h-6 bg-[#e60000] rounded px-2 flex items-center justify-center" title="Telecel Cash">
@@ -707,7 +717,10 @@ Please confirm receipt of payment and process my order. Thank you!`;
                       </div>
                       {/* AirtelTigo */}
                       <div className="h-6 bg-white rounded px-1 flex items-center justify-center" title="AirtelTigo Money">
-                        <img src="/airteltigo.jpg" alt="AirtelTigo Money" className="h-4 w-auto object-contain" />
+                        <picture className="h-4 w-auto flex items-center justify-center">
+                          <source srcSet="/airteltigo.webp" type="image/webp" />
+                          <img src="/airteltigo.jpg" alt="AirtelTigo Money" className="h-4 w-auto object-contain" width={28} height={16} loading="lazy" />
+                        </picture>
                       </div>
                     </div>
                   </div>

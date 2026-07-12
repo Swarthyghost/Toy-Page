@@ -200,13 +200,20 @@ export default function Hero() {
               <div className="absolute inset-0 bg-primary/10 rounded-[2.5rem] blur-3xl scale-110" />
 
               <div className="relative bg-white/5 border border-white/10 rounded-[2.5rem] overflow-hidden">
+                <link rel="preload" href="/rosetoy2in1.webp" as="image" fetchPriority="high" />
                 {/* Image */}
                 <div className="relative aspect-[4/3] overflow-hidden">
-                  <img
-                    src="/rosetoy2in1.jpg"
-                    alt="Rose Thrusting & Sucking Vibrator"
-                    className="w-full h-full object-cover transition-transform duration-700 hover:scale-105 bg-white"
-                  />
+                  <picture className="w-full h-full">
+                    <source srcSet="/rosetoy2in1.webp" type="image/webp" />
+                    <img
+                      src="/rosetoy2in1.jpg"
+                      alt="Rose Thrusting & Sucking Vibrator"
+                      className="w-full h-full object-cover transition-transform duration-700 hover:scale-105 bg-white"
+                      width={800}
+                      height={600}
+                      fetchPriority="high"
+                    />
+                  </picture>
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
 
                   {/* Featured badge */}
@@ -269,7 +276,7 @@ export default function Hero() {
       {/* ══════════════════════════════════════════
           CATEGORY QUICK-ACCESS
       ══════════════════════════════════════════ */}
-      <section className="max-w-7xl mx-auto px-6 py-20">
+      <section className="max-w-7xl mx-auto px-6 pt-20 pb-10 md:pb-20">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
