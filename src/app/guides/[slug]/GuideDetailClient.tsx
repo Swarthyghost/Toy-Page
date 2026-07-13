@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Calendar, Clock, Share2, ArrowLeft, Send, Check } from 'lucide-react';
 import { fetchGuideBySlug, fetchPublishedGuides, Guide } from '../../../services/firebaseApi';
 import { useProducts } from '../../../context/ProductContext';
@@ -176,15 +177,17 @@ export default function GuideDetailPage() {
 
         {/* Large Featured Image */}
         {guide.featuredImage && (
-          <div className="aspect-[21/9] rounded-[2rem] overflow-hidden border border-white/10 mb-12 shadow-2xl relative">
-            <img
-              src={guide.featuredImage}
-              alt={guide.featuredImageAlt}
-              className="w-full h-full object-cover"
-              loading="eager"
-            />
-          </div>
-        )}
+           <div className="aspect-[21/9] rounded-[2rem] overflow-hidden border border-white/10 mb-12 shadow-2xl relative">
+             <Image
+               src={guide.featuredImage}
+               alt={guide.featuredImageAlt || "Featured Image"}
+               className="object-cover"
+               fill
+               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
+               priority
+             />
+           </div>
+         )}
 
         {/* Layout with Article Body & Social Share side rail */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
@@ -210,11 +213,13 @@ export default function GuideDetailPage() {
                       key={product.id}
                       className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center gap-4 hover:border-primary/50 transition-colors group"
                     >
-                      <img
-                        src={product.image}
-                        alt={product.name}
-                        className="w-16 h-16 rounded-xl object-cover border border-white/10 flex-shrink-0"
-                      />
+                       <Image
+                         src={product.image}
+                         alt={product.name}
+                         className="w-16 h-16 rounded-xl object-cover border border-white/10 flex-shrink-0"
+                         width={64}
+                         height={64}
+                       />
                       <div className="min-w-0 flex-grow">
                         <h3 className="font-bold text-sm truncate group-hover:text-primary transition-colors">
                           <Link href={`/product/${product.id}`}>
@@ -298,11 +303,13 @@ export default function GuideDetailPage() {
                 >
                   <Link href={`/guides/${item.slug}`} className="block relative aspect-video overflow-hidden">
                     {item.featuredImage ? (
-                      <img
-                        src={item.featuredImage}
-                        alt={item.featuredImageAlt}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      />
+                       <Image
+                         src={item.featuredImage}
+                         alt={item.featuredImageAlt || "Guide thumbnail"}
+                         className="object-cover group-hover:scale-105 transition-transform duration-500"
+                         fill
+                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 33vw, 350px"
+                       />
                     ) : (
                       <div className="w-full h-full bg-white/5 flex items-center justify-center text-white/20">
                         <Calendar size={24} />

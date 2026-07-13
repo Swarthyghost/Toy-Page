@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { ShoppingCart, Menu, X } from 'lucide-react';
 import { useCart } from '../context/CartContext';
@@ -55,10 +56,13 @@ export default function Navbar() {
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 group">
           <div className="w-10 h-10 rounded-xl overflow-hidden border border-white/10 group-hover:rotate-12 transition-transform">
-            <picture className="w-full h-full">
-              <source srcSet="/toy.webp" type="image/webp" />
-              <img src="/toy.jpg" alt="Logo" className="w-full h-full object-cover" width={40} height={40} />
-            </picture>
+            <Image
+              src="/toy.webp"
+              alt="Logo"
+              className="w-full h-full object-cover"
+              width={40}
+              height={40}
+            />
           </div>
           <span className="text-xl font-display font-bold tracking-tight">
             PleasureToys <span className="text-primary">GH</span>

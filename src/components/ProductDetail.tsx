@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { motion } from "motion/react";
-import { getProductWebpUrl, getProductSrcSet } from "../utils/imageOptimizer";
+import Image from "next/image";
 import {
   ShoppingCart,
   ArrowLeft,
@@ -273,30 +273,21 @@ export default function ProductDetail() {
 
       <div className="grid lg:grid-cols-2 gap-16">
         <div className="space-y-6">
-          {activeImage && (
-            <link
-              rel="preload"
-              href={getProductWebpUrl(activeImage, 800)}
-              as="image"
-              fetchPriority="high"
-            />
-          )}
           <motion.div
             key={activeImage}
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             className="rounded-[2.5rem] overflow-hidden border border-white/10"
           >
-            <img
-              src={getProductWebpUrl(activeImage, 800)}
-              srcSet={getProductSrcSet(activeImage)}
+            <Image
+              src={activeImage}
               sizes="(max-width: 640px) 100vw, 800px"
               alt={imageAltText}
               className="w-full aspect-square object-cover"
               referrerPolicy="no-referrer"
               width={800}
               height={800}
-              fetchPriority="high"
+              priority
             />
           </motion.div>
 
@@ -308,13 +299,12 @@ export default function ProductDetail() {
                   activeImage === product.image ? 'border-primary' : 'border-transparent hover:border-white/20'
                 }`}
               >
-                <img
-                  src={getProductWebpUrl(product.image, 100)}
+                <Image
+                  src={product.image}
                   alt={`${product.name} main view thumbnail`}
                   className="w-full h-full object-cover"
                   width={100}
                   height={100}
-                  loading="lazy"
                 />
               </button>
               {product.images.map((img, idx) => (
@@ -325,13 +315,12 @@ export default function ProductDetail() {
                     activeImage === img ? 'border-primary' : 'border-transparent hover:border-white/20'
                   }`}
                 >
-                  <img
-                    src={getProductWebpUrl(img, 100)}
+                  <Image
+                    src={img}
                     alt={`${product.name} detail view ${idx + 1} thumbnail`}
                     className="w-full h-full object-cover"
                     width={100}
                     height={100}
-                    loading="lazy"
                   />
                 </button>
               ))}

@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Image from "next/image";
 import { motion } from "motion/react";
 import { Heart, Shield, Eye, Lock } from "lucide-react";
 import { useSEO } from "../hooks/useSEO";
@@ -65,10 +66,12 @@ export default function About() {
       </div>
 
       <div className="rounded-[3rem] overflow-hidden relative h-[400px]">
-        <img
+        <Image
           src="https://images.unsplash.com/photo-1518623489648-a173ef7824f3?auto=format&fit=crop&q=80&w=2000"
           alt="Atmosphere"
-          className="w-full h-full object-cover"
+          className="object-cover"
+          fill
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
           referrerPolicy="no-referrer"
         />
         <div className="absolute inset-0 bg-black/60 flex items-center justify-center p-12">

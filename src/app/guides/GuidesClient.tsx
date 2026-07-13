@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { FileText, Calendar, BookOpen, ChevronRight, SlidersHorizontal } from 'lucide-react';
 import { fetchPublishedGuides, Guide } from '../../services/firebaseApi';
 import { useSEO } from '../../hooks/useSEO';
-import { getProductWebpUrl } from '../../utils/imageOptimizer';
+import Image from 'next/image';
 
 const CATEGORIES = ["Self-Care", "Beginner Guides", "Product Education", "Wellness Tips"];
 const POSTS_PER_PAGE = 6;
@@ -125,25 +125,16 @@ export default function GuidesPage() {
             transition={{ duration: 0.6 }}
             className="mb-16 bg-zinc-900/40 border border-white/10 rounded-[2rem] overflow-hidden hover:border-primary/30 transition-all group"
           >
-            {featuredPost.featuredImage && (
-              <link
-                rel="preload"
-                href={getProductWebpUrl(featuredPost.featuredImage, 800)}
-                as="image"
-                fetchPriority="high"
-              />
-            )}
             <div className="grid md:grid-cols-12 gap-8 items-center">
               <div className="md:col-span-7 aspect-[16/10] md:aspect-auto md:h-[400px] overflow-hidden relative">
                 {featuredPost.featuredImage ? (
-                  <img
-                    src={getProductWebpUrl(featuredPost.featuredImage, 800)}
-                    alt={featuredPost.featuredImageAlt}
+                  <Image
+                    src={featuredPost.featuredImage}
+                    alt={featuredPost.featuredImageAlt || "Featured Guide"}
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                     width={640}
                     height={400}
-                    loading="eager"
-                    fetchPriority="high"
+                    priority
                   />
                 ) : (
                   <div className="w-full h-full bg-white/5 flex items-center justify-center text-white/20">
@@ -242,13 +233,12 @@ export default function GuidesPage() {
                 >
                   <Link href={`/guides/${post.slug}`} className="block relative aspect-[16/10] overflow-hidden bg-zinc-950">
                     {post.featuredImage ? (
-                      <img
-                        src={getProductWebpUrl(post.featuredImage, 400)}
-                        alt={post.featuredImageAlt}
+                      <Image
+                        src={post.featuredImage}
+                        alt={post.featuredImageAlt || "Guide thumbnail"}
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                         width={400}
                         height={250}
-                        loading="lazy"
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-white/10">

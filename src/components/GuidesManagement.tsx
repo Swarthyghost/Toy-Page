@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'motion/react';
 import { Plus, Edit2, Trash2, X, Tag, FileText, Upload, Copy, Eye, Calendar, Heading, Bold, Italic, List, Quote, Link as LinkIcon, Image as ImageIcon, Search } from 'lucide-react';
 import { fetchGuides, createGuide, updateGuide, deleteGuide, Guide, fetchProducts, Product } from '../services/firebaseApi';
@@ -415,7 +416,7 @@ export default function GuidesManagement() {
                   <td className="p-6">
                     <div className="flex items-center gap-4">
                       {guide.featuredImage ? (
-                        <img src={guide.featuredImage} alt="" className="w-12 h-12 rounded-lg object-cover" />
+                    <Image src={guide.featuredImage} alt="" className="w-12 h-12 rounded-lg object-cover" width={48} height={48} unoptimized />
                       ) : (
                         <div className="w-12 h-12 bg-white/5 border border-white/10 rounded-lg flex items-center justify-center text-white/30"><FileText size={18} /></div>
                       )}
@@ -626,7 +627,9 @@ export default function GuidesManagement() {
                       
                       {formData.featuredImage && (
                         <div className="relative aspect-video rounded-2xl overflow-hidden border border-white/10">
-                          <img src={formData.featuredImage} alt="Featured Preview" className="w-full h-full object-cover" />
+                          <div className="relative w-full h-full min-h-[160px]">
+                            <Image src={formData.featuredImage} alt="Featured Preview" className="object-cover" fill unoptimized />
+                          </div>
                         </div>
                       )}
                     </div>
@@ -804,7 +807,7 @@ export default function GuidesManagement() {
                               : 'bg-zinc-950 border-white/10 hover:border-white/30 text-white/60'
                           }`}
                         >
-                          <img src={prod.image} alt="" className="w-8 h-8 rounded object-cover flex-shrink-0" />
+                          <Image src={prod.image} alt="" className="w-8 h-8 rounded object-cover flex-shrink-0" width={32} height={32} unoptimized />
                           <div className="truncate">
                             <p className="text-xs font-bold truncate">{prod.name}</p>
                             <p className="text-[10px] text-white/30 font-mono">GHS {prod.price.toFixed(2)}</p>
@@ -941,8 +944,8 @@ export default function GuidesManagement() {
                 </div>
 
                 {previewGuideData.featuredImage && (
-                  <div className="aspect-video rounded-3xl overflow-hidden mb-8 border border-white/10">
-                    <img src={previewGuideData.featuredImage} alt={previewGuideData.featuredImageAlt} className="w-full h-full object-cover" />
+                  <div className="aspect-video rounded-3xl overflow-hidden mb-8 border border-white/10 relative">
+                    <Image src={previewGuideData.featuredImage} alt={previewGuideData.featuredImageAlt || ""} className="object-cover" fill unoptimized />
                   </div>
                 )}
 
@@ -955,7 +958,7 @@ export default function GuidesManagement() {
                     <div className="grid grid-cols-2 gap-4">
                       {products.filter(p => previewGuideData.relatedProductIds.includes(p.id)).map(prod => (
                         <div key={prod.id} className="p-4 bg-white/5 border border-white/10 rounded-2xl flex items-center gap-4">
-                          <img src={prod.image} alt="" className="w-12 h-12 rounded-lg object-cover" />
+                          <Image src={prod.image} alt="" className="w-12 h-12 rounded-lg object-cover" width={48} height={48} unoptimized />
                           <div>
                             <p className="font-bold text-sm">{prod.name}</p>
                             <p className="text-xs text-emerald-400 font-bold">GHS {prod.price.toFixed(2)}</p>

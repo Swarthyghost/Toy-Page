@@ -3,6 +3,7 @@
 import { motion, useScroll, useTransform } from "motion/react";
 import { ArrowRight, Sparkles, Shield, Package, Truck } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRef } from "react";
 import { useSEO } from "../hooks/useSEO";
 
@@ -200,20 +201,15 @@ export default function Hero() {
               <div className="absolute inset-0 bg-primary/10 rounded-[2.5rem] blur-3xl scale-110" />
 
               <div className="relative bg-white/5 border border-white/10 rounded-[2.5rem] overflow-hidden">
-                <link rel="preload" href="/rosetoy2in1.webp" as="image" fetchPriority="high" />
-                {/* Image */}
                 <div className="relative aspect-[4/3] overflow-hidden">
-                  <picture className="w-full h-full">
-                    <source srcSet="/rosetoy2in1.webp" type="image/webp" />
-                    <img
-                      src="/rosetoy2in1.jpg"
-                      alt="Rose Thrusting & Sucking Vibrator"
-                      className="w-full h-full object-cover transition-transform duration-700 hover:scale-105 bg-white"
-                      width={800}
-                      height={600}
-                      fetchPriority="high"
-                    />
-                  </picture>
+                  <Image
+                    src="/rosetoy2in1.webp"
+                    alt="Rose Thrusting & Sucking Vibrator"
+                    className="w-full h-full object-cover transition-transform duration-700 hover:scale-105 bg-white"
+                    width={800}
+                    height={600}
+                    priority
+                  />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
 
                   {/* Featured badge */}

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'motion/react';
 import { Plus, Edit2, Trash2, X, Image as ImageIcon, DollarSign, Tag, FileText, Upload, LogOut, Gift, Settings, BookOpen, List, LayoutGrid, Copy } from 'lucide-react';
 import { useAdminAuth } from '../context/AdminAuthContext';
@@ -394,7 +395,7 @@ export default function AdminDashboard() {
               <tr key={product.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
                 <td className="p-6">
                   <div className="flex items-center gap-4">
-                    <img src={product.image} alt="" className="w-12 h-12 rounded-lg object-cover" />
+                    <Image src={product.image} alt="" className="w-12 h-12 rounded-lg object-cover" width={48} height={48} unoptimized />
                     <span className="font-bold">{product.name}</span>
                     {product.isOutOfStock && (
                       <span className="px-2 py-0.5 bg-primary/20 text-primary text-[10px] font-bold uppercase tracking-wider rounded-full border border-primary/20">
@@ -523,11 +524,14 @@ export default function AdminDashboard() {
                       
                       {(formData.image || imageFile) && (
                         <div className="relative">
-                          <img
-                            src={formData.image}
-                            alt="Product preview"
-                            className="w-full h-48 object-cover rounded-xl"
-                          />
+                           <Image
+                             src={formData.image}
+                             alt="Product preview"
+                             className="w-full h-48 object-cover rounded-xl"
+                             width={400}
+                             height={192}
+                             unoptimized
+                           />
                           {imageFile && (
                             <div className="absolute top-2 right-2 px-2 py-1 bg-primary text-white text-xs rounded-full">
                               New Image
@@ -547,7 +551,7 @@ export default function AdminDashboard() {
                       {/* Existing additional images */}
                       {formData.images.map((img, idx) => (
                         <div key={idx} className="relative group overflow-hidden rounded-xl border border-white/10 aspect-square">
-                          <img src={img} alt="" className="w-full h-full object-cover transition-transform group-hover:scale-110" />
+                           <Image src={img} alt="" className="object-cover transition-transform group-hover:scale-110" fill sizes="100px" unoptimized />
                           
                           {/* Hover Overlay */}
                           <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center gap-3">

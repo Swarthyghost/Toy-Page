@@ -6,9 +6,8 @@ import { ShoppingCart, Eye } from 'lucide-react';
 import { Product, useCart } from '../context/CartContext';
 import { useSiteSettings } from '../context/SiteSettingsContext';
 import Link from 'next/link';
+import Image from 'next/image';
 import { flyToCart } from '../utils/animations';
-
-import { getProductWebpUrl, getProductSrcSet } from '../utils/imageOptimizer';
 
 interface ProductCardProps {
   product: Product;
@@ -21,8 +20,6 @@ export default function ProductCard({ product, index }: ProductCardProps) {
   const { siteSettings } = useSiteSettings();
   const showDiscount = siteSettings?.isDiscountTagsActive !== false && product.originalPrice && product.originalPrice > product.price;
 
-  const isLcpCandidate = index === 0;
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -33,17 +30,13 @@ export default function ProductCard({ product, index }: ProductCardProps) {
     >
       {/* Image Container */}
       <div className="relative aspect-square overflow-hidden">
-        <img
-          src={getProductWebpUrl(product.image, 400)}
-          srcSet={getProductSrcSet(product.image)}
-          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+        <Image
+          src={product.image}
           alt={`${product.name} - premium sex toys Ghana - PleasureToysGH`}
-          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+          className="object-cover transition-transform duration-500 group-hover:scale-110"
           referrerPolicy="no-referrer"
-          width={400}
-          height={400}
-          loading={isLcpCandidate ? "eager" : "lazy"}
-          fetchPriority={isLcpCandidate ? "high" : undefined}
+          fill
+          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
         />
         {!product.isOutOfStock && (
           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
