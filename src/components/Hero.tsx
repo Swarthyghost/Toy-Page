@@ -122,7 +122,7 @@ export default function Hero() {
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-primary text-xs font-bold uppercase tracking-[0.15em] mb-8"
               >
                 <Sparkles size={12} />
-                Ghana's Premier Adult Boutique
+                Ghana's Premier Adult Store
               </motion.div>
 
               {/* Headline */}
