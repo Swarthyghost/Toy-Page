@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'motion/react';
-import { Plus, Edit2, Trash2, X, Image as ImageIcon, DollarSign, Tag, FileText, Upload, LogOut, Gift, Settings, BookOpen, List, LayoutGrid, Copy } from 'lucide-react';
+import { Plus, Edit2, Trash2, X, Image as ImageIcon, DollarSign, Tag, FileText, Upload, LogOut, Gift, Settings, BookOpen, List, LayoutGrid, Copy, Star } from 'lucide-react';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { fetchProducts, createProduct, updateProduct, deleteProduct, Product, SiteSettings, fetchSiteSettings, updateSiteSettings, fetchOrders, CustomerOrder, updateOrder, deleteOrder } from '../services/firebaseApi';
 import { uploadImage } from '../config/cloudinary';
@@ -29,6 +29,7 @@ export default function AdminDashboard() {
     category: 'Vibrators',
     description: '',
     isOutOfStock: false,
+    featured: false,
   });
   const [editingOrder, setEditingOrder] = useState<CustomerOrder | null>(null);
   const [orderFormData, setOrderFormData] = useState({
@@ -117,6 +118,19 @@ export default function AdminDashboard() {
     setProducts(data);
   };
 
+  const handleFeaturedToggle = (checked: boolean) => {
+    if (checked) {
+      const currentFeatured = products.find(p => p.featured && p.id !== editingProduct?.id);
+      if (currentFeatured) {
+        const confirmSwap = window.confirm(`This will replace "${currentFeatured.name}" as the featured product. Do you want to proceed?`);
+        if (!confirmSwap) {
+          return;
+        }
+      }
+    }
+    setFormData(prev => ({ ...prev, featured: checked }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsUploading(true);
@@ -142,6 +156,7 @@ export default function AdminDashboard() {
         category: formData.category,
         description: formData.description,
         isOutOfStock: formData.isOutOfStock,
+        featured: formData.featured,
       };
 
       const validAdditionalFiles = additionalImageFiles.filter((f): f is File => f !== null);
@@ -156,7 +171,7 @@ export default function AdminDashboard() {
       setEditingProduct(null);
       setImageFile(null);
       setAdditionalImageFiles([]);
-      setFormData({ name: '', price: '', originalPrice: '', image: '', images: [], category: 'Vibrators', description: '', isOutOfStock: false });
+      setFormData({ name: '', price: '', originalPrice: '', image: '', images: [], category: 'Vibrators', description: '', isOutOfStock: false, featured: false });
       loadProducts();
     } catch (error) {
       console.error('Error saving product:', error);
@@ -177,6 +192,7 @@ export default function AdminDashboard() {
       category: product.category,
       description: product.description,
       isOutOfStock: product.isOutOfStock || false,
+      featured: product.featured || false,
     });
     setImageFile(null);
     setAdditionalImageFiles(new Array(product.images?.length || 0).fill(null));
@@ -370,7 +386,7 @@ export default function AdminDashboard() {
                 setEditingProduct(null);
                 setImageFile(null);
                 setAdditionalImageFiles([]);
-                setFormData({ name: '', price: '', originalPrice: '', image: '', images: [], category: 'Vibrators', description: '', isOutOfStock: false });
+                setFormData({ name: '', price: '', originalPrice: '', image: '', images: [], category: 'Vibrators', description: '', isOutOfStock: false, featured: false });
                 setIsModalOpen(true);
               }}
               className="px-6 py-3 bg-primary text-white font-bold rounded-2xl flex items-center gap-2 hover:scale-105 transition-transform"
@@ -397,6 +413,11 @@ export default function AdminDashboard() {
                   <div className="flex items-center gap-4">
                     <Image src={product.image} alt="" className="w-12 h-12 rounded-lg object-cover" width={48} height={48} unoptimized />
                     <span className="font-bold">{product.name}</span>
+                    {product.featured && (
+                      <span className="flex items-center gap-1 px-2 py-0.5 bg-yellow-400/25 text-yellow-400 text-[10px] font-bold uppercase tracking-wider rounded-full border border-yellow-400/20">
+                        <Star size={10} className="fill-yellow-400" /> Featured
+                      </span>
+                    )}
                     {product.isOutOfStock && (
                       <span className="px-2 py-0.5 bg-primary/20 text-primary text-[10px] font-bold uppercase tracking-wider rounded-full border border-primary/20">
                         Restocking
@@ -626,6 +647,23 @@ export default function AdminDashboard() {
                     {formData.isOutOfStock && <X size={14} className="text-white" />}
                   </div>
                   <span className="text-sm font-bold text-white/80">Mark as Out of Stock (Restocking soon)</span>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center gap-3 p-4 bg-white/5 border border-white/10 rounded-2xl cursor-pointer hover:border-primary/50 transition-colors"
+                       onClick={() => handleFeaturedToggle(!formData.featured)}>
+                    <div className={`w-6 h-6 rounded-md border flex items-center justify-center transition-colors ${formData.featured ? 'bg-primary border-primary' : 'border-white/20'}`}>
+                      {formData.featured && <Star size={14} className="text-white fill-white" />}
+                    </div>
+                    <span className="text-sm font-bold text-white/80">Set as Featured Product</span>
+                  </div>
+                  {formData.featured && (
+                    <p className="text-xs text-primary/80 ml-1">
+                      {products.find(p => p.featured && p.id !== editingProduct?.id) 
+                        ? `Note: This will replace "${products.find(p => p.featured && p.id !== editingProduct?.id)?.name}" as the featured product.`
+                        : 'This product will be highlighted on the homepage.'}
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-2">

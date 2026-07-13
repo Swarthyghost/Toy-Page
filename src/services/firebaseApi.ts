@@ -11,7 +11,8 @@ import {
   Timestamp,
   onSnapshot,
   setDoc,
-  where
+  where,
+  writeBatch
 } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { uploadImage } from '../config/cloudinary';
@@ -26,6 +27,7 @@ export interface Product {
   category: string;
   description: string;
   isOutOfStock: boolean;
+  featured?: boolean;
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }
@@ -104,14 +106,37 @@ export const createProduct = async (productData: Omit<Product, 'id' | 'createdAt
       image: imageUrl,
       images: additionalImageUrls,
       isOutOfStock: productData.isOutOfStock || false,
+      featured: productData.featured || false,
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now(),
     };
 
     console.log('Creating product with data:', product);
-    const docRef = await addDoc(collection(db, PRODUCTS_COLLECTION), product);
-    console.log('Product created with ID:', docRef.id);
-    return docRef.id;
+
+    if (product.featured) {
+      const q = query(collection(db, PRODUCTS_COLLECTION), where('featured', '==', true));
+      const querySnapshot = await getDocs(q);
+      
+      const batch = writeBatch(db);
+      
+      querySnapshot.docs.forEach((docSnap) => {
+        batch.update(docSnap.ref, { 
+          featured: false,
+          updatedAt: Timestamp.now() 
+        });
+      });
+      
+      const newDocRef = doc(collection(db, PRODUCTS_COLLECTION));
+      batch.set(newDocRef, product);
+      
+      await batch.commit();
+      console.log('Product created with ID (via batch):', newDocRef.id);
+      return newDocRef.id;
+    } else {
+      const docRef = await addDoc(collection(db, PRODUCTS_COLLECTION), product);
+      console.log('Product created with ID:', docRef.id);
+      return docRef.id;
+    }
   } catch (error) {
     console.error('Error in createProduct:', error);
     throw error;
@@ -142,7 +167,27 @@ export const updateProduct = async (id: string, productData: Partial<Product>, i
   };
 
   const docRef = doc(db, PRODUCTS_COLLECTION, id);
-  await updateDoc(docRef, updates);
+
+  if (productData.featured === true) {
+    const q = query(collection(db, PRODUCTS_COLLECTION), where('featured', '==', true));
+    const querySnapshot = await getDocs(q);
+    
+    const batch = writeBatch(db);
+    
+    querySnapshot.docs.forEach((docSnap) => {
+      if (docSnap.id !== id) {
+        batch.update(docSnap.ref, { 
+          featured: false,
+          updatedAt: Timestamp.now() 
+        });
+      }
+    });
+    
+    batch.update(docRef, updates);
+    await batch.commit();
+  } else {
+    await updateDoc(docRef, updates);
+  }
 };
 
 export const deleteProduct = async (id: string): Promise<void> => {
