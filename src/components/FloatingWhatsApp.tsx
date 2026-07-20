@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import { usePathname } from "next/navigation";
 import { motion, useAnimation } from "motion/react";
 
 // Snapping and placement constants
@@ -10,8 +11,11 @@ const DEFAULT_BOTTOM_OFFSET = 24;
 const WHATSAPP_URL = "https://wa.me/233266181581?text=Hello%20pleasure%20Toys%20GH%20I%20am%20interested%20in%20your%20products";
 
 export default function FloatingWhatsApp() {
+  const pathname = usePathname();
   const controls = useAnimation();
   const buttonRef = useRef<HTMLDivElement>(null);
+
+  const isAdminPage = pathname?.startsWith("/admin");
   
   const [initialPos, setInitialPos] = useState<{ x: number; y: number } | null>(null);
   const [dragConstraints, setDragConstraints] = useState({ top: 0, bottom: 0, left: 0, right: 0 });
@@ -149,7 +153,7 @@ export default function FloatingWhatsApp() {
     }
   };
 
-  if (!initialPos) return null;
+  if (isAdminPage || !initialPos) return null;
 
   return (
     <motion.div
