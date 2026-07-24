@@ -105,8 +105,13 @@ ${promoDetails}
 
 Please confirm my order. Thank you!`;
 
-    // Pre-open the tab synchronously to bypass browser popup blockers
-    const whatsappWindow = window.open("", "_blank");
+    // Device detection
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+      navigator.userAgent
+    );
+
+    // Pre-open the tab synchronously on desktop to bypass browser popup blockers
+    const whatsappWindow = !isMobile ? window.open("", "_blank") : null;
 
     try {
       // Save order details to Firestore
@@ -137,13 +142,36 @@ Please confirm my order. Thank you!`;
     }
 
     const encodedMessage = encodeURIComponent(message);
-    const whatsappUrl = `https://wa.me/233266181581?text=${encodedMessage}`;
+    const phone = "233266181581";
 
-    if (whatsappWindow) {
-      whatsappWindow.location.href = whatsappUrl;
+    if (isMobile) {
+      const whatsappAppUrl = `whatsapp://send?phone=${phone}&text=${encodedMessage}`;
+      const whatsappWebFallbackUrl = `https://api.whatsapp.com/send?phone=${phone}&text=${encodedMessage}`;
+
+      // Set up visibility check for fallback
+      let appOpened = false;
+      const handleBlur = () => {
+        appOpened = true;
+      };
+      window.addEventListener("blur", handleBlur, { once: true });
+
+      // Attempt to open the WhatsApp app directly
+      window.location.href = whatsappAppUrl;
+
+      // Fallback after 1 second if window did not lose focus
+      setTimeout(() => {
+        window.removeEventListener("blur", handleBlur);
+        if (!appOpened) {
+          window.location.href = whatsappWebFallbackUrl;
+        }
+      }, 1000);
     } else {
-      // Fallback if window creation failed completely
-      window.location.href = whatsappUrl;
+      const whatsappWebUrl = `https://web.whatsapp.com/send?phone=${phone}&text=${encodedMessage}`;
+      if (whatsappWindow) {
+        whatsappWindow.location.href = whatsappWebUrl;
+      } else {
+        window.open(whatsappWebUrl, "_blank", "noopener,noreferrer");
+      }
     }
     clearCart();
     setIsSubmitting(false);
@@ -221,7 +249,7 @@ ${promoDetails}
 Please confirm receipt of payment and process my order. Thank you!`;
 
     const encodedMessage = encodeURIComponent(message);
-    const whatsappUrl = `https://wa.me/233266181581?text=${encodedMessage}`;
+    const phone = "233266181581";
 
     alert("Payment successful! Redirecting you to WhatsApp to confirm your order details.");
     
@@ -229,8 +257,35 @@ Please confirm receipt of payment and process my order. Thank you!`;
     clearCart();
     setIsCheckoutOpen(false);
 
-    // Redirect to WhatsApp
-    window.location.href = whatsappUrl;
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+      navigator.userAgent
+    );
+
+    if (isMobile) {
+      const whatsappAppUrl = `whatsapp://send?phone=${phone}&text=${encodedMessage}`;
+      const whatsappWebFallbackUrl = `https://api.whatsapp.com/send?phone=${phone}&text=${encodedMessage}`;
+
+      // Set up visibility check for fallback
+      let appOpened = false;
+      const handleBlur = () => {
+        appOpened = true;
+      };
+      window.addEventListener("blur", handleBlur, { once: true });
+
+      // Attempt to open the WhatsApp app directly
+      window.location.href = whatsappAppUrl;
+
+      // Fallback after 1 second if window did not lose focus
+      setTimeout(() => {
+        window.removeEventListener("blur", handleBlur);
+        if (!appOpened) {
+          window.location.href = whatsappWebFallbackUrl;
+        }
+      }, 1000);
+    } else {
+      const whatsappWebUrl = `https://web.whatsapp.com/send?phone=${phone}&text=${encodedMessage}`;
+      window.location.href = whatsappWebUrl;
+    }
   };
 
   const handlePaystackCloseAction = () => {
