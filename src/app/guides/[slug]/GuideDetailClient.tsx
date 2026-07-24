@@ -8,6 +8,7 @@ import { Calendar, Clock, Share2, ArrowLeft, Send, Check } from 'lucide-react';
 import { fetchGuideBySlug, fetchPublishedGuides, Guide } from '../../../services/firebaseApi';
 import { useProducts } from '../../../context/ProductContext';
 import { useSEO } from '../../../hooks/useSEO';
+import { parseMarkdown } from '../../../utils/markdown';
 
 export default function GuideDetailPage() {
   const params = useParams();
@@ -196,7 +197,7 @@ export default function GuideDetailPage() {
           <div className="lg:col-span-9 space-y-8">
             <div
               className="rich-text-content prose prose-invert max-w-none prose-headings:font-display"
-              dangerouslySetInnerHTML={{ __html: guide.body }}
+              dangerouslySetInnerHTML={{ __html: parseMarkdown(guide.body) }}
             />
             
             {/* Call To Action: Linked Products */}

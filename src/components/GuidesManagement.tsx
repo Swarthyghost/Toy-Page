@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'motion/react';
-import { Plus, Edit2, Trash2, X, Tag, FileText, Upload, Copy, Eye, Calendar, Heading, Bold, Italic, List, Quote, Link as LinkIcon, Image as ImageIcon, Search } from 'lucide-react';
+import { Plus, Edit2, Trash2, X, Tag, FileText, Upload, Copy, Eye, Calendar, Search } from 'lucide-react';
 import { fetchGuides, createGuide, updateGuide, deleteGuide, Guide, fetchProducts, Product } from '../services/firebaseApi';
-import { uploadImage } from '../config/cloudinary';
 import { Timestamp } from 'firebase/firestore';
+import { parseMarkdown } from '../utils/markdown';
+import MarkdownEditor from './MarkdownEditor';
 
 const CATEGORIES = ["Self-Care", "Beginner Guides", "Product Education", "Wellness Tips"];
 
@@ -40,11 +41,6 @@ export default function GuidesManagement() {
 
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [isUploadingInline, setIsUploadingInline] = useState(false);
-  const [editorTab, setEditorTab] = useState<'write' | 'preview'>('write');
-
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const inlineImageInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     loadGuides();
@@ -111,42 +107,7 @@ export default function GuidesManagement() {
     }
   };
 
-  // Helper to insert formatting tags at cursor
-  const insertTextAtCursor = (before: string, after: string = '') => {
-    const textarea = textareaRef.current;
-    if (!textarea) return;
 
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const text = textarea.value;
-    const selection = text.substring(start, end);
-    
-    const replacement = before + selection + after;
-    const newBody = text.substring(0, start) + replacement + text.substring(end);
-    
-    setFormData(prev => ({ ...prev, body: newBody }));
-
-    // Refocus and select
-    setTimeout(() => {
-      textarea.focus();
-      textarea.setSelectionRange(start + before.length, start + before.length + selection.length);
-    }, 0);
-  };
-
-  const handleInlineImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setIsUploadingInline(true);
-    try {
-      const url = await uploadImage(file);
-      insertTextAtCursor(`\n<img src="${url}" alt="${file.name.replace(/\.[^/.]+$/, "")}" class="rounded-2xl max-w-full my-6 mx-auto block shadow-md" />\n`);
-    } catch (err) {
-      console.error(err);
-      alert("Failed to upload inline image.");
-    } finally {
-      setIsUploadingInline(false);
-    }
-  };
 
   const handleProductToggle = (productId: string) => {
     setFormData(prev => {
@@ -179,7 +140,6 @@ export default function GuidesManagement() {
       isFeatured: false,
       relatedProductIds: guide.relatedProductIds || [],
     });
-    setEditorTab('write');
     setIsModalOpen(true);
   };
 
@@ -201,7 +161,6 @@ export default function GuidesManagement() {
       isFeatured: guide.isFeatured || false,
       relatedProductIds: guide.relatedProductIds || [],
     });
-    setEditorTab('write');
     setIsModalOpen(true);
   };
 
@@ -348,7 +307,6 @@ export default function GuidesManagement() {
               isFeatured: false,
               relatedProductIds: [],
             });
-            setEditorTab('write');
             setIsModalOpen(true);
           }}
           className="px-6 py-3 bg-primary text-white font-bold rounded-2xl flex items-center gap-2 hover:scale-105 transition-transform"
@@ -648,143 +606,13 @@ export default function GuidesManagement() {
                   </div>
                 </div>
 
-                {/* Rich-Text Body Editor */}
-                <div className="space-y-4 border border-white/10 rounded-3xl p-6 bg-white/5">
-                  <div className="flex justify-between items-center pb-4 border-b border-white/10">
-                    <label className="text-xs font-bold uppercase tracking-widest text-white/40">Article Body Editor</label>
-                    
-                    <div className="flex bg-zinc-950 p-1 rounded-xl border border-white/10">
-                      <button
-                        type="button"
-                        onClick={() => setEditorTab('write')}
-                        className={`px-3 py-1 text-xs font-bold rounded-lg transition-all ${
-                          editorTab === 'write' ? 'bg-primary text-white' : 'text-white/40 hover:text-white'
-                        }`}
-                      >
-                        Write
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setEditorTab('preview')}
-                        className={`px-3 py-1 text-xs font-bold rounded-lg transition-all ${
-                          editorTab === 'preview' ? 'bg-primary text-white' : 'text-white/40 hover:text-white'
-                        }`}
-                      >
-                        Preview (Rendered HTML)
-                      </button>
-                    </div>
-                  </div>
-
-                  {editorTab === 'write' ? (
-                    <div className="space-y-4">
-                      {/* Editor Toolbar */}
-                      <div className="flex flex-wrap gap-2 p-2 bg-zinc-950 rounded-xl border border-white/10">
-                        <button
-                          type="button"
-                          onClick={() => insertTextAtCursor('<h2>', '</h2>')}
-                          className="p-2 hover:bg-white/10 rounded-lg text-white/60 hover:text-white transition-colors flex items-center gap-1 text-xs font-bold"
-                          title="Heading 2"
-                        >
-                          <Heading size={16} /><span className="text-[10px]">H2</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => insertTextAtCursor('<h3>', '</h3>')}
-                          className="p-2 hover:bg-white/10 rounded-lg text-white/60 hover:text-white transition-colors flex items-center gap-1 text-xs font-bold"
-                          title="Heading 3"
-                        >
-                          <Heading size={14} /><span className="text-[10px]">H3</span>
-                        </button>
-                        <div className="w-px bg-white/10 self-stretch my-1" />
-                        <button
-                          type="button"
-                          onClick={() => insertTextAtCursor('<strong>', '</strong>')}
-                          className="p-2 hover:bg-white/10 rounded-lg text-white/60 hover:text-white transition-colors"
-                          title="Bold"
-                        >
-                          <Bold size={16} />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => insertTextAtCursor('<em>', '</em>')}
-                          className="p-2 hover:bg-white/10 rounded-lg text-white/60 hover:text-white transition-colors"
-                          title="Italic"
-                        >
-                          <Italic size={16} />
-                        </button>
-                        <div className="w-px bg-white/10 self-stretch my-1" />
-                        <button
-                          type="button"
-                          onClick={() => insertTextAtCursor('<ul>\n  <li>', '</li>\n  <li>item 2</li>\n</ul>')}
-                          className="p-2 hover:bg-white/10 rounded-lg text-white/60 hover:text-white transition-colors"
-                          title="Bullet List"
-                        >
-                          <List size={16} />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => insertTextAtCursor('<blockquote>', '</blockquote>')}
-                          className="p-2 hover:bg-white/10 rounded-lg text-white/60 hover:text-white transition-colors"
-                          title="Blockquote"
-                        >
-                          <Quote size={16} />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const url = prompt("Enter website link URL:");
-                            if (url) insertTextAtCursor(`<a href="${url}" target="_blank">`, '</a>');
-                          }}
-                          className="p-2 hover:bg-white/10 rounded-lg text-white/60 hover:text-white transition-colors"
-                          title="Insert Link"
-                        >
-                          <LinkIcon size={16} />
-                        </button>
-                        <div className="w-px bg-white/10 self-stretch my-1" />
-                        
-                        <button
-                          type="button"
-                          disabled={isUploadingInline}
-                          onClick={() => inlineImageInputRef.current?.click()}
-                          className="p-2 hover:bg-white/10 rounded-lg text-white/60 hover:text-white transition-colors flex items-center gap-1.5 text-xs font-bold disabled:opacity-50"
-                          title="Upload inline image to post body"
-                        >
-                          {isUploadingInline ? (
-                            <div className="w-4 h-4 border border-white border-t-transparent rounded-full animate-spin" />
-                          ) : (
-                            <ImageIcon size={16} />
-                          )}
-                          <span>Upload Image</span>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            ref={inlineImageInputRef}
-                            onChange={handleInlineImageUpload}
-                            className="hidden"
-                          />
-                        </button>
-                      </div>
-
-                      {/* Code Area */}
-                      <textarea
-                        required
-                        ref={textareaRef}
-                        placeholder="Write your rich-text HTML content here. Use the toolbar buttons above to quickly insert elements..."
-                        value={formData.body}
-                        onChange={(e) => setFormData(prev => ({ ...prev, body: e.target.value }))}
-                        className="w-full px-6 py-4 bg-zinc-950 border border-white/10 rounded-2xl focus:border-primary focus:outline-none transition-colors text-white font-mono text-sm min-h-[300px] resize-y"
-                      />
-                    </div>
-                  ) : (
-                    <div className="p-8 bg-zinc-950 border border-white/10 rounded-2xl min-h-[300px] max-h-[450px] overflow-y-auto rich-text-content">
-                      {formData.body ? (
-                        <div dangerouslySetInnerHTML={{ __html: formData.body }} />
-                      ) : (
-                        <div className="text-white/20 text-center py-20">Nothing to preview. Go to the "Write" tab and add body content.</div>
-                      )}
-                    </div>
-                  )}
-                </div>
+                <MarkdownEditor
+                  label="Article Body Editor (Markdown)"
+                  placeholder="Write your guide content here in Markdown..."
+                  value={formData.body}
+                  onChange={(val) => setFormData(prev => ({ ...prev, body: val }))}
+                  minHeight="350px"
+                />
 
                 {/* Related Products Picker */}
                 <div className="space-y-4 border border-white/10 rounded-3xl p-6 bg-white/5">
@@ -949,7 +777,7 @@ export default function GuidesManagement() {
                   </div>
                 )}
 
-                <div className="rich-text-content mb-12" dangerouslySetInnerHTML={{ __html: previewGuideData.body }} />
+                <div className="rich-text-content mb-12" dangerouslySetInnerHTML={{ __html: parseMarkdown(previewGuideData.body) }} />
 
                 {/* Render Related Products CTA Mockup if present */}
                 {previewGuideData.relatedProductIds?.length > 0 && (

@@ -17,6 +17,7 @@ import { useSiteSettings } from "../context/SiteSettingsContext";
 import { fetchProductById } from "../services/firebaseApi";
 import { useSEO } from "../hooks/useSEO";
 import { flyToCart } from "../utils/animations";
+import { parseMarkdown } from "../utils/markdown";
 
 export default function ProductDetail() {
   const params = useParams();
@@ -360,9 +361,10 @@ export default function ProductDetail() {
             )}
           </div>
 
-          <p className="text-white/60 text-lg leading-relaxed mb-10">
-            {richDescription}
-          </p>
+          <div 
+            className="rich-text-content text-white/60 text-lg leading-relaxed mb-10"
+            dangerouslySetInnerHTML={{ __html: parseMarkdown(richDescription) }}
+          />
 
           <div className="grid grid-cols-3 gap-4 mb-10">
             <div className="p-4 bg-white/5 border border-white/10 rounded-2xl text-center">

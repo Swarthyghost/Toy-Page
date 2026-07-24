@@ -9,6 +9,7 @@ import { fetchProducts, createProduct, updateProduct, deleteProduct, Product, Si
 import { uploadImage } from '../config/cloudinary';
 import PromoManagement from './PromoManagement';
 import GuidesManagement from './GuidesManagement';
+import MarkdownEditor from './MarkdownEditor';
 
 export default function AdminDashboard() {
   const { adminUser, logout } = useAdminAuth();
@@ -667,14 +668,12 @@ export default function AdminDashboard() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-white/40 ml-1">
-                    <FileText size={14} /> Description
-                  </label>
-                  <textarea
-                    required
+                  <MarkdownEditor
+                    label="Product Description (Markdown)"
+                    placeholder="Write a compelling product description in Markdown..."
                     value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    className="w-full px-6 py-4 bg-white/5 border border-white/10 rounded-2xl focus:border-primary focus:outline-none transition-colors min-h-[120px] resize-none"
+                    onChange={(val) => setFormData({ ...formData, description: val })}
+                    minHeight="200px"
                   />
                 </div>
 
