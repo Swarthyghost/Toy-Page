@@ -21,7 +21,8 @@ export function ProductProvider({ children }: { children: React.ReactNode }) {
   const loadProducts = async () => {
     try {
       const data = await fetchProducts();
-      setProducts(data);
+      const visibleProducts = data.filter(p => !p.hide_product);
+      setProducts(visibleProducts);
       setError(null);
     } catch (err: any) {
       setError(err);

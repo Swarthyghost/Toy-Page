@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { motion } from "motion/react";
 import Image from "next/image";
 import {
@@ -21,6 +21,7 @@ import { parseMarkdown } from "../utils/markdown";
 
 export default function ProductDetail() {
   const params = useParams();
+  const router = useRouter();
   const id = params?.id as string | undefined;
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
@@ -33,12 +34,16 @@ export default function ProductDetail() {
     if (id) {
       fetchProductById(id)
         .then((data) => {
+          if (data?.hide_product) {
+            router.replace("/");
+            return;
+          }
           setProduct(data);
           if (data?.image) setActiveImage(data.image);
         })
         .finally(() => setLoading(false));
     }
-  }, [id]);
+  }, [id, router]);
 
   // SEO optimization for product pages
   const productKeywords = product 

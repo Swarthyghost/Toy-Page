@@ -28,6 +28,7 @@ export interface Product {
   description: string;
   isOutOfStock: boolean;
   featured?: boolean;
+  hide_product?: boolean;
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }
@@ -107,6 +108,7 @@ export const createProduct = async (productData: Omit<Product, 'id' | 'createdAt
       images: additionalImageUrls,
       isOutOfStock: productData.isOutOfStock || false,
       featured: productData.featured || false,
+      hide_product: productData.hide_product || false,
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now(),
     };
@@ -193,6 +195,23 @@ export const updateProduct = async (id: string, productData: Partial<Product>, i
 export const deleteProduct = async (id: string): Promise<void> => {
   const docRef = doc(db, PRODUCTS_COLLECTION, id);
   await deleteDoc(docRef);
+};
+
+export const updateProductsVisibility = async (ids: string[], hideProduct: boolean): Promise<void> => {
+  try {
+    const batch = writeBatch(db);
+    ids.forEach(id => {
+      const docRef = doc(db, PRODUCTS_COLLECTION, id);
+      batch.update(docRef, { 
+        hide_product: hideProduct,
+        updatedAt: Timestamp.now()
+      });
+    });
+    await batch.commit();
+  } catch (error) {
+    console.error("Error in updateProductsVisibility:", error);
+    throw error;
+  }
 };
 
 // Promo Codes API

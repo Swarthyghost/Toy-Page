@@ -3,9 +3,9 @@
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'motion/react';
-import { Plus, Edit2, Trash2, X, Image as ImageIcon, DollarSign, Tag, FileText, Upload, LogOut, Gift, Settings, BookOpen, List, LayoutGrid, Copy, Star } from 'lucide-react';
+import { Plus, Edit2, Trash2, X, Image as ImageIcon, DollarSign, Tag, FileText, Upload, LogOut, Gift, Settings, BookOpen, List, LayoutGrid, Copy, Star, Eye, EyeOff } from 'lucide-react';
 import { useAdminAuth } from '../context/AdminAuthContext';
-import { fetchProducts, createProduct, updateProduct, deleteProduct, Product, SiteSettings, fetchSiteSettings, updateSiteSettings, fetchOrders, CustomerOrder, updateOrder, deleteOrder } from '../services/firebaseApi';
+import { fetchProducts, createProduct, updateProduct, deleteProduct, Product, SiteSettings, fetchSiteSettings, updateSiteSettings, fetchOrders, CustomerOrder, updateOrder, deleteOrder, updateProductsVisibility } from '../services/firebaseApi';
 import { uploadImage } from '../config/cloudinary';
 import PromoManagement from './PromoManagement';
 import GuidesManagement from './GuidesManagement';
@@ -31,6 +31,7 @@ export default function AdminDashboard() {
     description: '',
     isOutOfStock: false,
     featured: false,
+    hide_product: false,
   });
   const [editingOrder, setEditingOrder] = useState<CustomerOrder | null>(null);
   const [orderFormData, setOrderFormData] = useState({
@@ -44,6 +45,8 @@ export default function AdminDashboard() {
   const [additionalImageFiles, setAdditionalImageFiles] = useState<(File | null)[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [viewMode, setViewMode] = useState<'compact' | 'detailed'>('compact');
+  const [visibilityFilter, setVisibilityFilter] = useState<'all' | 'visible' | 'hidden'>('all');
+  const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -62,10 +65,58 @@ export default function AdminDashboard() {
   };
 
   useEffect(() => {
+    setSelectedProductIds([]);
+  }, [visibilityFilter, activeTab]);
+
+  useEffect(() => {
     loadProducts();
     loadSettings();
     loadOrders();
   }, []);
+
+  const filteredProducts = products.filter(product => {
+    if (visibilityFilter === 'visible') return !product.hide_product;
+    if (visibilityFilter === 'hidden') return !!product.hide_product;
+    return true;
+  });
+
+  const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.checked) {
+      setSelectedProductIds(filteredProducts.map(p => p.id));
+    } else {
+      setSelectedProductIds([]);
+    }
+  };
+
+  const handleSelectProduct = (productId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedProductIds(prev => [...prev, productId]);
+    } else {
+      setSelectedProductIds(prev => prev.filter(id => id !== productId));
+    }
+  };
+
+  const handleBulkVisibility = async (hide: boolean) => {
+    if (selectedProductIds.length === 0) return;
+    const confirmMessage = hide 
+      ? `Are you sure you want to hide the ${selectedProductIds.length} selected products?`
+      : `Are you sure you want to unhide the ${selectedProductIds.length} selected products?`;
+      
+    if (confirm(confirmMessage)) {
+      try {
+        setIsUploading(true);
+        await updateProductsVisibility(selectedProductIds, hide);
+        setSelectedProductIds([]);
+        alert("Product visibility updated successfully.");
+        loadProducts();
+      } catch (error) {
+        console.error("Error bulk updating product visibility:", error);
+        alert(`Failed to update product visibility: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      } finally {
+        setIsUploading(false);
+      }
+    }
+  };
 
   const loadOrders = async () => {
     setLoadingOrders(true);
@@ -117,6 +168,7 @@ export default function AdminDashboard() {
   const loadProducts = async () => {
     const data = await fetchProducts();
     setProducts(data);
+    setSelectedProductIds([]);
   };
 
   const handleFeaturedToggle = (checked: boolean) => {
@@ -158,6 +210,7 @@ export default function AdminDashboard() {
         description: formData.description,
         isOutOfStock: formData.isOutOfStock,
         featured: formData.featured,
+        hide_product: formData.hide_product,
       };
 
       const validAdditionalFiles = additionalImageFiles.filter((f): f is File => f !== null);
@@ -172,8 +225,10 @@ export default function AdminDashboard() {
       setEditingProduct(null);
       setImageFile(null);
       setAdditionalImageFiles([]);
-      setFormData({ name: '', price: '', originalPrice: '', image: '', images: [], category: 'Vibrators', description: '', isOutOfStock: false, featured: false });
+      setSelectedProductIds([]);
+      setFormData({ name: '', price: '', originalPrice: '', image: '', images: [], category: 'Vibrators', description: '', isOutOfStock: false, featured: false, hide_product: false });
       loadProducts();
+      alert("Product visibility updated successfully.");
     } catch (error) {
       console.error('Error saving product:', error);
       alert(`Failed to save product: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -194,6 +249,7 @@ export default function AdminDashboard() {
       description: product.description,
       isOutOfStock: product.isOutOfStock || false,
       featured: product.featured || false,
+      hide_product: product.hide_product || false,
     });
     setImageFile(null);
     setAdditionalImageFiles(new Array(product.images?.length || 0).fill(null));
@@ -387,7 +443,7 @@ export default function AdminDashboard() {
                 setEditingProduct(null);
                 setImageFile(null);
                 setAdditionalImageFiles([]);
-                setFormData({ name: '', price: '', originalPrice: '', image: '', images: [], category: 'Vibrators', description: '', isOutOfStock: false, featured: false });
+                setFormData({ name: '', price: '', originalPrice: '', image: '', images: [], category: 'Vibrators', description: '', isOutOfStock: false, featured: false, hide_product: false });
                 setIsModalOpen(true);
               }}
               className="px-6 py-3 bg-primary text-white font-bold rounded-2xl flex items-center gap-2 hover:scale-105 transition-transform"
@@ -397,10 +453,60 @@ export default function AdminDashboard() {
             </button>
           </div>
 
+      {/* Visibility Filters & Bulk Actions */}
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+        <div className="flex items-center gap-2 p-1 bg-white/5 border border-white/10 rounded-2xl w-fit">
+          {(['all', 'visible', 'hidden'] as const).map((filter) => (
+            <button
+              key={filter}
+              type="button"
+              onClick={() => setVisibilityFilter(filter)}
+              className={`px-4 py-2 rounded-xl text-xs font-bold capitalize transition-all ${
+                visibilityFilter === filter
+                  ? 'bg-primary text-white shadow-lg shadow-primary/20'
+                  : 'text-white/40 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              {filter}
+            </button>
+          ))}
+        </div>
+
+        {selectedProductIds.length > 0 && (
+          <div className="flex items-center gap-2 p-1 bg-white/5 border border-white/10 rounded-2xl w-fit">
+            <span className="text-xs text-white/40 px-3 font-medium">
+              {selectedProductIds.length} selected
+            </span>
+            <button
+              type="button"
+              onClick={() => handleBulkVisibility(true)}
+              className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5"
+            >
+              <EyeOff size={14} /> Hide Selected
+            </button>
+            <button
+              type="button"
+              onClick={() => handleBulkVisibility(false)}
+              className="px-4 py-2 bg-primary hover:bg-primary/80 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5"
+            >
+              <Eye size={14} /> Unhide Selected
+            </button>
+          </div>
+        )}
+      </div>
+
       <div className="bg-white/5 border border-white/10 rounded-[2rem] overflow-hidden">
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="border-b border-white/10 bg-white/5">
+              <th className="p-6 text-xs font-bold uppercase tracking-widest text-white/40 w-12">
+                <input
+                  type="checkbox"
+                  checked={filteredProducts.length > 0 && selectedProductIds.length === filteredProducts.length}
+                  onChange={handleSelectAll}
+                  className="w-5 h-5 rounded border-white/20 bg-white/10 text-primary focus:ring-primary focus:ring-offset-0 cursor-pointer"
+                />
+              </th>
               <th className="p-6 text-xs font-bold uppercase tracking-widest text-white/40">Product</th>
               <th className="p-6 text-xs font-bold uppercase tracking-widest text-white/40">Category</th>
               <th className="p-6 text-xs font-bold uppercase tracking-widest text-white/40">Price</th>
@@ -408,8 +514,16 @@ export default function AdminDashboard() {
             </tr>
           </thead>
           <tbody>
-            {products.map((product) => (
+            {filteredProducts.map((product) => (
               <tr key={product.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                <td className="p-6 w-12">
+                  <input
+                    type="checkbox"
+                    checked={selectedProductIds.includes(product.id)}
+                    onChange={(e) => handleSelectProduct(product.id, e.target.checked)}
+                    className="w-5 h-5 rounded border-white/20 bg-white/10 text-primary focus:ring-primary focus:ring-offset-0 cursor-pointer"
+                  />
+                </td>
                 <td className="p-6">
                   <div className="flex items-center gap-4">
                     <Image src={product.image} alt="" className="w-12 h-12 rounded-lg object-cover" width={48} height={48} unoptimized />
@@ -417,6 +531,11 @@ export default function AdminDashboard() {
                     {product.featured && (
                       <span className="flex items-center gap-1 px-2 py-0.5 bg-yellow-400/25 text-yellow-400 text-[10px] font-bold uppercase tracking-wider rounded-full border border-yellow-400/20">
                         <Star size={10} className="fill-yellow-400" /> Featured
+                      </span>
+                    )}
+                    {product.hide_product && (
+                      <span className="flex items-center gap-1 px-2 py-0.5 bg-white/10 text-white/60 text-[10px] font-bold uppercase tracking-wider rounded-full border border-white/10">
+                        <EyeOff size={10} /> Hidden
                       </span>
                     )}
                     {product.isOutOfStock && (
@@ -665,6 +784,19 @@ export default function AdminDashboard() {
                         : 'This product will be highlighted on the homepage.'}
                     </p>
                   )}
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center gap-3 p-4 bg-white/5 border border-white/10 rounded-2xl cursor-pointer hover:border-primary/50 transition-colors"
+                       onClick={() => setFormData({ ...formData, hide_product: !formData.hide_product })}>
+                    <div className={`w-6 h-6 rounded-md border flex items-center justify-center transition-colors ${formData.hide_product ? 'bg-primary border-primary' : 'border-white/20'}`}>
+                      {formData.hide_product && <EyeOff size={14} className="text-white" />}
+                    </div>
+                    <span className="text-sm font-bold text-white/80">Hide Product</span>
+                  </div>
+                  <p className="text-xs text-white/40 ml-1">
+                    When enabled, this product will be hidden from all customer-facing pages and will only be visible in the Admin Product list.
+                  </p>
                 </div>
 
                 <div className="space-y-2">
