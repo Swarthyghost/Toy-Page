@@ -37,6 +37,7 @@ export default function DataSource() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [logs, setLogs] = useState<InventoryLog[]>([]);
   const [settings, setSettings] = useState<SiteSettings | null>(null);
+  const [googleSheetId, setGoogleSheetId] = useState<string>('');
   
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -56,7 +57,11 @@ export default function DataSource() {
     // 60 seconds background polling
     const interval = setInterval(async () => {
       try {
-        await fetch('/api/sheets-sync');
+        const res = await fetch('/api/sheets-sync');
+        const syncData = await res.json();
+        if (syncData.googleSheetId) {
+          setGoogleSheetId(syncData.googleSheetId);
+        }
         const [p, s, e, l, set] = await Promise.all([
           fetchProducts(),
           fetchSales(),
@@ -80,6 +85,12 @@ export default function DataSource() {
 
   const loadAllData = async () => {
     try {
+      const res = await fetch('/api/sheets-sync');
+      const syncData = await res.json();
+      if (syncData.googleSheetId) {
+        setGoogleSheetId(syncData.googleSheetId);
+      }
+      
       const [p, s, e, l, set] = await Promise.all([
         fetchProducts(),
         fetchSales(),
@@ -92,8 +103,8 @@ export default function DataSource() {
       setExpenses(e);
       setLogs(l);
       setSettings(set);
-      if (set?.googleSheetId) {
-        setNewSheetId(set.googleSheetId);
+      if (syncData.googleSheetId || set?.googleSheetId) {
+        setNewSheetId(syncData.googleSheetId || set?.googleSheetId || '');
       }
       
       setLastRefreshed(new Date().toLocaleTimeString());
@@ -184,7 +195,7 @@ export default function DataSource() {
     return <div className="p-8 text-center text-zinc-500">Loading Google Sheets connection dashboard...</div>;
   }
 
-  const sheetId = settings?.googleSheetId || process.env.NEXT_PUBLIC_GOOGLE_SHEET_ID || '';
+  const sheetId = googleSheetId || settings?.googleSheetId || process.env.NEXT_PUBLIC_GOOGLE_SHEET_ID || '';
   const maskedSheetId = sheetId 
     ? `${sheetId.substring(0, 6)}...${sheetId.substring(sheetId.length - 6)}` 
     : 'Not configured';

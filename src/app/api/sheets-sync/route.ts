@@ -8,7 +8,10 @@ import { syncAllSheetsToFirestore, decrementStockInSheets } from '../../../servi
 export async function GET(req: NextRequest) {
   try {
     const result = await syncAllSheetsToFirestore();
-    return NextResponse.json(result);
+    return NextResponse.json({
+      ...result,
+      googleSheetId: process.env.GOOGLE_SHEET_ID || ''
+    });
   } catch (error) {
     console.error('Error triggering sync in GET route:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
@@ -25,7 +28,10 @@ export async function POST(req: NextRequest) {
 
     if (type === 'sync_inventory') {
       const result = await syncAllSheetsToFirestore();
-      return NextResponse.json(result);
+      return NextResponse.json({
+        ...result,
+        googleSheetId: process.env.GOOGLE_SHEET_ID || ''
+      });
     } else if (type === 'decrement_stock') {
       const { productId, quantity } = data;
       const success = await decrementStockInSheets(productId, quantity);
