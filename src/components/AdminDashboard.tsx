@@ -32,7 +32,7 @@ export default function AdminDashboard() {
     description: '',
     isOutOfStock: false,
     featured: false,
-    hide_product: false,
+    hide_product: true,
     costPrice: '',
     openingStock: '',
     minimumStock: '5',
@@ -289,7 +289,7 @@ export default function AdminDashboard() {
       setImageFile(null);
       setAdditionalImageFiles([]);
       setSelectedProductIds([]);
-      setFormData({ name: '', price: '', originalPrice: '', image: '', images: [], category: 'Vibrators', description: '', isOutOfStock: false, featured: false, hide_product: false, costPrice: '', openingStock: '', minimumStock: '5', status: 'active' });
+      setFormData({ name: '', price: '', originalPrice: '', image: '', images: [], category: 'Vibrators', description: '', isOutOfStock: false, featured: false, hide_product: true, costPrice: '', openingStock: '', minimumStock: '5', status: 'active' });
       loadProducts();
       alert("Product saved successfully.");
     } catch (error) {
@@ -634,7 +634,7 @@ export default function AdminDashboard() {
                   setEditingProduct(null);
                   setImageFile(null);
                   setAdditionalImageFiles([]);
-                  setFormData({ name: '', price: '', originalPrice: '', image: '', images: [], category: 'Vibrators', description: '', isOutOfStock: false, featured: false, hide_product: false, costPrice: '', openingStock: '', minimumStock: '5', status: 'active' });
+                  setFormData({ name: '', price: '', originalPrice: '', image: '', images: [], category: 'Vibrators', description: '', isOutOfStock: false, featured: false, hide_product: true, costPrice: '', openingStock: '', minimumStock: '5', status: 'active' });
                   setIsModalOpen(true);
                 }}
                 className="px-6 py-3 bg-primary text-white font-bold rounded-2xl flex items-center gap-2 hover:scale-105 transition-transform text-xs"
