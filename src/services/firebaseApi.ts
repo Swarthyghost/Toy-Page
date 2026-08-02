@@ -615,21 +615,23 @@ export const fetchInventoryLogs = async (): Promise<InventoryLog[]> => {
 
 export const logInventoryChange = async (data: Omit<InventoryLog, 'id' | 'createdAt'>): Promise<string> => {
   try {
-    const log = { ...data, createdAt: Timestamp.now() };
-    const docRef = await addDoc(collection(db, INVENTORY_LOGS_COLLECTION), log);
+    const logId = doc(collection(db, INVENTORY_LOGS_COLLECTION)).id;
+    const createdAtStr = new Date().toISOString();
     
-    // Sync to Sheets
-    try {
-      await fetch('/api/sheets-sync', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: 'inventory_log', data: { ...log, id: docRef.id, createdAt: log.createdAt.toDate().toISOString() } })
-      });
-    } catch (e) {
-      console.error('Failed to sync inventory log:', e);
-    }
+    await fetch('/api/sheets-sync', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'inventory_log',
+        data: {
+          ...data,
+          id: logId,
+          createdAt: createdAtStr
+        }
+      })
+    });
     
-    return docRef.id;
+    return logId;
   } catch (error) {
     console.error('Error in logInventoryChange:', error);
     throw error;
@@ -699,33 +701,57 @@ export const fetchSales = async (): Promise<Sale[]> => {
 
 export const logSale = async (saleData: Omit<Sale, 'createdAt'>): Promise<string> => {
   try {
-    const sale = { ...saleData, createdAt: Timestamp.now() };
-    const docRef = await addDoc(collection(db, SALES_COLLECTION), sale);
+    const saleId = doc(collection(db, SALES_COLLECTION)).id;
+    const createdAtStr = new Date().toISOString();
 
-    // Update Product Stock count
-    if (saleData.productId) {
+    const salePayload = {
+      ...saleData,
+      id: saleId,
+      createdAt: createdAtStr
+    };
+
+    // 1. Write the sale transaction directly to the Sales Google Sheet
+    await fetch('/api/sheets-sync', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'sale', data: salePayload })
+    });
+
+    // 2. Reduce the product stock quantity in the master Google Sheet
+    await fetch('/api/sheets-sync', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'decrement_stock', data: { productId: saleData.productId, quantity: saleData.quantity } })
+    });
+
+    // 3. Write the inventory log straight to Google Sheets
+    const logId = doc(collection(db, INVENTORY_LOGS_COLLECTION)).id;
+    await fetch('/api/sheets-sync', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'inventory_log',
+        data: {
+          id: logId,
+          productId: saleData.productId,
+          productName: saleData.productName,
+          type: 'out',
+          changeQty: saleData.quantity,
+          newQty: 0,
+          reason: `Logged Sale (ID: ${saleId})`,
+          createdAt: createdAtStr
+        }
+      })
+    });
+
+    // 4. Low stock warning (optional check in cache if needed)
+    try {
       const productRef = doc(db, PRODUCTS_COLLECTION, saleData.productId);
       const productSnap = await getDoc(productRef);
       if (productSnap.exists()) {
         const product = productSnap.data() as Product;
         const currentStock = product.currentStock !== undefined ? product.currentStock : 0;
         const newStock = Math.max(0, currentStock - saleData.quantity);
-        await updateDoc(productRef, {
-          currentStock: newStock,
-          isOutOfStock: newStock === 0 ? true : product.isOutOfStock
-        });
-
-        // Log Inventory Change
-        await logInventoryChange({
-          productId: saleData.productId,
-          productName: product.name,
-          type: 'out',
-          changeQty: saleData.quantity,
-          newQty: newStock,
-          reason: `Logged Sale (ID: ${docRef.id})`
-        });
-
-        // Low stock warning
         const minStock = product.minimumStock !== undefined ? product.minimumStock : 5;
         if (newStock <= minStock) {
           await createNotification({
@@ -736,27 +762,11 @@ export const logSale = async (saleData: Omit<Sale, 'createdAt'>): Promise<string
           });
         }
       }
-    }
-
-    // Google Sheets Sync
-    try {
-      await fetch('/api/sheets-sync', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: 'sale', data: { ...sale, id: docRef.id, createdAt: sale.createdAt.toDate().toISOString() } })
-      });
-      
-      // Decrement stock in the master Google Sheet
-      await fetch('/api/sheets-sync', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: 'decrement_stock', data: { productId: saleData.productId, quantity: saleData.quantity } })
-      });
     } catch (e) {
-      console.error('Failed to sync sale/stock to sheets:', e);
+      console.error('Failed to trigger low stock notification:', e);
     }
 
-    return docRef.id;
+    return saleId;
   } catch (error) {
     console.error('Error in logSale:', error);
     throw error;
@@ -786,21 +796,23 @@ export const fetchExpenses = async (): Promise<Expense[]> => {
 
 export const logExpense = async (data: Omit<Expense, 'id' | 'createdAt'>): Promise<string> => {
   try {
-    const expense = { ...data, createdAt: Timestamp.now() };
-    const docRef = await addDoc(collection(db, EXPENSES_COLLECTION), expense);
+    const expenseId = doc(collection(db, EXPENSES_COLLECTION)).id;
+    const createdAtStr = new Date().toISOString();
 
-    // Google Sheets Sync
-    try {
-      await fetch('/api/sheets-sync', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: 'expense', data: { ...expense, id: docRef.id, createdAt: expense.createdAt.toDate().toISOString() } })
-      });
-    } catch (e) {
-      console.error('Failed to sync expense to sheets:', e);
-    }
+    const expensePayload = {
+      ...data,
+      id: expenseId,
+      createdAt: createdAtStr
+    };
 
-    return docRef.id;
+    // Write directly to Google Sheets
+    await fetch('/api/sheets-sync', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'expense', data: expensePayload })
+    });
+
+    return expenseId;
   } catch (error) {
     console.error('Error in logExpense:', error);
     throw error;

@@ -48,7 +48,7 @@ export default function Overview() {
     
     const initSync = async () => {
       try {
-        await fetch('/api/sheets-sync?type=sync_inventory', { method: 'POST' });
+        await fetch('/api/sheets-sync');
       } catch (e) {
         console.error('Initial sheets sync failed:', e);
       }
@@ -60,7 +60,7 @@ export default function Overview() {
     // Poll sheets inventory every 60 seconds
     const interval = setInterval(async () => {
       try {
-        await fetch('/api/sheets-sync?type=sync_inventory', { method: 'POST' });
+        await fetch('/api/sheets-sync');
         const [p, s, e] = await Promise.all([
           fetchProducts(),
           fetchSales(),
@@ -191,17 +191,17 @@ export default function Overview() {
           onClick={async () => {
             setIsRefreshing(true);
             try {
-              const res = await fetch('/api/sheets-sync?type=sync_inventory', { method: 'POST' });
+              const res = await fetch('/api/sheets-sync');
               const data = await res.json();
               if (data.success) {
-                alert(`Inventory refreshed successfully! Synced ${data.syncedCount} items.`);
+                alert(`Data refreshed successfully! Synced database states.`);
               } else {
-                alert('Failed to sync inventory.');
+                alert('Failed to sync data from Google Sheets.');
               }
               await loadOverviewData();
             } catch (err) {
               console.error(err);
-              alert('Error syncing inventory.');
+              alert('Error syncing sheets.');
             } finally {
               setIsRefreshing(false);
             }

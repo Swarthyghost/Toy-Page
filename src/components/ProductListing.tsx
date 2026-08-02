@@ -138,7 +138,7 @@ export default function ProductListing() {
 
   const filteredProducts = useMemo(() => {
     let result = activeCategory === "All" 
-      ? [...products] 
+      ? products.filter(p => p.category?.trim() !== "Other Products") 
       : products.filter((p) => p.category?.trim() === activeCategory);
       
     return result.sort((a, b) => {

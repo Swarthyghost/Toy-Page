@@ -2,12 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { appendToSheet, clearSheet } from '../../../lib/googleSheets';
 import { db } from '../../../config/firebase';
 import { collection, getDocs, orderBy, query } from 'firebase/firestore';
-import { syncSheetsToFirestore, decrementStockInSheets } from '../../../services/sheetsSyncService';
+import { syncAllSheetsToFirestore, decrementStockInSheets } from '../../../services/sheetsSyncService';
 
-// GET triggers sheets-to-Firestore synchronization
+// GET triggers full sheets-to-Firestore synchronization
 export async function GET(req: NextRequest) {
   try {
-    const result = await syncSheetsToFirestore();
+    const result = await syncAllSheetsToFirestore();
     return NextResponse.json(result);
   } catch (error) {
     console.error('Error triggering sync in GET route:', error);
@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (type === 'sync_inventory') {
-      const result = await syncSheetsToFirestore();
+      const result = await syncAllSheetsToFirestore();
       return NextResponse.json(result);
     } else if (type === 'decrement_stock') {
       const { productId, quantity } = data;
@@ -32,9 +32,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success });
     } else if (type === 'sale') {
       const { id, productName, quantity, price, costPrice, profit, platform, paymentMethod, discount, deliveryFee, notes, createdAt } = data;
+      // 1. Append sale transaction to Google Sheets
       await appendToSheet('Sales!A:L', [[
         id || '',
-        createdAt || '',
+        createdAt || new Date().toISOString(),
         productName || '',
         quantity || 0,
         price || 0,
@@ -46,20 +47,30 @@ export async function POST(req: NextRequest) {
         deliveryFee || 0,
         notes || ''
       ]]);
+
+      // 2. Perform background sync to keep Firestore cache aligned
+      await syncAllSheetsToFirestore();
+      return NextResponse.json({ success: true });
     } else if (type === 'expense') {
       const { id, category, amount, description, createdAt } = data;
+      // 1. Append expense to Google Sheets
       await appendToSheet('Expenses!A:E', [[
         id || '',
-        createdAt || '',
+        createdAt || new Date().toISOString(),
         category || '',
         amount || 0,
         description || ''
       ]]);
+
+      // 2. Perform background sync to update cache
+      await syncAllSheetsToFirestore();
+      return NextResponse.json({ success: true });
     } else if (type === 'inventory_log') {
       const { id, productId, productName, type: logType, changeQty, newQty, reason, createdAt } = data;
+      // 1. Append log to Google Sheets
       await appendToSheet('InventoryLogs!A:H', [[
         id || '',
-        createdAt || '',
+        createdAt || new Date().toISOString(),
         productId || '',
         productName || '',
         logType || '',
@@ -67,6 +78,10 @@ export async function POST(req: NextRequest) {
         newQty || 0,
         reason || ''
       ]]);
+
+      // 2. Perform background sync to update cache
+      await syncAllSheetsToFirestore();
+      return NextResponse.json({ success: true });
     } else if (type === 'bulk_sync') {
       // Bulk Sync Sales
       const salesSnap = await getDocs(query(collection(db, 'sales'), orderBy('createdAt', 'desc')));
@@ -128,11 +143,11 @@ export async function POST(req: NextRequest) {
       if (productsValues.length > 0) {
         await appendToSheet('Products!A2', productsValues);
       }
+
+      return NextResponse.json({ success: true });
     } else {
       return NextResponse.json({ error: 'Invalid sync type' }, { status: 400 });
     }
-
-    return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error in sheets-sync API route:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
