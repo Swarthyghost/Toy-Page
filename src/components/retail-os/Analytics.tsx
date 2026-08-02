@@ -8,7 +8,11 @@ import {
   Layers, 
   DollarSign, 
   Award,
-  ShoppingCart
+  ShoppingCart,
+  Percent,
+  Calendar,
+  AlertOctagon,
+  RefreshCw
 } from 'lucide-react';
 import { 
   fetchProducts, 
@@ -118,6 +122,48 @@ export default function Analytics() {
   const topProducts = sortedProductQtys.slice(0, 5);
   const leastProducts = [...sortedProductQtys].reverse().slice(0, 5);
 
+  // Platform breakdowns
+  const platforms = ['Website', 'WhatsApp', 'Instagram', 'Facebook', 'Jiji', 'Referral'];
+  const platformStats = platforms.map(plat => {
+    const platSales = sales.filter(s => s.platform === plat);
+    const revenue = platSales.reduce((acc, s) => acc + (s.price * s.quantity), 0);
+    const profit = platSales.reduce((acc, s) => acc + s.profit, 0);
+    const orders = platSales.length;
+    const aovVal = orders > 0 ? revenue / orders : 0;
+    return { name: plat, revenue, profit, orders, aov: aovVal };
+  });
+
+  // Highest Revenue / Profit lists
+  const productStatsMap: { [key: string]: { name: string; revenue: number; profit: number } } = {};
+  sales.forEach(s => {
+    if (!productStatsMap[s.productId]) {
+      productStatsMap[s.productId] = { name: s.productName, revenue: 0, profit: 0 };
+    }
+    productStatsMap[s.productId].revenue += s.price * s.quantity;
+    productStatsMap[s.productId].profit += s.profit;
+  });
+
+  const sortedByRevenue = Object.values(productStatsMap).sort((a,b) => b.revenue - a.revenue).slice(0, 5);
+  const sortedByProfit = Object.values(productStatsMap).sort((a,b) => b.profit - a.profit).slice(0, 5);
+
+  // Products Not Sold in 30 Days
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  const soldProductIdsIn30Days = new Set(
+    sales
+      .filter(s => s.createdAt?.toDate() >= thirtyDaysAgo)
+      .map(s => s.productId)
+  );
+  const notSoldProducts = products
+    .filter(p => !soldProductIdsIn30Days.has(p.id))
+    .slice(0, 5);
+
+  // Inventory Turnover = COGS / Inventory Value
+  const inventoryTurnover = inventoryValue > 0 ? totalCOGS / inventoryValue : 0;
+
+  // Out of Stock list
+  const outOfStockProducts = products.filter(p => (p.currentStock || 0) <= 0).slice(0, 5);
+
   // Revenue by Month (Last 6 months)
   const monthlyRevenueMap: { [key: string]: number } = {};
   for (let i = 5; i >= 0; i--) {
@@ -143,22 +189,23 @@ export default function Analytics() {
   });
   const expenseChartData = Object.entries(expenseCatMap).map(([name, value]) => ({ name, value }));
 
-  const COLORS = ['#3B82F6', '#EC4899', '#10B981', '#F59E0B', '#8B5CF6', '#F43F5E', '#14B8A6'];
+  const COLORS = ['#3B82F6', '#EC4899', '#10B981', '#F59E0B', '#6366F1', '#8B5CF6', '#F43F5E', '#14B8A6'];
 
   return (
-    <div className="px-6 space-y-6">
+    <div className="px-6 space-y-8 animate-in fade-in-50 duration-200">
       {/* Metrics Row */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         {[
-          { label: "Gross Profit", val: `GH₵ ${grossProfit.toFixed(2)}`, desc: "Revenue minus Product Costs", color: "text-emerald-400" },
-          { label: "Net Profit", val: `GH₵ ${netProfit.toFixed(2)}`, desc: "Revenue minus COGS & Expenses", color: "text-primary" },
-          { label: "Average Order Value", val: `GH₵ ${aov.toFixed(2)}`, desc: "Total Revenue / Sales count", color: "text-sky-400" },
-          { label: "Total Inventory Value", val: `GH₵ ${inventoryValue.toFixed(2)}`, desc: "Valuation of assets at cost", color: "text-indigo-400" },
+          { label: "Gross Profit", val: `GH₵ ${grossProfit.toFixed(2)}`, desc: "Revenue minus Costs", color: "text-emerald-400" },
+          { label: "Net Profit", val: `GH₵ ${netProfit.toFixed(2)}`, desc: "Gross minus Expenses", color: "text-primary" },
+          { label: "Average Order Value", val: `GH₵ ${aov.toFixed(2)}`, desc: "Total Revenue / Sales", color: "text-sky-400" },
+          { label: "Total Inventory Value", val: `GH₵ ${inventoryValue.toFixed(2)}`, desc: "Valuation of assets", color: "text-indigo-400" },
+          { label: "Inventory Turnover", val: `${inventoryTurnover.toFixed(2)}x`, desc: "COGS / Inventory Value", color: "text-amber-400" },
         ].map((m, idx) => (
           <div key={idx} className="bg-zinc-900 border border-white/5 rounded-2xl p-5 shadow-lg">
             <span className="text-[9px] uppercase font-bold tracking-wider text-zinc-500">{m.label}</span>
-            <span className={`text-lg font-bold font-display tracking-tight mt-2 block ${m.color}`}>{m.val}</span>
-            <span className="text-[10px] text-zinc-600 mt-1 block">{m.desc}</span>
+            <span className={`text-base font-bold font-display tracking-tight mt-2 block ${m.color}`}>{m.val}</span>
+            <span className="text-[9px] text-zinc-500 mt-1 block">{m.desc}</span>
           </div>
         ))}
       </div>
@@ -178,14 +225,39 @@ export default function Analytics() {
         ))}
       </div>
 
-      {/* Visual Analytics Charts Grid */}
+      {/* Platform Breakdown Section */}
+      <div className="bg-zinc-900 border border-white/5 rounded-3xl p-6 shadow-xl">
+        <h3 className="text-sm font-bold text-white font-display mb-4">Platform Channel Metrics</h3>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr className="border-b border-white/5 text-zinc-500">
+                <th className="pb-3 font-bold">Platform</th>
+                <th className="pb-3 font-bold text-right">Orders</th>
+                <th className="pb-3 font-bold text-right">Revenue</th>
+                <th className="pb-3 font-bold text-right">Net Profit</th>
+                <th className="pb-3 font-bold text-right">AOV</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/5">
+              {platformStats.map((plat) => (
+                <tr key={plat.name} className="hover:bg-zinc-800/10 text-zinc-300">
+                  <td className="py-3 font-bold text-white">{plat.name}</td>
+                  <td className="py-3 text-right">{plat.orders}</td>
+                  <td className="py-3 text-right text-emerald-400">GH₵ {plat.revenue.toFixed(2)}</td>
+                  <td className="py-3 text-right text-primary">GH₵ {plat.profit.toFixed(2)}</td>
+                  <td className="py-3 text-right text-sky-400">GH₵ {plat.aov.toFixed(2)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Visual Charts Grid */}
       <div className="grid lg:grid-cols-2 gap-6">
-        {/* Month by Month Revenue */}
         <div className="bg-zinc-900 border border-white/5 rounded-3xl p-6 shadow-xl">
-          <div>
-            <h3 className="text-sm font-bold text-white font-display">Revenue by Month</h3>
-            <p className="text-[10px] text-zinc-500 mt-0.5">Month by month operational performance metrics.</p>
-          </div>
+          <h3 className="text-sm font-bold text-white font-display mb-2">Revenue by Month</h3>
           <div className="h-60 mt-6">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={monthChartData} margin={{ top: 0, right: 10, left: -20, bottom: 0 }}>
@@ -202,12 +274,8 @@ export default function Analytics() {
           </div>
         </div>
 
-        {/* Expenses Category Outlays */}
         <div className="bg-zinc-900 border border-white/5 rounded-3xl p-6 shadow-xl flex flex-col justify-between">
-          <div>
-            <h3 className="text-sm font-bold text-white font-display">Expense Category Share</h3>
-            <p className="text-[10px] text-zinc-500 mt-0.5">Segment share of cumulative business expenditures.</p>
-          </div>
+          <h3 className="text-sm font-bold text-white font-display mb-2">Expense Category Share</h3>
           <div className="h-44 my-4 flex items-center justify-center">
             {expenseChartData.length === 0 ? (
               <span className="text-xs text-zinc-500">No expenses recorded</span>
@@ -246,36 +314,97 @@ export default function Analytics() {
         </div>
       </div>
 
-      {/* Tables: Top Selling vs Least Selling */}
-      <div className="grid lg:grid-cols-2 gap-6">
-        {/* Top 5 Products */}
+      {/* Products Leaders Tables */}
+      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* Top Products */}
         <div className="bg-zinc-900/50 border border-white/5 rounded-3xl p-6 shadow-xl">
-          <h3 className="text-sm font-bold text-white font-display mb-4">Top 5 Selling Products</h3>
+          <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-4">Top 5 Selling</h4>
           <div className="space-y-3">
-            {topProducts.length === 0 ? (
-              <p className="text-zinc-500 text-xs py-8 text-center">No sales logged yet.</p>
+            {topProducts.map((p, idx) => (
+              <div key={idx} className="flex justify-between items-center text-xs pb-2 border-b border-white/5 last:border-0">
+                <span className="text-zinc-300 truncate max-w-[120px]">{p.name}</span>
+                <span className="font-bold text-emerald-400">{p.quantity} units</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Least Products */}
+        <div className="bg-zinc-900/50 border border-white/5 rounded-3xl p-6 shadow-xl">
+          <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-4">5 Least Selling</h4>
+          <div className="space-y-3">
+            {leastProducts.map((p, idx) => (
+              <div key={idx} className="flex justify-between items-center text-xs pb-2 border-b border-white/5 last:border-0">
+                <span className="text-zinc-400 truncate max-w-[120px]">{p.name}</span>
+                <span className="font-bold text-rose-400">{p.quantity} units</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Highest Revenue */}
+        <div className="bg-zinc-900/50 border border-white/5 rounded-3xl p-6 shadow-xl">
+          <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-4">Top 5 Revenue</h4>
+          <div className="space-y-3">
+            {sortedByRevenue.map((p, idx) => (
+              <div key={idx} className="flex justify-between items-center text-xs pb-2 border-b border-white/5 last:border-0">
+                <span className="text-zinc-300 truncate max-w-[100px]">{p.name}</span>
+                <span className="font-bold text-sky-400">GH₵{p.revenue.toFixed(0)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Highest Profit */}
+        <div className="bg-zinc-900/50 border border-white/5 rounded-3xl p-6 shadow-xl">
+          <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-4">Top 5 Profit</h4>
+          <div className="space-y-3">
+            {sortedByProfit.map((p, idx) => (
+              <div key={idx} className="flex justify-between items-center text-xs pb-2 border-b border-white/5 last:border-0">
+                <span className="text-zinc-300 truncate max-w-[100px]">{p.name}</span>
+                <span className="font-bold text-primary">GH₵{p.profit.toFixed(0)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Warning/Depletion Status Tables */}
+      <div className="grid lg:grid-cols-2 gap-6">
+        {/* Out of Stock */}
+        <div className="bg-zinc-900/40 border border-white/5 rounded-3xl p-6 shadow-xl">
+          <div className="flex items-center gap-2 text-rose-400 mb-4">
+            <AlertOctagon size={16} />
+            <h4 className="text-xs font-bold uppercase tracking-wider">Out of Stock Listings</h4>
+          </div>
+          <div className="space-y-3">
+            {outOfStockProducts.length === 0 ? (
+              <p className="text-zinc-500 text-xs py-4">All products currently have stock.</p>
             ) : (
-              topProducts.map((p, idx) => (
-                <div key={idx} className="flex items-center justify-between border-b border-white/5 pb-2 last:border-0 last:pb-0 text-xs">
-                  <span className="font-bold text-zinc-300 truncate max-w-[200px]">{p.name}</span>
-                  <span className="font-bold text-emerald-400 font-display">{p.quantity} units</span>
+              outOfStockProducts.map((p, idx) => (
+                <div key={idx} className="flex justify-between items-center text-xs pb-2 border-b border-white/5 last:border-0">
+                  <span className="text-zinc-400 font-bold">{p.name}</span>
+                  <span className="px-2.5 py-0.5 rounded bg-rose-500/10 border border-rose-500/20 text-rose-400 text-[10px] font-bold">OUT</span>
                 </div>
               ))
             )}
           </div>
         </div>
 
-        {/* Least 5 Products */}
-        <div className="bg-zinc-900/50 border border-white/5 rounded-3xl p-6 shadow-xl">
-          <h3 className="text-sm font-bold text-white font-display mb-4">5 Least Selling Products</h3>
+        {/* Products Not Sold in 30 Days */}
+        <div className="bg-zinc-900/40 border border-white/5 rounded-3xl p-6 shadow-xl">
+          <div className="flex items-center gap-2 text-amber-400 mb-4">
+            <Calendar size={16} />
+            <h4 className="text-xs font-bold uppercase tracking-wider">Not Sold in 30 Days</h4>
+          </div>
           <div className="space-y-3">
-            {leastProducts.length === 0 ? (
-              <p className="text-zinc-500 text-xs py-8 text-center">No sales logged yet.</p>
+            {notSoldProducts.length === 0 ? (
+              <p className="text-zinc-500 text-xs py-4">All products have recent sales activity.</p>
             ) : (
-              leastProducts.map((p, idx) => (
-                <div key={idx} className="flex items-center justify-between border-b border-white/5 pb-2 last:border-0 last:pb-0 text-xs">
-                  <span className="font-bold text-zinc-400 truncate max-w-[200px]">{p.name}</span>
-                  <span className="font-bold text-rose-400 font-display">{p.quantity} units</span>
+              notSoldProducts.map((p, idx) => (
+                <div key={idx} className="flex justify-between items-center text-xs pb-2 border-b border-white/5 last:border-0 text-zinc-400">
+                  <span>{p.name}</span>
+                  <span className="text-[10px] text-zinc-500 font-medium">Inactive</span>
                 </div>
               ))
             )}

@@ -9,7 +9,8 @@ import {
   Package, 
   AlertTriangle, 
   Layers,
-  Calendar
+  Calendar,
+  RefreshCw
 } from 'lucide-react';
 import { 
   fetchProducts, 
@@ -39,11 +40,41 @@ export default function Overview() {
   const [sales, setSales] = useState<Sale[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
-    loadOverviewData();
+    
+    const initSync = async () => {
+      try {
+        await fetch('/api/sheets-sync?type=sync_inventory', { method: 'POST' });
+      } catch (e) {
+        console.error('Initial sheets sync failed:', e);
+      }
+      await loadOverviewData();
+    };
+
+    initSync();
+
+    // Poll sheets inventory every 60 seconds
+    const interval = setInterval(async () => {
+      try {
+        await fetch('/api/sheets-sync?type=sync_inventory', { method: 'POST' });
+        const [p, s, e] = await Promise.all([
+          fetchProducts(),
+          fetchSales(),
+          fetchExpenses()
+        ]);
+        setProducts(p);
+        setSales(s);
+        setExpenses(e);
+      } catch (e) {
+        console.error('Polling sheets sync failed:', e);
+      }
+    }, 60000);
+
+    return () => clearInterval(interval);
   }, []);
 
   const loadOverviewData = async () => {
@@ -150,6 +181,39 @@ export default function Overview() {
 
   return (
     <div className="px-6 space-y-8 animate-in fade-in-50 duration-200">
+      {/* Top Bar with Refresh button */}
+      <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 bg-zinc-900/40 border border-white/5 p-6 rounded-3xl backdrop-blur-sm">
+        <div>
+          <h2 className="text-base font-bold text-white font-display">Retail OS Dashboard Overview</h2>
+          <p className="text-xs text-zinc-500 mt-1">Master Inventory synchronized with Google Sheets.</p>
+        </div>
+        <button
+          onClick={async () => {
+            setIsRefreshing(true);
+            try {
+              const res = await fetch('/api/sheets-sync?type=sync_inventory', { method: 'POST' });
+              const data = await res.json();
+              if (data.success) {
+                alert(`Inventory refreshed successfully! Synced ${data.syncedCount} items.`);
+              } else {
+                alert('Failed to sync inventory.');
+              }
+              await loadOverviewData();
+            } catch (err) {
+              console.error(err);
+              alert('Error syncing inventory.');
+            } finally {
+              setIsRefreshing(false);
+            }
+          }}
+          disabled={isRefreshing}
+          className="flex items-center justify-center gap-2 px-4 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-white rounded-2xl text-xs font-bold border border-white/5 transition-all cursor-pointer disabled:opacity-50"
+        >
+          <RefreshCw size={14} className={isRefreshing ? "animate-spin text-primary" : ""} />
+          <span>{isRefreshing ? 'Refreshing...' : 'Refresh Inventory'}</span>
+        </button>
+      </div>
+
       {/* 9 KPI Cards Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
         {[

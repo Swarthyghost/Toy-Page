@@ -2,6 +2,18 @@ import { NextRequest, NextResponse } from 'next/server';
 import { appendToSheet, clearSheet } from '../../../lib/googleSheets';
 import { db } from '../../../config/firebase';
 import { collection, getDocs, orderBy, query } from 'firebase/firestore';
+import { syncSheetsToFirestore, decrementStockInSheets } from '../../../services/sheetsSyncService';
+
+// GET triggers sheets-to-Firestore synchronization
+export async function GET(req: NextRequest) {
+  try {
+    const result = await syncSheetsToFirestore();
+    return NextResponse.json(result);
+  } catch (error) {
+    console.error('Error triggering sync in GET route:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -11,7 +23,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing sync type' }, { status: 400 });
     }
 
-    if (type === 'sale') {
+    if (type === 'sync_inventory') {
+      const result = await syncSheetsToFirestore();
+      return NextResponse.json(result);
+    } else if (type === 'decrement_stock') {
+      const { productId, quantity } = data;
+      const success = await decrementStockInSheets(productId, quantity);
+      return NextResponse.json({ success });
+    } else if (type === 'sale') {
       const { id, productName, quantity, price, costPrice, profit, platform, paymentMethod, discount, deliveryFee, notes, createdAt } = data;
       await appendToSheet('Sales!A:L', [[
         id || '',

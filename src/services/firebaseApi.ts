@@ -745,8 +745,15 @@ export const logSale = async (saleData: Omit<Sale, 'createdAt'>): Promise<string
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ type: 'sale', data: { ...sale, id: docRef.id, createdAt: sale.createdAt.toDate().toISOString() } })
       });
+      
+      // Decrement stock in the master Google Sheet
+      await fetch('/api/sheets-sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'decrement_stock', data: { productId: saleData.productId, quantity: saleData.quantity } })
+      });
     } catch (e) {
-      console.error('Failed to sync sale to sheets:', e);
+      console.error('Failed to sync sale/stock to sheets:', e);
     }
 
     return docRef.id;
