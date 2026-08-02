@@ -1015,23 +1015,6 @@ export default function AdminDashboard() {
                   </div>
                 </div>
 
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-white/40 ml-1">
-                      <Settings size={14} /> Status
-                    </label>
-                    <select
-                      value={formData.status}
-                      onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
-                      className="w-full px-6 py-4 bg-white/5 border border-white/10 rounded-2xl focus:border-primary focus:outline-none transition-colors"
-                    >
-                      <option value="active">Active</option>
-                      <option value="draft">Draft</option>
-                      <option value="archived">Archived</option>
-                    </select>
-                  </div>
-                </div>
-
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-white/40 ml-1">

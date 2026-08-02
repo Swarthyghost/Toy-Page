@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(./node_modules/.bin/tsc --noEmit -p .)"
+      "Bash(./node_modules/.bin/tsc --noEmit -p .)",
+      "Bash(netstat -ano)"
     ]
   }
 }
