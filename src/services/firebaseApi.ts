@@ -60,6 +60,7 @@ export interface SiteSettings {
   lowStockAlertThreshold?: number;
   expenseMonthlyBudget?: number;
   monthlySalesTarget?: number;
+  googleSheetId?: string;
 }
 
 const PRODUCTS_COLLECTION = 'products';
@@ -298,7 +299,8 @@ export const fetchSiteSettings = async (): Promise<SiteSettings | null> => {
     return {
       isSalesNotificationActive: data.isSalesNotificationActive || false,
       salesNotificationText: data.salesNotificationText || '',
-      isDiscountTagsActive: data.isDiscountTagsActive !== undefined ? data.isDiscountTagsActive : true
+      isDiscountTagsActive: data.isDiscountTagsActive !== undefined ? data.isDiscountTagsActive : true,
+      googleSheetId: data.googleSheetId || ''
     };
   }
   return null;
@@ -312,7 +314,8 @@ export const subscribeToSiteSettings = (callback: (settings: SiteSettings | null
       callback({
         isSalesNotificationActive: data.isSalesNotificationActive || false,
         salesNotificationText: data.salesNotificationText || '',
-        isDiscountTagsActive: data.isDiscountTagsActive !== undefined ? data.isDiscountTagsActive : true
+        isDiscountTagsActive: data.isDiscountTagsActive !== undefined ? data.isDiscountTagsActive : true,
+        googleSheetId: data.googleSheetId || ''
       });
     } else {
       callback(null);

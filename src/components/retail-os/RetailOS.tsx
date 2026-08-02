@@ -17,7 +17,7 @@ import Expenses from './Expenses';
 import Analytics from './Analytics';
 import Reports from './Reports';
 import AIAssistant from './AIAssistant';
-import SyncService from './SyncService';
+import DataSource from './DataSource';
 
 type SubTab = 
   | 'overview' 
@@ -38,7 +38,7 @@ export default function RetailOS() {
     { id: 'analytics' as const, label: 'Analytics Insights', icon: BarChart3 },
     { id: 'reports' as const, label: 'Reports Exporter', icon: FileText },
     { id: 'ai-assistant' as const, label: 'AI Assistant', icon: Sparkles },
-    { id: 'sync' as const, label: 'Sheets Sync', icon: RefreshCw },
+    { id: 'sync' as const, label: 'Data Source', icon: RefreshCw },
   ];
 
   const renderSubContent = () => {
@@ -56,7 +56,7 @@ export default function RetailOS() {
       case 'ai-assistant':
         return <AIAssistant />;
       case 'sync':
-        return <SyncService />;
+        return <DataSource />;
       default:
         return <Overview />;
     }
