@@ -270,9 +270,9 @@ export default function AdminDashboard() {
       let parsedOpeningStock = parseInt(formData.openingStock) || 0;
       let parsedMinimumStock = parseInt(formData.minimumStock) || 5;
 
-      const currentStock = editingProduct
-        ? (editingProduct.currentStock !== undefined ? editingProduct.currentStock : parsedOpeningStock)
-        : parsedOpeningStock;
+      // While editing, the stock field holds the current stock count; the
+      // original opening-stock baseline is preserved as-is for reporting.
+      const currentStock = parsedOpeningStock;
 
       const payload = {
         name: formData.name,
@@ -288,7 +288,7 @@ export default function AdminDashboard() {
         featured: formData.featured,
         hide_product: formData.hide_product,
         costPrice: parsedCostPrice,
-        openingStock: parsedOpeningStock,
+        openingStock: editingProduct ? (editingProduct.openingStock || 0) : parsedOpeningStock,
         currentStock,
         minimumStock: parsedMinimumStock,
         status: formData.status,
@@ -332,7 +332,7 @@ export default function AdminDashboard() {
       featured: product.featured || false,
       hide_product: product.hide_product || false,
       costPrice: (product.costPrice || 0).toString(),
-      openingStock: (product.openingStock || 0).toString(),
+      openingStock: (product.currentStock || 0).toString(),
       minimumStock: (product.minimumStock || 5).toString(),
       status: product.status || 'active',
     });
@@ -990,15 +990,14 @@ export default function AdminDashboard() {
                 <div className="grid md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-white/40 ml-1">
-                      <Layers size={14} /> Opening Stock
+                      <Layers size={14} /> {editingProduct ? 'Current Stock' : 'Opening Stock'}
                     </label>
                     <input
                       required
-                      disabled={!!editingProduct}
                       type="number"
                       value={formData.openingStock}
                       onChange={(e) => setFormData({ ...formData, openingStock: e.target.value })}
-                      className="w-full px-6 py-4 bg-white/5 border border-white/10 rounded-2xl focus:border-primary focus:outline-none transition-colors disabled:opacity-50"
+                      className="w-full px-6 py-4 bg-white/5 border border-white/10 rounded-2xl focus:border-primary focus:outline-none transition-colors"
                     />
                   </div>
 
