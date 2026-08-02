@@ -3,12 +3,13 @@
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'motion/react';
-import { Plus, Edit2, Trash2, X, Image as ImageIcon, DollarSign, Tag, FileText, Upload, LogOut, Gift, Settings, BookOpen, List, LayoutGrid, Copy, Star, Eye, EyeOff } from 'lucide-react';
+import { Plus, Edit2, Trash2, X, Image as ImageIcon, DollarSign, Tag, FileText, Upload, LogOut, Gift, Settings, BookOpen, List, LayoutGrid, Copy, Star, Eye, EyeOff, TrendingUp, AlertTriangle, PlusCircle, History, Database, Layers, Search } from 'lucide-react';
 import { useAdminAuth } from '../context/AdminAuthContext';
-import { fetchProducts, createProduct, updateProduct, deleteProduct, Product, SiteSettings, fetchSiteSettings, updateSiteSettings, fetchOrders, CustomerOrder, updateOrder, deleteOrder, updateProductsVisibility } from '../services/firebaseApi';
+import { fetchProducts, createProduct, updateProduct, deleteProduct, Product, SiteSettings, fetchSiteSettings, updateSiteSettings, fetchOrders, CustomerOrder, updateOrder, deleteOrder, updateProductsVisibility, fetchInventoryLogs, logStockAdjustment, createPurchaseOrder, updatePurchaseOrder } from '../services/firebaseApi';
 import { uploadImage } from '../config/cloudinary';
 import PromoManagement from './PromoManagement';
 import GuidesManagement from './GuidesManagement';
+import RetailOS from './retail-os/RetailOS';
 import MarkdownEditor from './MarkdownEditor';
 
 export default function AdminDashboard() {
@@ -16,7 +17,7 @@ export default function AdminDashboard() {
   const [products, setProducts] = useState<Product[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  const [activeTab, setActiveTab] = useState<'products' | 'promos' | 'settings' | 'orders' | 'guides'>('products');
+  const [activeTab, setActiveTab] = useState<'products' | 'promos' | 'settings' | 'orders' | 'guides' | 'retail-os'>('products');
   const [siteSettings, setSiteSettings] = useState<SiteSettings | null>(null);
   const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [orders, setOrders] = useState<CustomerOrder[]>([]);
@@ -32,6 +33,10 @@ export default function AdminDashboard() {
     isOutOfStock: false,
     featured: false,
     hide_product: false,
+    costPrice: '',
+    openingStock: '',
+    minimumStock: '5',
+    status: 'active' as 'active' | 'draft' | 'archived',
   });
   const [editingOrder, setEditingOrder] = useState<CustomerOrder | null>(null);
   const [orderFormData, setOrderFormData] = useState({
@@ -47,6 +52,35 @@ export default function AdminDashboard() {
   const [viewMode, setViewMode] = useState<'compact' | 'detailed'>('compact');
   const [visibilityFilter, setVisibilityFilter] = useState<'all' | 'visible' | 'hidden'>('all');
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
+
+  // Search & Filter States
+  const [searchTerm, setSearchTerm] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('All');
+  const [statusFilter, setStatusFilter] = useState('All');
+
+  // Modals for Stock Management
+  const [isRestockModalOpen, setIsRestockModalOpen] = useState(false);
+  const [isAdjustmentModalOpen, setIsAdjustmentModalOpen] = useState(false);
+  const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
+
+  // Stock Form States
+  const [adjustForm, setAdjustForm] = useState({
+    productId: '',
+    type: 'add' as 'add' | 'remove',
+    adjustQty: '',
+    reason: '',
+  });
+
+  const [restockForm, setRestockForm] = useState({
+    productId: '',
+    quantity: '',
+    costPrice: '',
+  });
+
+  // History state
+  const [historyProductId, setHistoryProductId] = useState<string | null>(null);
+  const [historyLogs, setHistoryLogs] = useState<any[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -75,8 +109,22 @@ export default function AdminDashboard() {
   }, []);
 
   const filteredProducts = products.filter(product => {
-    if (visibilityFilter === 'visible') return !product.hide_product;
-    if (visibilityFilter === 'hidden') return !!product.hide_product;
+    // Visibility
+    if (visibilityFilter === 'visible' && product.hide_product) return false;
+    if (visibilityFilter === 'hidden' && !product.hide_product) return false;
+
+    // Search Name / Category
+    const name = (product.productName || product.name || '').toLowerCase();
+    if (searchTerm && !name.includes(searchTerm.toLowerCase())) return false;
+    if (categoryFilter !== 'All' && product.category !== categoryFilter) return false;
+
+    // Stock Status
+    const current = product.currentStock || 0;
+    const min = product.minimumStock || 5;
+    if (statusFilter === 'In Stock' && current <= min) return false;
+    if (statusFilter === 'Low Stock' && (current > min || current === 0)) return false;
+    if (statusFilter === 'Out of Stock' && current > 0) return false;
+
     return true;
   });
 
@@ -200,17 +248,32 @@ export default function AdminDashboard() {
         parsedOriginalPrice = temp;
       }
 
+      let parsedCostPrice = parseFloat(formData.costPrice) || 0;
+      let parsedOpeningStock = parseInt(formData.openingStock) || 0;
+      let parsedMinimumStock = parseInt(formData.minimumStock) || 5;
+
+      const currentStock = editingProduct
+        ? (editingProduct.currentStock !== undefined ? editingProduct.currentStock : parsedOpeningStock)
+        : parsedOpeningStock;
+
       const payload = {
         name: formData.name,
+        productName: formData.name,
         price: parsedPrice,
+        sellingPrice: parsedPrice,
         originalPrice: parsedOriginalPrice,
         image: formData.image.startsWith('data:') ? '' : formData.image,
         images: formData.images.filter(img => !img.startsWith('data:')),
         category: formData.category,
         description: formData.description,
-        isOutOfStock: formData.isOutOfStock,
+        isOutOfStock: currentStock === 0,
         featured: formData.featured,
         hide_product: formData.hide_product,
+        costPrice: parsedCostPrice,
+        openingStock: parsedOpeningStock,
+        currentStock,
+        minimumStock: parsedMinimumStock,
+        status: formData.status,
       };
 
       const validAdditionalFiles = additionalImageFiles.filter((f): f is File => f !== null);
@@ -226,9 +289,9 @@ export default function AdminDashboard() {
       setImageFile(null);
       setAdditionalImageFiles([]);
       setSelectedProductIds([]);
-      setFormData({ name: '', price: '', originalPrice: '', image: '', images: [], category: 'Vibrators', description: '', isOutOfStock: false, featured: false, hide_product: false });
+      setFormData({ name: '', price: '', originalPrice: '', image: '', images: [], category: 'Vibrators', description: '', isOutOfStock: false, featured: false, hide_product: false, costPrice: '', openingStock: '', minimumStock: '5', status: 'active' });
       loadProducts();
-      alert("Product visibility updated successfully.");
+      alert("Product saved successfully.");
     } catch (error) {
       console.error('Error saving product:', error);
       alert(`Failed to save product: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -250,6 +313,10 @@ export default function AdminDashboard() {
       isOutOfStock: product.isOutOfStock || false,
       featured: product.featured || false,
       hide_product: product.hide_product || false,
+      costPrice: (product.costPrice || 0).toString(),
+      openingStock: (product.openingStock || 0).toString(),
+      minimumStock: (product.minimumStock || 5).toString(),
+      status: product.status || 'active',
     });
     setImageFile(null);
     setAdditionalImageFiles(new Array(product.images?.length || 0).fill(null));
@@ -265,6 +332,104 @@ export default function AdminDashboard() {
         console.error('Error deleting product:', error);
         alert('Failed to delete product. Please try again.');
       }
+    }
+  };
+
+  const handleDuplicate = (product: Product) => {
+    setEditingProduct(null);
+    setFormData({
+      name: `${product.name} (Copy)`,
+      price: product.price.toString(),
+      originalPrice: product.originalPrice ? product.originalPrice.toString() : '',
+      image: product.image,
+      images: product.images || [],
+      category: product.category,
+      description: product.description,
+      isOutOfStock: (product.currentStock || 0) === 0,
+      featured: false,
+      hide_product: product.hide_product || false,
+      costPrice: (product.costPrice || 0).toString(),
+      openingStock: (product.currentStock || 0).toString(),
+      minimumStock: (product.minimumStock || 5).toString(),
+      status: 'active',
+    });
+    setImageFile(null);
+    setAdditionalImageFiles([]);
+    setIsModalOpen(true);
+  };
+
+  const handleOpenHistory = async (productId: string) => {
+    setHistoryProductId(productId);
+    setLoadingHistory(true);
+    setIsHistoryModalOpen(true);
+    try {
+      const logs = await fetchInventoryLogs();
+      const productLogs = logs.filter((l: any) => l.productId === productId);
+      setHistoryLogs(productLogs);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoadingHistory(false);
+    }
+  };
+
+  const handleAdjustmentSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const { productId, type, adjustQty, reason } = adjustForm;
+    if (!productId || !adjustQty || !reason) {
+      alert('Please fill out all fields.');
+      return;
+    }
+
+    try {
+      const selected = products.find(p => p.id === productId);
+      if (!selected) return;
+
+      await logStockAdjustment({
+        productId,
+        productName: selected.productName || selected.name,
+        adjustQty: parseInt(adjustQty),
+        type,
+        reason,
+      });
+
+      alert('Adjustment logged successfully!');
+      setIsAdjustmentModalOpen(false);
+      setAdjustForm({ productId: '', type: 'add', adjustQty: '', reason: '' });
+      loadProducts();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleRestockSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const { productId, quantity, costPrice } = restockForm;
+    if (!productId || !quantity || !costPrice) {
+      alert('Please fill out all fields.');
+      return;
+    }
+
+    try {
+      const selected = products.find(p => p.id === productId);
+      if (!selected) return;
+
+      const poId = await createPurchaseOrder({
+        productId,
+        productName: selected.productName || selected.name,
+        quantity: parseInt(quantity),
+        costPrice: parseFloat(costPrice),
+        status: 'pending',
+      });
+
+      await updatePurchaseOrder(poId, { status: 'completed' });
+
+      alert('Restocked successfully!');
+      setIsRestockModalOpen(false);
+      setRestockForm({ productId: '', quantity: '', costPrice: '' });
+      loadProducts();
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -408,6 +573,17 @@ export default function AdminDashboard() {
               Guides
             </button>
             <button
+              onClick={() => setActiveTab('retail-os')}
+              className={`py-4 border-b-2 transition-colors flex items-center gap-2 ${
+                activeTab === 'retail-os'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-white/60 hover:text-white'
+              }`}
+            >
+              <TrendingUp size={18} />
+              Retail OS
+            </button>
+            <button
               onClick={() => setActiveTab('settings')}
               className={`py-4 border-b-2 transition-colors flex items-center gap-2 ${
                 activeTab === 'settings'
@@ -432,142 +608,270 @@ export default function AdminDashboard() {
 
       {/* Content */}
       {activeTab === 'products' ? (
-        <div className="max-w-7xl mx-auto px-6 py-8">
-          <div className="flex justify-between items-end mb-8">
+        <div className="max-w-7xl mx-auto px-6 py-8 space-y-6">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
               <h2 className="text-2xl font-bold mb-2">Product Management</h2>
-              <p className="text-white/40">Manage your product collection and inventory.</p>
+              <p className="text-white/40">Manage your product collection and inventory levels.</p>
             </div>
-            <button
-              onClick={() => {
-                setEditingProduct(null);
-                setImageFile(null);
-                setAdditionalImageFiles([]);
-                setFormData({ name: '', price: '', originalPrice: '', image: '', images: [], category: 'Vibrators', description: '', isOutOfStock: false, featured: false, hide_product: false });
-                setIsModalOpen(true);
-              }}
-              className="px-6 py-3 bg-primary text-white font-bold rounded-2xl flex items-center gap-2 hover:scale-105 transition-transform"
-            >
-              <Plus size={20} />
-              Add Product
-            </button>
+            <div className="flex flex-wrap items-center gap-3">
+              <button 
+                onClick={() => setIsAdjustmentModalOpen(true)}
+                className="flex items-center gap-2 px-4 py-2.5 bg-zinc-900 border border-white/10 text-white font-bold rounded-xl hover:bg-zinc-800 transition-all cursor-pointer text-xs"
+              >
+                <Settings size={14} />
+                <span>Adjustment</span>
+              </button>
+              <button 
+                onClick={() => setIsRestockModalOpen(true)}
+                className="flex items-center gap-2 px-4 py-2.5 bg-zinc-900 border border-white/10 text-white font-bold rounded-xl hover:bg-zinc-800 transition-all cursor-pointer text-xs"
+              >
+                <PlusCircle size={14} />
+                <span>Restock</span>
+              </button>
+              <button
+                onClick={() => {
+                  setEditingProduct(null);
+                  setImageFile(null);
+                  setAdditionalImageFiles([]);
+                  setFormData({ name: '', price: '', originalPrice: '', image: '', images: [], category: 'Vibrators', description: '', isOutOfStock: false, featured: false, hide_product: false, costPrice: '', openingStock: '', minimumStock: '5', status: 'active' });
+                  setIsModalOpen(true);
+                }}
+                className="px-6 py-3 bg-primary text-white font-bold rounded-2xl flex items-center gap-2 hover:scale-105 transition-transform text-xs"
+              >
+                <Plus size={16} />
+                Add Product
+              </button>
+            </div>
           </div>
 
-      {/* Visibility Filters & Bulk Actions */}
-      <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-        <div className="flex items-center gap-2 p-1 bg-white/5 border border-white/10 rounded-2xl w-fit">
-          {(['all', 'visible', 'hidden'] as const).map((filter) => (
-            <button
-              key={filter}
-              type="button"
-              onClick={() => setVisibilityFilter(filter)}
-              className={`px-4 py-2 rounded-xl text-xs font-bold capitalize transition-all ${
-                visibilityFilter === filter
-                  ? 'bg-primary text-white shadow-lg shadow-primary/20'
-                  : 'text-white/40 hover:text-white hover:bg-white/5'
-              }`}
-            >
-              {filter}
-            </button>
-          ))}
-        </div>
-
-        {selectedProductIds.length > 0 && (
-          <div className="flex items-center gap-2 p-1 bg-white/5 border border-white/10 rounded-2xl w-fit">
-            <span className="text-xs text-white/40 px-3 font-medium">
-              {selectedProductIds.length} selected
-            </span>
-            <button
-              type="button"
-              onClick={() => handleBulkVisibility(true)}
-              className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5"
-            >
-              <EyeOff size={14} /> Hide Selected
-            </button>
-            <button
-              type="button"
-              onClick={() => handleBulkVisibility(false)}
-              className="px-4 py-2 bg-primary hover:bg-primary/80 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5"
-            >
-              <Eye size={14} /> Unhide Selected
-            </button>
+          {/* 4 Widgets Grid */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {[
+              { label: "Total Products", val: products.length, icon: Layers, color: "text-zinc-400" },
+              { label: "Inventory Value", val: `GH₵ ${products.reduce((acc, p) => acc + ((p.costPrice || 0) * (p.currentStock || 0)), 0).toFixed(2)}`, icon: Layers, color: "text-indigo-400" },
+              { label: "Low Stock Items", val: products.filter(p => {
+                const stock = p.currentStock || 0;
+                const min = p.minimumStock || 5;
+                return stock > 0 && stock <= min;
+              }).length, icon: AlertTriangle, color: "text-amber-400 font-bold" },
+              { label: "Out of Stock Items", val: products.filter(p => (p.currentStock || 0) === 0).length, icon: AlertTriangle, color: "text-rose-400 font-bold" },
+            ].map((widget, idx) => {
+              const Icon = widget.icon;
+              return (
+                <div key={idx} className="bg-white/5 border border-white/10 rounded-2xl p-4 flex flex-col justify-between shadow-lg">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] uppercase font-bold tracking-wider text-white/40">{widget.label}</span>
+                    <Icon size={14} className={widget.color} />
+                  </div>
+                  <span className="text-lg font-bold font-display text-white mt-2 block">{widget.val}</span>
+                </div>
+              );
+            })}
           </div>
-        )}
-      </div>
 
-      <div className="bg-white/5 border border-white/10 rounded-[2rem] overflow-hidden">
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="border-b border-white/10 bg-white/5">
-              <th className="p-6 text-xs font-bold uppercase tracking-widest text-white/40 w-12">
-                <input
-                  type="checkbox"
-                  checked={filteredProducts.length > 0 && selectedProductIds.length === filteredProducts.length}
-                  onChange={handleSelectAll}
-                  className="w-5 h-5 rounded border-white/20 bg-white/10 text-primary focus:ring-primary focus:ring-offset-0 cursor-pointer"
-                />
-              </th>
-              <th className="p-6 text-xs font-bold uppercase tracking-widest text-white/40">Product</th>
-              <th className="p-6 text-xs font-bold uppercase tracking-widest text-white/40">Category</th>
-              <th className="p-6 text-xs font-bold uppercase tracking-widest text-white/40">Price</th>
-              <th className="p-6 text-xs font-bold uppercase tracking-widest text-white/40 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredProducts.map((product) => (
-              <tr key={product.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                <td className="p-6 w-12">
-                  <input
-                    type="checkbox"
-                    checked={selectedProductIds.includes(product.id)}
-                    onChange={(e) => handleSelectProduct(product.id, e.target.checked)}
-                    className="w-5 h-5 rounded border-white/20 bg-white/10 text-primary focus:ring-primary focus:ring-offset-0 cursor-pointer"
-                  />
-                </td>
-                <td className="p-6">
-                  <div className="flex items-center gap-4">
-                    <Image src={product.image} alt="" className="w-12 h-12 rounded-lg object-cover" width={48} height={48} unoptimized />
-                    <span className="font-bold">{product.name}</span>
-                    {product.featured && (
-                      <span className="flex items-center gap-1 px-2 py-0.5 bg-yellow-400/25 text-yellow-400 text-[10px] font-bold uppercase tracking-wider rounded-full border border-yellow-400/20">
-                        <Star size={10} className="fill-yellow-400" /> Featured
-                      </span>
-                    )}
-                    {product.hide_product && (
-                      <span className="flex items-center gap-1 px-2 py-0.5 bg-white/10 text-white/60 text-[10px] font-bold uppercase tracking-wider rounded-full border border-white/10">
-                        <EyeOff size={10} /> Hidden
-                      </span>
-                    )}
-                    {product.isOutOfStock && (
-                      <span className="px-2 py-0.5 bg-primary/20 text-primary text-[10px] font-bold uppercase tracking-wider rounded-full border border-primary/20">
-                        Restocking
-                      </span>
-                    )}
-                  </div>
-                </td>
-                <td className="p-6 text-white/60">{product.category}</td>
-                <td className="p-6 font-display font-bold">GHS {product.price.toFixed(2)}</td>
-                <td className="p-6">
-                  <div className="flex justify-end gap-2">
-                    <button
-                      onClick={() => handleEdit(product)}
-                      className="p-2 hover:bg-white/10 rounded-lg text-white/40 hover:text-white transition-colors"
-                    >
-                      <Edit2 size={18} />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(product.id)}
-                      className="p-2 hover:bg-white/10 rounded-lg text-white/40 hover:text-primary transition-colors"
-                    >
-                      <Trash2 size={18} />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+          {/* Visibility Filters, Search, Category Dropdowns */}
+          <div className="grid md:grid-cols-4 gap-4 items-center">
+            {/* Search */}
+            <div className="relative md:col-span-2">
+              <Search size={16} className="absolute left-3.5 top-3 text-zinc-500" />
+              <input 
+                type="text"
+                placeholder="Search catalog products by name..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2.5 bg-zinc-900 border border-white/10 rounded-xl focus:outline-none focus:border-primary text-xs text-white"
+              />
+            </div>
+            {/* Category Dropdown */}
+            <select
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
+              className="px-4 py-2.5 bg-zinc-900 border border-white/10 rounded-xl focus:outline-none focus:border-primary text-xs text-zinc-400"
+            >
+              <option value="All">All Categories</option>
+              {['Vibrators', 'Male Toys', 'BDSM', 'Wearables', 'Lubricants', 'Strap-Ons', 'Other Products'].map(c => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+            {/* Status Dropdown */}
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="px-4 py-2.5 bg-zinc-900 border border-white/10 rounded-xl focus:outline-none focus:border-primary text-xs text-zinc-400"
+            >
+              <option value="All">All Stock Levels</option>
+              <option value="In Stock">In Stock</option>
+              <option value="Low Stock">Low Stock</option>
+              <option value="Out of Stock">Out of Stock</option>
+            </select>
+          </div>
+
+          {/* Visibility filters */}
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center gap-2 p-1 bg-white/5 border border-white/10 rounded-2xl w-fit">
+              {(['all', 'visible', 'hidden'] as const).map((filter) => (
+                <button
+                  key={filter}
+                  type="button"
+                  onClick={() => setVisibilityFilter(filter)}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold capitalize transition-all ${
+                    visibilityFilter === filter
+                      ? 'bg-primary text-white shadow-lg shadow-primary/25'
+                      : 'text-white/40 hover:text-white hover:bg-white/5'
+                  }`}
+                >
+                  {filter}
+                </button>
+              ))}
+            </div>
+
+            {selectedProductIds.length > 0 && (
+              <div className="flex items-center gap-2 p-1 bg-white/5 border border-white/10 rounded-2xl w-fit">
+                <span className="text-xs text-white/40 px-3 font-medium">
+                  {selectedProductIds.length} selected
+                </span>
+                <button
+                  type="button"
+                  onClick={() => handleBulkVisibility(true)}
+                  className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+                >
+                  <EyeOff size={14} /> Hide Selected
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleBulkVisibility(false)}
+                  className="px-4 py-2 bg-primary hover:bg-primary/80 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Eye size={14} /> Unhide Selected
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Table */}
+          <div className="bg-white/5 border border-white/10 rounded-[2rem] overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-white/10 bg-white/5">
+                    <th className="p-6 text-xs font-bold uppercase tracking-widest text-white/40 w-12">
+                      <input
+                        type="checkbox"
+                        checked={filteredProducts.length > 0 && selectedProductIds.length === filteredProducts.length}
+                        onChange={handleSelectAll}
+                        className="w-5 h-5 rounded border-white/20 bg-white/10 text-primary focus:ring-primary focus:ring-offset-0 cursor-pointer"
+                      />
+                    </th>
+                    <th className="p-6 text-xs font-bold uppercase tracking-widest text-white/40">Product</th>
+                    <th className="p-6 text-xs font-bold uppercase tracking-widest text-white/40">Category</th>
+                    <th className="p-6 text-xs font-bold uppercase tracking-widest text-white/40 text-right">Cost (GHC)</th>
+                    <th className="p-6 text-xs font-bold uppercase tracking-widest text-white/40 text-right">Selling (GHC)</th>
+                    <th className="p-6 text-xs font-bold uppercase tracking-widest text-white/40 text-right">Opening</th>
+                    <th className="p-6 text-xs font-bold uppercase tracking-widest text-white/40 text-right">Current Stock</th>
+                    <th className="p-6 text-xs font-bold uppercase tracking-widest text-white/40 text-right">Minimum Level</th>
+                    <th className="p-6 text-xs font-bold uppercase tracking-widest text-white/40">Status</th>
+                    <th className="p-6 text-xs font-bold uppercase tracking-widest text-white/40 text-center">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredProducts.map((product) => {
+                    const currentStock = product.currentStock || 0;
+                    const minStock = product.minimumStock || 5;
+                    const isOut = currentStock === 0;
+                    const isLow = currentStock <= minStock && !isOut;
+                    return (
+                      <tr key={product.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                        <td className="p-6 w-12">
+                          <input
+                            type="checkbox"
+                            checked={selectedProductIds.includes(product.id)}
+                            onChange={(e) => handleSelectProduct(product.id, e.target.checked)}
+                            className="w-5 h-5 rounded border-white/20 bg-white/10 text-primary focus:ring-primary focus:ring-offset-0 cursor-pointer"
+                          />
+                        </td>
+                        <td className="p-6">
+                          <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-lg overflow-hidden border border-white/10 bg-black flex-shrink-0 flex items-center justify-center">
+                              {product.image ? (
+                                <Image src={product.image} alt="" className="w-full h-full object-cover" width={48} height={48} unoptimized />
+                              ) : (
+                                <Layers size={18} className="text-white/20" />
+                              )}
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="font-bold text-white">{product.name}</span>
+                              <div className="flex flex-wrap gap-1 mt-1">
+                                {product.featured && (
+                                  <span className="flex items-center gap-1 px-2 py-0.5 bg-yellow-400/25 text-yellow-400 text-[8px] font-bold uppercase tracking-wider rounded-full border border-yellow-400/20">
+                                    <Star size={8} className="fill-yellow-400" /> Featured
+                                  </span>
+                                )}
+                                {product.hide_product && (
+                                  <span className="flex items-center gap-1 px-2 py-0.5 bg-white/10 text-white/60 text-[8px] font-bold uppercase tracking-wider rounded-full border border-white/10">
+                                    <EyeOff size={8} /> Hidden
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="p-6 text-white/60">{product.category}</td>
+                        <td className="p-6 text-right font-display text-white/60 font-semibold">{(product.costPrice || 0).toFixed(2)}</td>
+                        <td className="p-6 text-right font-display font-bold text-emerald-400">{(product.price).toFixed(2)}</td>
+                        <td className="p-6 text-right text-white/40">{product.openingStock || 0}</td>
+                        <td className="p-6 text-right font-bold text-white">{currentStock}</td>
+                        <td className="p-6 text-right text-white/40">{minStock}</td>
+                        <td className="p-6 whitespace-nowrap">
+                          <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold border ${
+                            isOut
+                              ? 'bg-rose-500/10 border-rose-500/20 text-rose-400'
+                              : isLow
+                                ? 'bg-amber-500/10 border-amber-500/20 text-amber-400 animate-pulse'
+                                : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+                          }`}>
+                            {isOut ? '🔴 Out of Stock' : isLow ? '🟡 Low Stock' : '🟢 In Stock'}
+                          </span>
+                        </td>
+                        <td className="p-6">
+                          <div className="flex justify-center gap-1.5">
+                            <button
+                              title="Edit"
+                              onClick={() => handleEdit(product)}
+                              className="p-1.5 hover:bg-white/10 rounded-lg text-white/40 hover:text-white transition-colors cursor-pointer"
+                            >
+                              <Edit2 size={14} />
+                            </button>
+                            <button
+                              title="Duplicate"
+                              onClick={() => handleDuplicate(product)}
+                              className="p-1.5 hover:bg-white/10 rounded-lg text-white/40 hover:text-white transition-colors cursor-pointer"
+                            >
+                              <Copy size={14} />
+                            </button>
+                            <button
+                              title="View History Logs"
+                              onClick={() => handleOpenHistory(product.id)}
+                              className="p-1.5 hover:bg-white/10 rounded-lg text-white/40 hover:text-white transition-colors cursor-pointer"
+                            >
+                              <History size={14} />
+                            </button>
+                            <button
+                              title="Delete"
+                              onClick={() => handleDelete(product.id)}
+                              className="p-1.5 hover:bg-white/10 rounded-lg text-white/40 hover:text-primary transition-colors cursor-pointer"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
 
       {/* Modal */}
       <AnimatePresence>
@@ -641,6 +945,66 @@ export default function AdminDashboard() {
                       className="w-full px-6 py-4 bg-white/5 border border-white/10 rounded-2xl focus:border-primary focus:outline-none transition-colors"
                       placeholder="Leave empty if no discount"
                     />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-white/40 ml-1">
+                      <DollarSign size={14} /> Cost Price (GHS)
+                    </label>
+                    <input
+                      required
+                      type="number"
+                      step="0.01"
+                      value={formData.costPrice}
+                      onChange={(e) => setFormData({ ...formData, costPrice: e.target.value })}
+                      className="w-full px-6 py-4 bg-white/5 border border-white/10 rounded-2xl focus:border-primary focus:outline-none transition-colors"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-white/40 ml-1">
+                      <Layers size={14} /> Opening Stock
+                    </label>
+                    <input
+                      required
+                      disabled={!!editingProduct}
+                      type="number"
+                      value={formData.openingStock}
+                      onChange={(e) => setFormData({ ...formData, openingStock: e.target.value })}
+                      className="w-full px-6 py-4 bg-white/5 border border-white/10 rounded-2xl focus:border-primary focus:outline-none transition-colors disabled:opacity-50"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-white/40 ml-1">
+                      <Layers size={14} /> Minimum Stock Alert Level
+                    </label>
+                    <input
+                      required
+                      type="number"
+                      value={formData.minimumStock}
+                      onChange={(e) => setFormData({ ...formData, minimumStock: e.target.value })}
+                      className="w-full px-6 py-4 bg-white/5 border border-white/10 rounded-2xl focus:border-primary focus:outline-none transition-colors"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-white/40 ml-1">
+                      <Settings size={14} /> Status
+                    </label>
+                    <select
+                      value={formData.status}
+                      onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
+                      className="w-full px-6 py-4 bg-white/5 border border-white/10 rounded-2xl focus:border-primary focus:outline-none transition-colors"
+                    >
+                      <option value="active">Active</option>
+                      <option value="draft">Draft</option>
+                      <option value="archived">Archived</option>
+                    </select>
                   </div>
                 </div>
 
@@ -754,10 +1118,12 @@ export default function AdminDashboard() {
                     className="w-full px-6 py-4 bg-white/5 border border-white/10 rounded-2xl focus:border-primary focus:outline-none transition-colors appearance-none"
                   >
                     <option value="Vibrators">Vibrators</option>
+                    <option value="Male Toys">Male Toys</option>
                     <option value="BDSM">BDSM</option>
+                    <option value="Wearables">Wearables</option>
                     <option value="Lubricants">Lubricants</option>
-                    <option value="Mens Toy">Men's Toy</option>
-                    <option value="Accessories">Accessories</option>
+                    <option value="Strap-Ons">Strap-Ons</option>
+                    <option value="Other Products">Other Products</option>
                   </select>
                 </div>
 
@@ -1158,6 +1524,8 @@ export default function AdminDashboard() {
         </div>
       ) : activeTab === 'guides' ? (
         <GuidesManagement />
+      ) : activeTab === 'retail-os' ? (
+        <RetailOS />
       ) : (
         <div className="max-w-7xl mx-auto px-6 py-8">
           <div className="mb-8">
@@ -1231,6 +1599,220 @@ export default function AdminDashboard() {
               </form>
             </div>
           )}
+      {/* Restock Modal */}
+      {isRestockModalOpen && (
+        <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-zinc-900 border border-white/10 rounded-[2.5rem] w-full max-w-md p-8 shadow-2xl relative">
+            <button 
+              onClick={() => setIsRestockModalOpen(false)}
+              className="absolute right-6 top-6 p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
+            >
+              <X size={18} />
+            </button>
+
+            <h3 className="text-lg font-bold font-display text-white mb-6">Restock Product</h3>
+
+            <form onSubmit={handleRestockSubmit} className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 ml-1">Product</label>
+                <select
+                  value={restockForm.productId}
+                  onChange={(e) => setRestockForm({ ...restockForm, productId: e.target.value })}
+                  className="w-full px-4 py-3 bg-black border border-white/10 rounded-xl text-xs focus:outline-none focus:border-primary text-zinc-400"
+                  required
+                >
+                  <option value="">Select product to restock...</option>
+                  {products.map(p => (
+                    <option key={p.id} value={p.id}>{p.name} (Current Stock: {p.currentStock || 0})</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 ml-1">Restock Qty</label>
+                  <input 
+                    type="number"
+                    min="1"
+                    value={restockForm.quantity}
+                    onChange={(e) => setRestockForm({ ...restockForm, quantity: e.target.value })}
+                    className="w-full px-4 py-3 bg-black border border-white/10 rounded-xl text-xs focus:outline-none focus:border-primary text-white"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 ml-1">Unit Cost Price (GH₵)</label>
+                  <input 
+                    type="number"
+                    step="0.01"
+                    min="0.01"
+                    value={restockForm.costPrice}
+                    onChange={(e) => setRestockForm({ ...restockForm, costPrice: e.target.value })}
+                    className="w-full px-4 py-3 bg-black border border-white/10 rounded-xl text-xs focus:outline-none focus:border-primary text-white"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-4 pt-4 border-t border-white/5">
+                <button
+                  type="button"
+                  onClick={() => setIsRestockModalOpen(false)}
+                  className="flex-1 py-3 bg-zinc-800 hover:bg-zinc-700 text-white font-bold rounded-xl text-xs cursor-pointer transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-3 bg-primary text-white font-bold rounded-xl text-xs cursor-pointer transition-colors hover:bg-primary-hover shadow-lg shadow-primary/25"
+                >
+                  Confirm Restock
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Stock Adjustment Modal */}
+      {isAdjustmentModalOpen && (
+        <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-zinc-900 border border-white/10 rounded-[2.5rem] w-full max-w-md p-8 shadow-2xl relative">
+            <button 
+              onClick={() => setIsAdjustmentModalOpen(false)}
+              className="absolute right-6 top-6 p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
+            >
+              <X size={18} />
+            </button>
+
+            <h3 className="text-lg font-bold font-display text-white mb-6">Manual Stock Adjustment</h3>
+
+            <form onSubmit={handleAdjustmentSubmit} className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 ml-1">Product</label>
+                <select
+                  value={adjustForm.productId}
+                  onChange={(e) => setAdjustForm({ ...adjustForm, productId: e.target.value })}
+                  className="w-full px-4 py-3 bg-black border border-white/10 rounded-xl text-xs focus:outline-none focus:border-primary text-zinc-400"
+                  required
+                >
+                  <option value="">Select product...</option>
+                  {products.map(p => (
+                    <option key={p.id} value={p.id}>{p.name} (Current: {p.currentStock || 0})</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 ml-1">Adjustment Type</label>
+                  <select
+                    value={adjustForm.type}
+                    onChange={(e) => setAdjustForm({ ...adjustForm, type: e.target.value as any })}
+                    className="w-full px-4 py-3 bg-black border border-white/10 rounded-xl text-xs focus:outline-none focus:border-primary text-zinc-400"
+                    required
+                  >
+                    <option value="add">Add Stock (+)</option>
+                    <option value="remove">Remove Stock (-)</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 ml-1">Quantity</label>
+                  <input 
+                    type="number"
+                    min="1"
+                    value={adjustForm.adjustQty}
+                    onChange={(e) => setAdjustForm({ ...adjustForm, adjustQty: e.target.value })}
+                    className="w-full px-4 py-3 bg-black border border-white/10 rounded-xl text-xs focus:outline-none focus:border-primary text-white"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 ml-1">Reason</label>
+                <textarea 
+                  placeholder="Cycle count correction, damaged item..."
+                  value={adjustForm.reason}
+                  onChange={(e) => setAdjustForm({ ...adjustForm, reason: e.target.value })}
+                  className="w-full px-4 py-3 bg-black border border-white/10 rounded-xl text-xs focus:outline-none focus:border-primary text-white h-20 resize-none"
+                  required
+                />
+              </div>
+
+              <div className="flex gap-4 pt-4 border-t border-white/5">
+                <button
+                  type="button"
+                  onClick={() => setIsAdjustmentModalOpen(false)}
+                  className="flex-1 py-3 bg-zinc-800 hover:bg-zinc-700 text-white font-bold rounded-xl text-xs cursor-pointer transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-3 bg-primary text-white font-bold rounded-xl text-xs cursor-pointer transition-colors hover:bg-primary-hover shadow-lg shadow-primary/25"
+                >
+                  Confirm Adjustment
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Product History Logs Modal */}
+      {isHistoryModalOpen && (
+        <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-zinc-900 border border-white/10 rounded-[2.5rem] w-full max-w-lg p-8 shadow-2xl relative max-h-[85vh] overflow-y-auto">
+            <button 
+              onClick={() => setIsHistoryModalOpen(false)}
+              className="absolute right-6 top-6 p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
+            >
+              <X size={18} />
+            </button>
+
+            <h3 className="text-lg font-bold font-display text-white mb-6">Stock Transaction History</h3>
+
+            <div className="space-y-4">
+              {loadingHistory ? (
+                <p className="text-center text-zinc-500 py-10 text-xs font-bold">Loading transaction logs...</p>
+              ) : historyLogs.length === 0 ? (
+                <p className="text-center text-zinc-500 py-10 text-xs font-bold">No transaction history found for this product.</p>
+              ) : (
+                <div className="space-y-3">
+                  {historyLogs.map((log) => (
+                    <div key={log.id} className="p-4 bg-black/20 border border-white/5 rounded-2xl text-xs flex justify-between items-center gap-4">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className={`px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider ${
+                            log.type === 'in'
+                              ? 'bg-emerald-500/10 text-emerald-400'
+                              : log.type === 'out'
+                                ? 'bg-rose-500/10 text-rose-400'
+                                : 'bg-indigo-500/10 text-indigo-400'
+                          }`}>
+                            {log.type}
+                          </span>
+                          <span className="font-bold text-zinc-300">
+                            {log.type === 'in' ? '+' : log.type === 'out' ? '-' : ''}{log.changeQty} units
+                          </span>
+                        </div>
+                        <span className="text-[10px] text-zinc-500 block">Balance: {log.newQty} units</span>
+                        <p className="text-[11px] text-zinc-400 italic mt-1">"{log.reason}"</p>
+                      </div>
+                      <span className="text-[10px] text-zinc-500 font-sans text-right">
+                        {log.createdAt?.toDate().toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
         </div>
       )}
     </div>

@@ -29,6 +29,13 @@ export interface Product {
   isOutOfStock: boolean;
   featured?: boolean;
   hide_product?: boolean;
+  costPrice?: number;
+  openingStock?: number;
+  currentStock?: number;
+  minimumStock?: number;
+  status?: 'active' | 'draft' | 'archived';
+  productName?: string;
+  sellingPrice?: number;
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }
@@ -50,6 +57,9 @@ export interface SiteSettings {
   isSalesNotificationActive: boolean;
   salesNotificationText: string;
   isDiscountTagsActive: boolean;
+  lowStockAlertThreshold?: number;
+  expenseMonthlyBudget?: number;
+  monthlySalesTarget?: number;
 }
 
 const PRODUCTS_COLLECTION = 'products';
@@ -310,7 +320,7 @@ export const subscribeToSiteSettings = (callback: (settings: SiteSettings | null
   });
 };
 
-export const updateSiteSettings = async (settingsData: SiteSettings): Promise<void> => {
+export const updateSiteSettings = async (settingsData: Partial<SiteSettings>): Promise<void> => {
   const docRef = doc(db, SETTINGS_COLLECTION, 'global');
   const docSnap = await getDoc(docRef);
   
@@ -513,3 +523,392 @@ export const deleteGuide = async (id: string): Promise<void> => {
     throw error;
   }
 };
+
+// ==========================================
+// RETAIL OS DATABASE LAYERS
+// ==========================================
+
+export interface Sale {
+  id?: string;
+  productId: string;
+  productName: string;
+  quantity: number;
+  price: number; // selling price
+  costPrice: number;
+  profit: number; // calculated automatically
+  platform: 'Website' | 'WhatsApp' | 'Instagram' | 'Facebook' | 'Jiji' | 'Walk-in' | 'Referral';
+  paymentMethod: 'Cash' | 'MoMo' | 'Card' | 'Bank Transfer';
+  discount?: number;
+  deliveryFee?: number;
+  notes?: string;
+  createdAt: Timestamp;
+}
+
+export interface Expense {
+  id?: string;
+  category: 'Fuel' | 'Packaging' | 'Delivery' | 'Advertising' | 'Rent' | 'Internet' | 'Electricity' | 'Stock Purchase' | 'Miscellaneous';
+  amount: number;
+  description: string;
+  receiptImage?: string;
+  createdAt: Timestamp;
+}
+
+export interface InventoryLog {
+  id?: string;
+  productId: string;
+  productName: string;
+  type: 'in' | 'out' | 'adjustment';
+  changeQty: number;
+  newQty: number;
+  reason: string;
+  createdAt: Timestamp;
+}
+
+export interface StockAdjustment {
+  id?: string;
+  productId: string;
+  productName: string;
+  adjustQty: number;
+  type: 'add' | 'remove';
+  reason: string;
+  createdAt: Timestamp;
+}
+
+export interface PurchaseOrder {
+  id?: string;
+  productId: string;
+  productName: string;
+  quantity: number;
+  costPrice: number;
+  status: 'pending' | 'completed' | 'cancelled';
+  createdAt: Timestamp;
+}
+
+export interface Notification {
+  id?: string;
+  title: string;
+  message: string;
+  type: 'stock' | 'expense' | 'target';
+  isRead: boolean;
+  createdAt: Timestamp;
+}
+
+// Collections constants
+const SALES_COLLECTION = 'sales';
+const EXPENSES_COLLECTION = 'expenses';
+const INVENTORY_LOGS_COLLECTION = 'inventory_logs';
+const STOCK_ADJUSTMENTS_COLLECTION = 'stock_adjustments';
+const PURCHASE_ORDERS_COLLECTION = 'purchase_orders';
+const NOTIFICATIONS_COLLECTION = 'notifications';
+
+// --- INVENTORY LOGS API ---
+export const fetchInventoryLogs = async (): Promise<InventoryLog[]> => {
+  try {
+    const q = query(collection(db, INVENTORY_LOGS_COLLECTION), orderBy('createdAt', 'desc'));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as InventoryLog));
+  } catch (error) {
+    console.error('Error in fetchInventoryLogs:', error);
+    throw error;
+  }
+};
+
+export const logInventoryChange = async (data: Omit<InventoryLog, 'id' | 'createdAt'>): Promise<string> => {
+  try {
+    const log = { ...data, createdAt: Timestamp.now() };
+    const docRef = await addDoc(collection(db, INVENTORY_LOGS_COLLECTION), log);
+    
+    // Sync to Sheets
+    try {
+      await fetch('/api/sheets-sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'inventory_log', data: { ...log, id: docRef.id, createdAt: log.createdAt.toDate().toISOString() } })
+      });
+    } catch (e) {
+      console.error('Failed to sync inventory log:', e);
+    }
+    
+    return docRef.id;
+  } catch (error) {
+    console.error('Error in logInventoryChange:', error);
+    throw error;
+  }
+};
+
+// --- STOCK ADJUSTMENTS API ---
+export const fetchStockAdjustments = async (): Promise<StockAdjustment[]> => {
+  try {
+    const q = query(collection(db, STOCK_ADJUSTMENTS_COLLECTION), orderBy('createdAt', 'desc'));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as StockAdjustment));
+  } catch (error) {
+    console.error('Error in fetchStockAdjustments:', error);
+    throw error;
+  }
+};
+
+export const logStockAdjustment = async (data: Omit<StockAdjustment, 'id' | 'createdAt'>): Promise<string> => {
+  try {
+    const adjustment = { ...data, createdAt: Timestamp.now() };
+    const docRef = await addDoc(collection(db, STOCK_ADJUSTMENTS_COLLECTION), adjustment);
+
+    // Update Product Stock
+    const productRef = doc(db, PRODUCTS_COLLECTION, data.productId);
+    const productSnap = await getDoc(productRef);
+    if (productSnap.exists()) {
+      const product = productSnap.data() as Product;
+      const currentVal = product.currentStock !== undefined ? product.currentStock : 0;
+      const adjustQty = data.adjustQty;
+      const newStock = Math.max(0, data.type === 'add' ? currentVal + adjustQty : currentVal - adjustQty);
+
+      await updateDoc(productRef, {
+        currentStock: newStock,
+        isOutOfStock: newStock === 0 ? true : product.isOutOfStock
+      });
+
+      // Log Inventory Change
+      await logInventoryChange({
+        productId: data.productId,
+        productName: data.productName,
+        type: 'adjustment',
+        changeQty: adjustQty,
+        newQty: newStock,
+        reason: `Manual Adjustment: ${data.reason}`
+      });
+    }
+
+    return docRef.id;
+  } catch (error) {
+    console.error('Error in logStockAdjustment:', error);
+    throw error;
+  }
+};
+
+// --- SALES API ---
+export const fetchSales = async (): Promise<Sale[]> => {
+  try {
+    const q = query(collection(db, SALES_COLLECTION), orderBy('createdAt', 'desc'));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Sale));
+  } catch (error) {
+    console.error('Error in fetchSales:', error);
+    throw error;
+  }
+};
+
+export const logSale = async (saleData: Omit<Sale, 'createdAt'>): Promise<string> => {
+  try {
+    const sale = { ...saleData, createdAt: Timestamp.now() };
+    const docRef = await addDoc(collection(db, SALES_COLLECTION), sale);
+
+    // Update Product Stock count
+    if (saleData.productId) {
+      const productRef = doc(db, PRODUCTS_COLLECTION, saleData.productId);
+      const productSnap = await getDoc(productRef);
+      if (productSnap.exists()) {
+        const product = productSnap.data() as Product;
+        const currentStock = product.currentStock !== undefined ? product.currentStock : 0;
+        const newStock = Math.max(0, currentStock - saleData.quantity);
+        await updateDoc(productRef, {
+          currentStock: newStock,
+          isOutOfStock: newStock === 0 ? true : product.isOutOfStock
+        });
+
+        // Log Inventory Change
+        await logInventoryChange({
+          productId: saleData.productId,
+          productName: product.name,
+          type: 'out',
+          changeQty: saleData.quantity,
+          newQty: newStock,
+          reason: `Logged Sale (ID: ${docRef.id})`
+        });
+
+        // Low stock warning
+        const minStock = product.minimumStock !== undefined ? product.minimumStock : 5;
+        if (newStock <= minStock) {
+          await createNotification({
+            title: 'Low Stock Alert',
+            message: `Product "${product.name}" is low on stock (${newStock} units left).`,
+            type: 'stock',
+            isRead: false
+          });
+        }
+      }
+    }
+
+    // Google Sheets Sync
+    try {
+      await fetch('/api/sheets-sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'sale', data: { ...sale, id: docRef.id, createdAt: sale.createdAt.toDate().toISOString() } })
+      });
+    } catch (e) {
+      console.error('Failed to sync sale to sheets:', e);
+    }
+
+    return docRef.id;
+  } catch (error) {
+    console.error('Error in logSale:', error);
+    throw error;
+  }
+};
+
+export const deleteSale = async (id: string): Promise<void> => {
+  try {
+    await deleteDoc(doc(db, SALES_COLLECTION, id));
+  } catch (error) {
+    console.error('Error in deleteSale:', error);
+    throw error;
+  }
+};
+
+// --- EXPENSES API ---
+export const fetchExpenses = async (): Promise<Expense[]> => {
+  try {
+    const q = query(collection(db, EXPENSES_COLLECTION), orderBy('createdAt', 'desc'));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Expense));
+  } catch (error) {
+    console.error('Error in fetchExpenses:', error);
+    throw error;
+  }
+};
+
+export const logExpense = async (data: Omit<Expense, 'id' | 'createdAt'>): Promise<string> => {
+  try {
+    const expense = { ...data, createdAt: Timestamp.now() };
+    const docRef = await addDoc(collection(db, EXPENSES_COLLECTION), expense);
+
+    // Google Sheets Sync
+    try {
+      await fetch('/api/sheets-sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'expense', data: { ...expense, id: docRef.id, createdAt: expense.createdAt.toDate().toISOString() } })
+      });
+    } catch (e) {
+      console.error('Failed to sync expense to sheets:', e);
+    }
+
+    return docRef.id;
+  } catch (error) {
+    console.error('Error in logExpense:', error);
+    throw error;
+  }
+};
+
+export const deleteExpense = async (id: string): Promise<void> => {
+  try {
+    await deleteDoc(doc(db, EXPENSES_COLLECTION, id));
+  } catch (error) {
+    console.error('Error in deleteExpense:', error);
+    throw error;
+  }
+};
+
+// --- PURCHASE ORDERS API ---
+export const fetchPurchaseOrders = async (): Promise<PurchaseOrder[]> => {
+  try {
+    const q = query(collection(db, PURCHASE_ORDERS_COLLECTION), orderBy('createdAt', 'desc'));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as PurchaseOrder));
+  } catch (error) {
+    console.error('Error in fetchPurchaseOrders:', error);
+    throw error;
+  }
+};
+
+export const createPurchaseOrder = async (data: Omit<PurchaseOrder, 'id' | 'createdAt'>): Promise<string> => {
+  try {
+    const po = { ...data, createdAt: Timestamp.now() };
+    const docRef = await addDoc(collection(db, PURCHASE_ORDERS_COLLECTION), po);
+    return docRef.id;
+  } catch (error) {
+    console.error('Error in createPurchaseOrder:', error);
+    throw error;
+  }
+};
+
+export const updatePurchaseOrder = async (id: string, data: Partial<PurchaseOrder>): Promise<void> => {
+  try {
+    const poRef = doc(db, PURCHASE_ORDERS_COLLECTION, id);
+    const poSnap = await getDoc(poRef);
+    if (!poSnap.exists()) return;
+    const oldPo = poSnap.data() as PurchaseOrder;
+
+    await updateDoc(poRef, data);
+
+    // Restock stock completed
+    if (oldPo.status === 'pending' && data.status === 'completed') {
+      const productRef = doc(db, PRODUCTS_COLLECTION, oldPo.productId);
+      const productSnap = await getDoc(productRef);
+      if (productSnap.exists()) {
+        const product = productSnap.data() as Product;
+        const currentStock = product.currentStock !== undefined ? product.currentStock : 0;
+        const newStock = currentStock + oldPo.quantity;
+
+        // Recalculate average cost price
+        const currentCost = product.costPrice || 0;
+        const totalItemsInStockBefore = currentStock;
+        const newItemsCost = oldPo.costPrice * oldPo.quantity;
+        const totalCost = (currentCost * totalItemsInStockBefore) + newItemsCost;
+        const newAverageCost = newStock > 0 ? parseFloat((totalCost / newStock).toFixed(2)) : oldPo.costPrice;
+
+        await updateDoc(productRef, {
+          currentStock: newStock,
+          costPrice: newAverageCost,
+          isOutOfStock: false
+        });
+
+        // Log to inventory changes
+        await logInventoryChange({
+          productId: oldPo.productId,
+          productName: oldPo.productName,
+          type: 'in',
+          changeQty: oldPo.quantity,
+          newQty: newStock,
+          reason: `Restocked via PO completed (ID: ${id})`
+        });
+      }
+    }
+  } catch (error) {
+    console.error('Error in updatePurchaseOrder:', error);
+    throw error;
+  }
+};
+
+// --- NOTIFICATIONS API ---
+export const fetchNotifications = async (): Promise<Notification[]> => {
+  try {
+    const q = query(collection(db, NOTIFICATIONS_COLLECTION), orderBy('createdAt', 'desc'));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Notification));
+  } catch (error) {
+    console.error('Error in fetchNotifications:', error);
+    throw error;
+  }
+};
+
+export const createNotification = async (data: Omit<Notification, 'id' | 'createdAt'>): Promise<string> => {
+  try {
+    const notification = { ...data, createdAt: Timestamp.now() };
+    const docRef = await addDoc(collection(db, NOTIFICATIONS_COLLECTION), notification);
+    return docRef.id;
+  } catch (error) {
+    console.error('Error in createNotification:', error);
+    throw error;
+  }
+};
+
+export const markNotificationRead = async (id: string): Promise<void> => {
+  try {
+    await updateDoc(doc(db, NOTIFICATIONS_COLLECTION, id), { isRead: true });
+  } catch (error) {
+    console.error('Error in markNotificationRead:', error);
+    throw error;
+  }
+};
+
