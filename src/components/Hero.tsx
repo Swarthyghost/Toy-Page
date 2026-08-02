@@ -58,14 +58,16 @@ export default function Hero() {
   const { products } = useProducts();
   const featuredProduct = products.find(p => p.featured === true);
 
-  const displayProduct = featuredProduct || {
-    id: "pcNPkD2LuoQ8hdODSntW",
-    name: "Rose Thrusting & Sucking Vibrator",
-    price: 450,
-    image: "/rosetoy2in1.webp",
-    category: "Vibrators",
-    description: "Advanced suction technology with dual stimulation modes",
-  };
+  // Fallback product commented out so it only shows selected featured product
+  // const displayProduct = featuredProduct || {
+  //   id: "pcNPkD2LuoQ8hdODSntW",
+  //   name: "Rose Thrusting & Sucking Vibrator",
+  //   price: 450,
+  //   image: "/rosetoy2in1.webp",
+  //   category: "Vibrators",
+  //   description: "Advanced suction technology with dual stimulation modes",
+  // };
+  const displayProduct = featuredProduct;
 
   // SEO optimization for homepage
   useSEO({
@@ -111,7 +113,7 @@ export default function Hero() {
           className="max-w-7xl mx-auto px-6 w-full"
           style={{ y: textY, opacity }}
         >
-          <div className="grid lg:grid-cols-[1fr_420px] gap-16 items-center">
+          <div className={`grid ${displayProduct ? "lg:grid-cols-[1fr_420px]" : "lg:grid-cols-1 max-w-4xl"} gap-16 items-center`}>
             {/* ── Left: Copy ── */}
             <div>
               {/* Badge */}
@@ -199,82 +201,84 @@ export default function Hero() {
             </div>
 
             {/* ── Right: Featured Product Card ── */}
-            <motion.div
-              initial={{ opacity: 0, x: 40, scale: 0.96 }}
-              animate={{ opacity: 1, x: 0, scale: 1 }}
-              transition={{
-                duration: 0.8,
-                delay: 0.2,
-                ease: [0.22, 1, 0.36, 1],
-              }}
-              className="relative"
-            >
-              {/* Glow behind card */}
-              <div className="absolute inset-0 bg-primary/10 rounded-[2.5rem] blur-3xl scale-110" />
+            {displayProduct && (
+              <motion.div
+                initial={{ opacity: 0, x: 40, scale: 0.96 }}
+                animate={{ opacity: 1, x: 0, scale: 1 }}
+                transition={{
+                  duration: 0.8,
+                  delay: 0.2,
+                  ease: [0.22, 1, 0.36, 1],
+                }}
+                className="relative"
+              >
+                {/* Glow behind card */}
+                <div className="absolute inset-0 bg-primary/10 rounded-[2.5rem] blur-3xl scale-110" />
 
-              <div className="relative bg-white/5 border border-white/10 rounded-[2.5rem] overflow-hidden">
-                <div className="relative aspect-[4/3] overflow-hidden">
-                  <Image
-                    src={displayProduct.image}
-                    alt={displayProduct.name}
-                    className="w-full h-full object-cover transition-transform duration-700 hover:scale-105 bg-white"
-                    width={800}
-                    height={600}
-                    priority
-                    unoptimized
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
+                <div className="relative bg-white/5 border border-white/10 rounded-[2.5rem] overflow-hidden">
+                  <div className="relative aspect-[4/3] overflow-hidden">
+                    <Image
+                      src={displayProduct.image}
+                      alt={displayProduct.name}
+                      className="w-full h-full object-cover transition-transform duration-700 hover:scale-105 bg-white"
+                      width={800}
+                      height={600}
+                      priority
+                      unoptimized
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
 
-                  {/* Featured badge */}
-                  <div className="absolute top-4 left-4 flex items-center gap-2 px-3 py-1.5 bg-primary text-white text-xs font-bold uppercase tracking-widest rounded-full">
-                    <Sparkles size={10} />
-                    Featured
-                  </div>
-                </div>
-
-                {/* Card body */}
-                <div className="p-6">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary/70 mb-2">
-                    {displayProduct.category}
-                  </p>
-                  <h3 className="text-xl font-display font-bold mb-1 leading-tight line-clamp-1">
-                    {displayProduct.name}
-                  </h3>
-                  <p className="text-white/40 text-sm mb-5 line-clamp-1">
-                    {displayProduct.description}
-                  </p>
-
-                  <div className="flex items-center justify-between">
-                    <span className="text-3xl font-display font-bold text-primary">
-                      GHS {displayProduct.price}
-                    </span>
-                    <Link
-                      href={`/product/${displayProduct.id}`}
-                      className="group flex items-center gap-2 px-5 py-3 bg-white text-black text-sm font-bold rounded-xl hover:bg-primary hover:text-white transition-all"
-                    >
-                      View
-                      <ArrowRight
-                        size={14}
-                        className="group-hover:translate-x-0.5 transition-transform"
-                      />
-                    </Link>
-                  </div>
-                </div>
-
-                {/* Feature pills */}
-                <div className="px-6 pb-6 flex flex-wrap gap-2">
-                  {features.map(({ icon: Icon, text }) => (
-                    <div
-                      key={text}
-                      className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 border border-white/10 rounded-full text-[11px] text-white/50"
-                    >
-                      <Icon size={11} className="text-primary" />
-                      {text}
+                    {/* Featured badge */}
+                    <div className="absolute top-4 left-4 flex items-center gap-2 px-3 py-1.5 bg-primary text-white text-xs font-bold uppercase tracking-widest rounded-full">
+                      <Sparkles size={10} />
+                      Featured
                     </div>
-                  ))}
+                  </div>
+
+                  {/* Card body */}
+                  <div className="p-6">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary/70 mb-2">
+                      {displayProduct.category}
+                    </p>
+                    <h3 className="text-xl font-display font-bold mb-1 leading-tight line-clamp-1">
+                      {displayProduct.name}
+                    </h3>
+                    <p className="text-white/40 text-sm mb-5 line-clamp-1">
+                      {displayProduct.description}
+                    </p>
+
+                    <div className="flex items-center justify-between">
+                      <span className="text-3xl font-display font-bold text-primary">
+                        GHS {displayProduct.price}
+                      </span>
+                      <Link
+                        href={`/product/${displayProduct.id}`}
+                        className="group flex items-center gap-2 px-5 py-3 bg-white text-black text-sm font-bold rounded-xl hover:bg-primary hover:text-white transition-all"
+                      >
+                        View
+                        <ArrowRight
+                          size={14}
+                          className="group-hover:translate-x-0.5 transition-transform"
+                        />
+                      </Link>
+                    </div>
+                  </div>
+
+                  {/* Feature pills */}
+                  <div className="px-6 pb-6 flex flex-wrap gap-2">
+                    {features.map(({ icon: Icon, text }) => (
+                      <div
+                        key={text}
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 border border-white/10 rounded-full text-[11px] text-white/50"
+                      >
+                        <Icon size={11} className="text-primary" />
+                        {text}
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            </motion.div>
+              </motion.div>
+            )}
           </div>
         </motion.div>
       </section>
