@@ -166,6 +166,24 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleBulkDelete = async () => {
+    if (selectedProductIds.length === 0) return;
+    if (confirm(`Are you sure you want to delete the ${selectedProductIds.length} selected products? This cannot be undone.`)) {
+      try {
+        setIsUploading(true);
+        await Promise.all(selectedProductIds.map(id => deleteProduct(id)));
+        setSelectedProductIds([]);
+        alert("Selected products deleted successfully.");
+        loadProducts();
+      } catch (error) {
+        console.error("Error bulk deleting products:", error);
+        alert(`Failed to delete selected products: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      } finally {
+        setIsUploading(false);
+      }
+    }
+  };
+
   const loadOrders = async () => {
     setLoadingOrders(true);
     try {
@@ -744,6 +762,13 @@ export default function AdminDashboard() {
                   className="px-4 py-2 bg-primary hover:bg-primary/80 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
                 >
                   <Eye size={14} /> Unhide Selected
+                </button>
+                <button
+                  type="button"
+                  onClick={handleBulkDelete}
+                  className="px-4 py-2 bg-red-600 hover:bg-red-500 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Trash2 size={14} /> Delete Selected
                 </button>
               </div>
             )}
