@@ -45,36 +45,7 @@ export default function Overview() {
 
   useEffect(() => {
     setMounted(true);
-    
-    const initSync = async () => {
-      try {
-        await fetch('/api/sheets-sync');
-      } catch (e) {
-        console.error('Initial sheets sync failed:', e);
-      }
-      await loadOverviewData();
-    };
-
-    initSync();
-
-    // Poll sheets inventory every 60 seconds
-    const interval = setInterval(async () => {
-      try {
-        await fetch('/api/sheets-sync');
-        const [p, s, e] = await Promise.all([
-          fetchProducts(),
-          fetchSales(),
-          fetchExpenses()
-        ]);
-        setProducts(p);
-        setSales(s);
-        setExpenses(e);
-      } catch (e) {
-        console.error('Polling sheets sync failed:', e);
-      }
-    }, 60000);
-
-    return () => clearInterval(interval);
+    loadOverviewData();
   }, []);
 
   const loadOverviewData = async () => {
@@ -185,23 +156,15 @@ export default function Overview() {
       <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 bg-zinc-900/40 border border-white/5 p-6 rounded-3xl backdrop-blur-sm">
         <div>
           <h2 className="text-base font-bold text-white font-display">Retail OS Dashboard Overview</h2>
-          <p className="text-xs text-zinc-500 mt-1">Master Inventory synchronized with Google Sheets.</p>
+          <p className="text-xs text-zinc-500 mt-1">Master Inventory and Sales Ledger Dashboard.</p>
         </div>
         <button
           onClick={async () => {
             setIsRefreshing(true);
             try {
-              const res = await fetch('/api/sheets-sync');
-              const data = await res.json();
-              if (data.success) {
-                alert(`Data refreshed successfully! Synced database states.`);
-              } else {
-                alert('Failed to sync data from Google Sheets.');
-              }
               await loadOverviewData();
             } catch (err) {
               console.error(err);
-              alert('Error syncing sheets.');
             } finally {
               setIsRefreshing(false);
             }
@@ -210,7 +173,7 @@ export default function Overview() {
           className="flex items-center justify-center gap-2 px-4 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-white rounded-2xl text-xs font-bold border border-white/5 transition-all cursor-pointer disabled:opacity-50"
         >
           <RefreshCw size={14} className={isRefreshing ? "animate-spin text-primary" : ""} />
-          <span>{isRefreshing ? 'Refreshing...' : 'Refresh Inventory'}</span>
+          <span>{isRefreshing ? 'Refreshing...' : 'Refresh Dashboard'}</span>
         </button>
       </div>
 

@@ -7,12 +7,14 @@ import {
   Upload, 
   X, 
   Search, 
-  ImageIcon 
+  ImageIcon,
+  Pencil
 } from 'lucide-react';
 import { 
   fetchExpenses, 
   logExpense, 
   deleteExpense, 
+  updateExpense,
   Expense 
 } from '../../services/firebaseApi';
 import { uploadImage } from '../../config/cloudinary';
@@ -30,7 +32,9 @@ export default function Expenses() {
     category: 'Advertising' as Expense['category'],
     amount: '',
     description: '',
+    spentAt: new Date().toISOString().substring(0, 10),
   });
+  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
 
@@ -70,36 +74,76 @@ export default function Expenses() {
     }
   };
 
+  const handleEditClick = (exp: Expense) => {
+    setEditingExpense(exp);
+    let dateStr = new Date().toISOString().substring(0, 10);
+    if (exp.createdAt) {
+      const created = exp.createdAt as any;
+      if (typeof created.toDate === 'function') {
+        dateStr = created.toDate().toISOString().substring(0, 10);
+      } else {
+        dateStr = new Date(created).toISOString().substring(0, 10);
+      }
+    }
+    setForm({
+      category: exp.category,
+      amount: exp.amount.toString(),
+      description: exp.description,
+      spentAt: dateStr,
+    });
+    setReceiptFile(null);
+    setReceiptPreview(exp.receiptImage || null);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setEditingExpense(null);
+    setForm({
+      category: 'Advertising',
+      amount: '',
+      description: '',
+      spentAt: new Date().toISOString().substring(0, 10),
+    });
+    setReceiptFile(null);
+    setReceiptPreview(null);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.amount || !form.description) {
+    if (!form.amount || !form.description || !form.spentAt) {
       alert('Please fill out all required fields.');
       return;
     }
 
     setIsSubmitting(true);
     try {
-      let receiptUrl = '';
+      let receiptUrl = receiptPreview || '';
       if (receiptFile) {
         receiptUrl = await uploadImage(receiptFile);
       }
 
-      await logExpense({
+      const payload = {
         category: form.category,
         amount: parseFloat(form.amount),
         description: form.description,
         receiptImage: receiptUrl || undefined,
-      });
+        createdAt: form.spentAt,
+      };
 
-      alert('Expense logged successfully!');
-      setIsModalOpen(false);
-      setForm({ category: 'Advertising', amount: '', description: '' });
-      setReceiptFile(null);
-      setReceiptPreview(null);
+      if (editingExpense) {
+        await updateExpense(editingExpense.id!, payload);
+        alert('Expense updated successfully!');
+      } else {
+        await logExpense(payload);
+        alert('Expense logged successfully!');
+      }
+
+      handleCloseModal();
       await loadExpensesData();
     } catch (err) {
       console.error(err);
-      alert('Failed to log expense.');
+      alert(editingExpense ? 'Failed to update expense.' : 'Failed to log expense.');
     } finally {
       setIsSubmitting(false);
     }
@@ -252,12 +296,22 @@ export default function Expenses() {
                       )}
                     </td>
                     <td className="p-4 text-center">
-                      <button 
-                        onClick={() => handleDelete(exp.id!)}
-                        className="p-1.5 rounded-lg border border-white/5 hover:bg-rose-500/10 text-zinc-400 hover:text-rose-400 transition-colors cursor-pointer"
-                      >
-                        <Trash2 size={14} />
-                      </button>
+                      <div className="flex items-center justify-center gap-2">
+                        <button 
+                          onClick={() => handleEditClick(exp)}
+                          className="p-1.5 rounded-lg border border-white/5 hover:bg-primary/10 text-zinc-400 hover:text-primary transition-colors cursor-pointer"
+                          title="Edit Expense"
+                        >
+                          <Pencil size={14} />
+                        </button>
+                        <button 
+                          onClick={() => handleDelete(exp.id!)}
+                          className="p-1.5 rounded-lg border border-white/5 hover:bg-rose-500/10 text-zinc-400 hover:text-rose-400 transition-colors cursor-pointer"
+                          title="Delete Expense"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -272,13 +326,15 @@ export default function Expenses() {
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-zinc-900 border border-white/10 rounded-[2rem] w-full max-w-md p-8 shadow-2xl relative">
             <button 
-              onClick={() => setIsModalOpen(false)}
+              onClick={handleCloseModal}
               className="absolute right-6 top-6 p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
             >
               <X size={18} />
             </button>
 
-            <h3 className="text-lg font-bold font-display text-white mb-6">Log Business Expense</h3>
+            <h3 className="text-lg font-bold font-display text-white mb-6">
+              {editingExpense ? 'Edit Expense Record' : 'Log Business Expense'}
+            </h3>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* Receipt File Upload */}
@@ -324,24 +380,37 @@ export default function Expenses() {
                 />
               </div>
 
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 ml-1">Amount (GH₵)</label>
-                <input 
-                  type="number"
-                  step="0.01"
-                  min="0.01"
-                  placeholder="0.00"
-                  value={form.amount}
-                  onChange={(e) => setForm({ ...form, amount: e.target.value })}
-                  className="w-full px-4 py-3 bg-black border border-white/5 rounded-xl text-xs focus:outline-none focus:border-primary text-white"
-                  required
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 ml-1">Amount (GH₵)</label>
+                  <input 
+                    type="number"
+                    step="0.01"
+                    min="0.01"
+                    placeholder="0.00"
+                    value={form.amount}
+                    onChange={(e) => setForm({ ...form, amount: e.target.value })}
+                    className="w-full px-4 py-3 bg-black border border-white/5 rounded-xl text-xs focus:outline-none focus:border-primary text-white"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 ml-1">Date Spent</label>
+                  <input 
+                    type="date"
+                    value={form.spentAt}
+                    onChange={(e) => setForm({ ...form, spentAt: e.target.value })}
+                    className="w-full px-4 py-3 bg-black border border-white/5 rounded-xl text-xs focus:outline-none focus:border-primary text-white"
+                    required
+                  />
+                </div>
               </div>
 
               <div className="flex gap-4 pt-4 border-t border-white/5">
                 <button
                   type="button"
-                  onClick={() => setIsModalOpen(false)}
+                  onClick={handleCloseModal}
                   className="flex-1 py-3 bg-zinc-800 hover:bg-zinc-700 text-white font-bold rounded-xl text-xs cursor-pointer transition-colors"
                 >
                   Cancel
@@ -351,7 +420,7 @@ export default function Expenses() {
                   disabled={isSubmitting}
                   className="flex-1 py-3 bg-primary text-white font-bold rounded-xl text-xs cursor-pointer transition-all shadow-lg shadow-primary/25 hover:scale-[1.01] active:scale-98 disabled:opacity-50"
                 >
-                  {isSubmitting ? 'Logging...' : 'Submit Outlay'}
+                  {isSubmitting ? 'Submitting...' : editingExpense ? 'Save Changes' : 'Submit Outlay'}
                 </button>
               </div>
             </form>

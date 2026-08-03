@@ -4,12 +4,10 @@ import React, { useState } from 'react';
 import { 
   LayoutDashboard, 
   TrendingUp, 
-  Package, 
-  TrendingDown, 
   BarChart3, 
   FileText, 
-  Sparkles, 
-  RefreshCw 
+  Sparkles,
+  TrendingDown
 } from 'lucide-react';
 import Overview from './Overview';
 import Sales from './Sales';
@@ -17,7 +15,6 @@ import Expenses from './Expenses';
 import Analytics from './Analytics';
 import Reports from './Reports';
 import AIAssistant from './AIAssistant';
-import DataSource from './DataSource';
 
 type SubTab = 
   | 'overview' 
@@ -25,8 +22,7 @@ type SubTab =
   | 'expenses' 
   | 'analytics' 
   | 'reports' 
-  | 'ai-assistant' 
-  | 'sync';
+  | 'ai-assistant';
 
 export default function RetailOS() {
   const [subTab, setSubTab] = useState<SubTab>('overview');
@@ -38,7 +34,6 @@ export default function RetailOS() {
     { id: 'analytics' as const, label: 'Analytics Insights', icon: BarChart3 },
     { id: 'reports' as const, label: 'Reports Exporter', icon: FileText },
     { id: 'ai-assistant' as const, label: 'AI Assistant', icon: Sparkles },
-    { id: 'sync' as const, label: 'Data Source', icon: RefreshCw },
   ];
 
   const renderSubContent = () => {
@@ -55,8 +50,6 @@ export default function RetailOS() {
         return <Reports />;
       case 'ai-assistant':
         return <AIAssistant />;
-      case 'sync':
-        return <DataSource />;
       default:
         return <Overview />;
     }

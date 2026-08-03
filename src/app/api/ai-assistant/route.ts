@@ -19,18 +19,34 @@ export async function POST(req: NextRequest) {
     const products = productsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
     const sales = salesSnap.docs.map(d => {
       const data = d.data();
+      let dateStr = '';
+      if (data.createdAt) {
+        if (typeof data.createdAt.toDate === 'function') {
+          dateStr = data.createdAt.toDate().toISOString();
+        } else {
+          dateStr = new Date(data.createdAt).toISOString();
+        }
+      }
       return {
         id: d.id,
         ...data,
-        createdAt: data.createdAt?.toDate().toISOString() || '',
+        createdAt: dateStr,
       };
     });
     const expenses = expensesSnap.docs.map(d => {
       const data = d.data();
+      let dateStr = '';
+      if (data.createdAt) {
+        if (typeof data.createdAt.toDate === 'function') {
+          dateStr = data.createdAt.toDate().toISOString();
+        } else {
+          dateStr = new Date(data.createdAt).toISOString();
+        }
+      }
       return {
         id: d.id,
         ...data,
-        createdAt: data.createdAt?.toDate().toISOString() || '',
+        createdAt: dateStr,
       };
     });
 
@@ -54,7 +70,7 @@ Answer business questions accurately based ONLY on the provided store data below
 
 CURRENT LOCAL TIME: ${new Date().toISOString()}
 
-=== INVENTORY DATABASE (From Google Sheets) ===
+=== INVENTORY DATABASE ===
 ${productSummary || 'No products available.'}
 
 === SALES LEDGER (From Cloud Firestore) ===

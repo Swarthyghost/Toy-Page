@@ -60,7 +60,6 @@ export interface SiteSettings {
   lowStockAlertThreshold?: number;
   expenseMonthlyBudget?: number;
   monthlySalesTarget?: number;
-  googleSheetId?: string;
 }
 
 const PRODUCTS_COLLECTION = 'products';
@@ -299,8 +298,7 @@ export const fetchSiteSettings = async (): Promise<SiteSettings | null> => {
     return {
       isSalesNotificationActive: data.isSalesNotificationActive || false,
       salesNotificationText: data.salesNotificationText || '',
-      isDiscountTagsActive: data.isDiscountTagsActive !== undefined ? data.isDiscountTagsActive : true,
-      googleSheetId: data.googleSheetId || ''
+      isDiscountTagsActive: data.isDiscountTagsActive !== undefined ? data.isDiscountTagsActive : true
     };
   }
   return null;
@@ -314,8 +312,7 @@ export const subscribeToSiteSettings = (callback: (settings: SiteSettings | null
       callback({
         isSalesNotificationActive: data.isSalesNotificationActive || false,
         salesNotificationText: data.salesNotificationText || '',
-        isDiscountTagsActive: data.isDiscountTagsActive !== undefined ? data.isDiscountTagsActive : true,
-        googleSheetId: data.googleSheetId || ''
+        isDiscountTagsActive: data.isDiscountTagsActive !== undefined ? data.isDiscountTagsActive : true
       });
     } else {
       callback(null);
@@ -619,19 +616,12 @@ export const fetchInventoryLogs = async (): Promise<InventoryLog[]> => {
 export const logInventoryChange = async (data: Omit<InventoryLog, 'id' | 'createdAt'>): Promise<string> => {
   try {
     const logId = doc(collection(db, INVENTORY_LOGS_COLLECTION)).id;
-    const createdAtStr = new Date().toISOString();
+    const createdAt = Timestamp.now();
     
-    await fetch('/api/sheets-sync', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        type: 'inventory_log',
-        data: {
-          ...data,
-          id: logId,
-          createdAt: createdAtStr
-        }
-      })
+    await setDoc(doc(db, INVENTORY_LOGS_COLLECTION, logId), {
+      ...data,
+      id: logId,
+      createdAt
     });
     
     return logId;
@@ -690,6 +680,12 @@ export const logStockAdjustment = async (data: Omit<StockAdjustment, 'id' | 'cre
   }
 };
 
+const cleanUndefined = (obj: any) => {
+  return Object.fromEntries(
+    Object.entries(obj).filter(([_, v]) => v !== undefined)
+  );
+};
+
 // --- SALES API ---
 export const fetchSales = async (): Promise<Sale[]> => {
   try {
@@ -702,72 +698,72 @@ export const fetchSales = async (): Promise<Sale[]> => {
   }
 };
 
-export const logSale = async (saleData: Omit<Sale, 'createdAt'>): Promise<string> => {
+export const logSale = async (saleData: Omit<Sale, 'createdAt'> & { createdAt?: any }): Promise<string> => {
   try {
     const saleId = doc(collection(db, SALES_COLLECTION)).id;
-    const createdAtStr = new Date().toISOString();
+    let timestamp = Timestamp.now();
+    if (saleData.createdAt) {
+      const selectedDate = new Date(saleData.createdAt);
+      const now = new Date();
+      selectedDate.setHours(now.getHours(), now.getMinutes(), now.getSeconds(), now.getMilliseconds());
+      timestamp = Timestamp.fromDate(selectedDate);
+    }
 
     const salePayload = {
       ...saleData,
       id: saleId,
-      createdAt: createdAtStr
+      createdAt: timestamp
     };
 
-    // 1. Write the sale transaction directly to the Sales Google Sheet
-    await fetch('/api/sheets-sync', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type: 'sale', data: salePayload })
-    });
+    // 1. Write the sale transaction directly to Firestore
+    await setDoc(doc(db, SALES_COLLECTION, saleId), cleanUndefined(salePayload));
 
-    // 2. Reduce the product stock quantity in the master Google Sheet
-    await fetch('/api/sheets-sync', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type: 'decrement_stock', data: { productId: saleData.productId, quantity: saleData.quantity } })
-    });
+    // 2. Reduce the product stock quantity in Firestore
+    const productRef = doc(db, PRODUCTS_COLLECTION, saleData.productId);
+    const productSnap = await getDoc(productRef);
+    let newStock = 0;
+    let productName = saleData.productName;
 
-    // 3. Write the inventory log straight to Google Sheets
-    const logId = doc(collection(db, INVENTORY_LOGS_COLLECTION)).id;
-    await fetch('/api/sheets-sync', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        type: 'inventory_log',
-        data: {
-          id: logId,
-          productId: saleData.productId,
-          productName: saleData.productName,
-          type: 'out',
-          changeQty: saleData.quantity,
-          newQty: 0,
-          reason: `Logged Sale (ID: ${saleId})`,
-          createdAt: createdAtStr
-        }
-      })
-    });
+    if (productSnap.exists()) {
+      const product = productSnap.data() as Product;
+      productName = product.name;
+      const currentStock = product.currentStock !== undefined ? product.currentStock : 0;
+      newStock = Math.max(0, currentStock - saleData.quantity);
+      
+      await updateDoc(productRef, {
+        currentStock: newStock,
+        isOutOfStock: newStock <= 0,
+        updatedAt: timestamp
+      });
 
-    // 4. Low stock warning (optional check in cache if needed)
-    try {
-      const productRef = doc(db, PRODUCTS_COLLECTION, saleData.productId);
-      const productSnap = await getDoc(productRef);
-      if (productSnap.exists()) {
-        const product = productSnap.data() as Product;
-        const currentStock = product.currentStock !== undefined ? product.currentStock : 0;
-        const newStock = Math.max(0, currentStock - saleData.quantity);
-        const minStock = product.minimumStock !== undefined ? product.minimumStock : 5;
-        if (newStock <= minStock) {
+      // 3. Low stock warning notification
+      const minStock = product.minimumStock !== undefined ? product.minimumStock : 5;
+      if (newStock <= minStock) {
+        try {
           await createNotification({
             title: 'Low Stock Alert',
             message: `Product "${product.name}" is low on stock (${newStock} units left).`,
             type: 'stock',
             isRead: false
           });
+        } catch (e) {
+          console.error('Failed to trigger low stock notification:', e);
         }
       }
-    } catch (e) {
-      console.error('Failed to trigger low stock notification:', e);
     }
+
+    // 4. Write the inventory log straight to Firestore
+    const logId = doc(collection(db, INVENTORY_LOGS_COLLECTION)).id;
+    await setDoc(doc(db, INVENTORY_LOGS_COLLECTION, logId), {
+      id: logId,
+      productId: saleData.productId,
+      productName: productName,
+      type: 'out',
+      changeQty: saleData.quantity,
+      newQty: newStock,
+      reason: `Logged Sale (ID: ${saleId})`,
+      createdAt: timestamp
+    });
 
     return saleId;
   } catch (error) {
@@ -785,6 +781,119 @@ export const deleteSale = async (id: string): Promise<void> => {
   }
 };
 
+export const updateSale = async (
+  saleId: string, 
+  updatedData: Omit<Sale, 'createdAt'> & { createdAt?: any }
+): Promise<void> => {
+  try {
+    const saleRef = doc(db, SALES_COLLECTION, saleId);
+    const saleSnap = await getDoc(saleRef);
+    if (!saleSnap.exists()) {
+      throw new Error("Sale record not found");
+    }
+    const originalSale = saleSnap.data() as Sale;
+
+    let timestamp = originalSale.createdAt;
+    if (updatedData.createdAt) {
+      const selectedDate = new Date(updatedData.createdAt);
+      const now = new Date();
+      selectedDate.setHours(now.getHours(), now.getMinutes(), now.getSeconds(), now.getMilliseconds());
+      timestamp = Timestamp.fromDate(selectedDate);
+    }
+
+    const isSameProduct = originalSale.productId === updatedData.productId;
+
+    if (isSameProduct) {
+      const qtyDiff = updatedData.quantity - originalSale.quantity;
+      if (qtyDiff !== 0) {
+        const productRef = doc(db, PRODUCTS_COLLECTION, updatedData.productId);
+        const productSnap = await getDoc(productRef);
+        if (productSnap.exists()) {
+          const product = productSnap.data() as Product;
+          const currentStock = product.currentStock !== undefined ? product.currentStock : 0;
+          const newStock = Math.max(0, currentStock - qtyDiff);
+
+          await updateDoc(productRef, {
+            currentStock: newStock,
+            isOutOfStock: newStock <= 0,
+            updatedAt: Timestamp.now()
+          });
+
+          // Log inventory change
+          await logInventoryChange({
+            productId: updatedData.productId,
+            productName: product.name,
+            type: qtyDiff > 0 ? 'out' : 'in',
+            changeQty: Math.abs(qtyDiff),
+            newQty: newStock,
+            reason: `Sale Edit (ID: ${saleId}) - Quantity adjusted from ${originalSale.quantity} to ${updatedData.quantity}`
+          });
+        }
+      }
+    } else {
+      // Return stock to the old product
+      const oldProductRef = doc(db, PRODUCTS_COLLECTION, originalSale.productId);
+      const oldProductSnap = await getDoc(oldProductRef);
+      if (oldProductSnap.exists()) {
+        const oldProduct = oldProductSnap.data() as Product;
+        const oldStock = oldProduct.currentStock !== undefined ? oldProduct.currentStock : 0;
+        const newOldStock = oldStock + originalSale.quantity;
+
+        await updateDoc(oldProductRef, {
+          currentStock: newOldStock,
+          isOutOfStock: newOldStock <= 0,
+          updatedAt: Timestamp.now()
+        });
+
+        // Log inventory change for returning stock
+        await logInventoryChange({
+          productId: originalSale.productId,
+          productName: oldProduct.name,
+          type: 'in',
+          changeQty: originalSale.quantity,
+          newQty: newOldStock,
+          reason: `Sale Edit (ID: ${saleId}) - Product changed (Returned stock)`
+        });
+      }
+
+      // Deduct stock from the new product
+      const newProductRef = doc(db, PRODUCTS_COLLECTION, updatedData.productId);
+      const newProductSnap = await getDoc(newProductRef);
+      if (newProductSnap.exists()) {
+        const newProduct = newProductSnap.data() as Product;
+        const newStockVal = newProduct.currentStock !== undefined ? newProduct.currentStock : 0;
+        const newNewStock = Math.max(0, newStockVal - updatedData.quantity);
+
+        await updateDoc(newProductRef, {
+          currentStock: newNewStock,
+          isOutOfStock: newNewStock <= 0,
+          updatedAt: Timestamp.now()
+        });
+
+        // Log inventory change for new deduction
+        await logInventoryChange({
+          productId: updatedData.productId,
+          productName: newProduct.name,
+          type: 'out',
+          changeQty: updatedData.quantity,
+          newQty: newNewStock,
+          reason: `Sale Edit (ID: ${saleId}) - Product changed (Deducted stock)`
+        });
+      }
+    }
+
+    // 2. Update the sale record in Firestore
+    await setDoc(saleRef, cleanUndefined({
+      ...updatedData,
+      id: saleId,
+      createdAt: timestamp
+    }));
+  } catch (error) {
+    console.error('Error in updateSale:', error);
+    throw error;
+  }
+};
+
 // --- EXPENSES API ---
 export const fetchExpenses = async (): Promise<Expense[]> => {
   try {
@@ -797,23 +906,24 @@ export const fetchExpenses = async (): Promise<Expense[]> => {
   }
 };
 
-export const logExpense = async (data: Omit<Expense, 'id' | 'createdAt'>): Promise<string> => {
+export const logExpense = async (data: Omit<Expense, 'id' | 'createdAt'> & { createdAt?: any }): Promise<string> => {
   try {
     const expenseId = doc(collection(db, EXPENSES_COLLECTION)).id;
-    const createdAtStr = new Date().toISOString();
+    let timestamp = Timestamp.now();
+    if (data.createdAt) {
+      const selectedDate = new Date(data.createdAt);
+      const now = new Date();
+      selectedDate.setHours(now.getHours(), now.getMinutes(), now.getSeconds(), now.getMilliseconds());
+      timestamp = Timestamp.fromDate(selectedDate);
+    }
 
     const expensePayload = {
       ...data,
       id: expenseId,
-      createdAt: createdAtStr
+      createdAt: timestamp
     };
 
-    // Write directly to Google Sheets
-    await fetch('/api/sheets-sync', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type: 'expense', data: expensePayload })
-    });
+    await setDoc(doc(db, EXPENSES_COLLECTION, expenseId), cleanUndefined(expensePayload));
 
     return expenseId;
   } catch (error) {
@@ -827,6 +937,37 @@ export const deleteExpense = async (id: string): Promise<void> => {
     await deleteDoc(doc(db, EXPENSES_COLLECTION, id));
   } catch (error) {
     console.error('Error in deleteExpense:', error);
+    throw error;
+  }
+};
+
+export const updateExpense = async (
+  expenseId: string, 
+  updatedData: Omit<Expense, 'id' | 'createdAt'> & { createdAt?: any }
+): Promise<void> => {
+  try {
+    const expenseRef = doc(db, EXPENSES_COLLECTION, expenseId);
+    const expenseSnap = await getDoc(expenseRef);
+    if (!expenseSnap.exists()) {
+      throw new Error("Expense record not found");
+    }
+    const originalExpense = expenseSnap.data() as Expense;
+
+    let timestamp = originalExpense.createdAt;
+    if (updatedData.createdAt) {
+      const selectedDate = new Date(updatedData.createdAt);
+      const now = new Date();
+      selectedDate.setHours(now.getHours(), now.getMinutes(), now.getSeconds(), now.getMilliseconds());
+      timestamp = Timestamp.fromDate(selectedDate);
+    }
+
+    await setDoc(expenseRef, cleanUndefined({
+      ...updatedData,
+      id: expenseId,
+      createdAt: timestamp
+    }));
+  } catch (error) {
+    console.error('Error in updateExpense:', error);
     throw error;
   }
 };

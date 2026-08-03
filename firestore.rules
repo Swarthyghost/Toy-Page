@@ -57,6 +57,26 @@ service cloud.firestore {
       allow create: if true;
       allow read, update, delete: if isAdmin();
     }
+
+    // Administrative collections - admin only
+    match /sales/{saleId} {
+      allow read, write: if isAdmin();
+    }
+    match /expenses/{expenseId} {
+      allow read, write: if isAdmin();
+    }
+    match /inventory_logs/{logId} {
+      allow read, write: if isAdmin();
+    }
+    match /stock_adjustments/{adjustmentId} {
+      allow read, write: if isAdmin();
+    }
+    match /purchase_orders/{orderId} {
+      allow read, write: if isAdmin();
+    }
+    match /notifications/{notificationId} {
+      allow read, write: if isAdmin();
+    }
     
     // Deny all other access
     match /{document=**} {
