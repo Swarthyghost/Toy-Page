@@ -36,6 +36,8 @@ export interface Product {
   status?: 'active' | 'draft' | 'archived';
   productName?: string;
   sellingPrice?: number;
+  productType?: 'Adult Products' | 'General Merchandise';
+  websiteVisibility?: 'Website' | 'Retail Only' | 'Both';
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }
@@ -71,8 +73,8 @@ export const fetchProducts = async (): Promise<Product[]> => {
   const q = query(collection(db, PRODUCTS_COLLECTION), orderBy('updatedAt', 'desc'));
   const querySnapshot = await getDocs(q);
   return querySnapshot.docs.map(doc => ({
-    id: doc.id,
-    ...doc.data()
+    ...doc.data(),
+    id: doc.id
   } as Product));
 };
 
@@ -82,8 +84,8 @@ export const fetchProductById = async (id: string): Promise<Product | null> => {
   
   if (docSnap.exists()) {
     return {
-      id: docSnap.id,
-      ...docSnap.data()
+      ...docSnap.data(),
+      id: docSnap.id
     } as Product;
   }
   return null;
@@ -229,8 +231,8 @@ export const fetchPromoCodes = async (): Promise<PromoCode[]> => {
   const q = query(collection(db, PROMOS_COLLECTION), orderBy('createdAt', 'desc'));
   const querySnapshot = await getDocs(q);
   return querySnapshot.docs.map(doc => ({
-    id: doc.id,
-    ...doc.data()
+    ...doc.data(),
+    id: doc.id
   } as PromoCode));
 };
 
@@ -260,7 +262,7 @@ export const validatePromoCode = async (code: string): Promise<PromoCode | null>
   const querySnapshot = await getDocs(q);
   
   const promo = querySnapshot.docs
-    .map(doc => ({ id: doc.id, ...doc.data() } as PromoCode))
+    .map(doc => ({ ...doc.data(), id: doc.id } as PromoCode))
     .find(p => p.code === code && p.isActive);
   
   if (!promo) return null;
@@ -606,7 +608,7 @@ export const fetchInventoryLogs = async (): Promise<InventoryLog[]> => {
   try {
     const q = query(collection(db, INVENTORY_LOGS_COLLECTION), orderBy('createdAt', 'desc'));
     const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as InventoryLog));
+    return querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as InventoryLog));
   } catch (error) {
     console.error('Error in fetchInventoryLogs:', error);
     throw error;
@@ -636,7 +638,7 @@ export const fetchStockAdjustments = async (): Promise<StockAdjustment[]> => {
   try {
     const q = query(collection(db, STOCK_ADJUSTMENTS_COLLECTION), orderBy('createdAt', 'desc'));
     const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as StockAdjustment));
+    return querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as StockAdjustment));
   } catch (error) {
     console.error('Error in fetchStockAdjustments:', error);
     throw error;
@@ -691,7 +693,7 @@ export const fetchSales = async (): Promise<Sale[]> => {
   try {
     const q = query(collection(db, SALES_COLLECTION), orderBy('createdAt', 'desc'));
     const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Sale));
+    return querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Sale));
   } catch (error) {
     console.error('Error in fetchSales:', error);
     throw error;
@@ -700,6 +702,10 @@ export const fetchSales = async (): Promise<Sale[]> => {
 
 export const logSale = async (saleData: Omit<Sale, 'createdAt'> & { createdAt?: any }): Promise<string> => {
   try {
+    if (!saleData.productId) throw new Error("Product ID is required.");
+    if (saleData.quantity <= 0) throw new Error("Quantity must be greater than zero.");
+    if (saleData.price <= 0) throw new Error("Selling price is required.");
+
     const saleId = doc(collection(db, SALES_COLLECTION)).id;
     let timestamp = Timestamp.now();
     if (saleData.createdAt) {
@@ -766,9 +772,12 @@ export const logSale = async (saleData: Omit<Sale, 'createdAt'> & { createdAt?: 
     });
 
     return saleId;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in logSale:', error);
-    throw error;
+    if (error.code === 'permission-denied') {
+      throw new Error("Permission denied.");
+    }
+    throw new Error(error.message || "Firestore write failed.");
   }
 };
 
@@ -786,10 +795,14 @@ export const updateSale = async (
   updatedData: Omit<Sale, 'createdAt'> & { createdAt?: any }
 ): Promise<void> => {
   try {
+    if (!updatedData.productId) throw new Error("Product ID is required.");
+    if (updatedData.quantity <= 0) throw new Error("Quantity must be greater than zero.");
+    if (updatedData.price <= 0) throw new Error("Selling price is required.");
+
     const saleRef = doc(db, SALES_COLLECTION, saleId);
     const saleSnap = await getDoc(saleRef);
     if (!saleSnap.exists()) {
-      throw new Error("Sale record not found");
+      throw new Error("Sale document not found.");
     }
     const originalSale = saleSnap.data() as Sale;
 
@@ -887,10 +900,16 @@ export const updateSale = async (
       ...updatedData,
       id: saleId,
       createdAt: timestamp
-    }));
-  } catch (error) {
+    }), { merge: true });
+  } catch (error: any) {
     console.error('Error in updateSale:', error);
-    throw error;
+    if (error.code === 'permission-denied') {
+      throw new Error("Permission denied.");
+    }
+    if (error.message === "Sale document not found.") {
+      throw error;
+    }
+    throw new Error(error.message || "Firestore update failed.");
   }
 };
 
@@ -977,7 +996,7 @@ export const fetchPurchaseOrders = async (): Promise<PurchaseOrder[]> => {
   try {
     const q = query(collection(db, PURCHASE_ORDERS_COLLECTION), orderBy('createdAt', 'desc'));
     const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as PurchaseOrder));
+    return querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as PurchaseOrder));
   } catch (error) {
     console.error('Error in fetchPurchaseOrders:', error);
     throw error;
@@ -1048,7 +1067,7 @@ export const fetchNotifications = async (): Promise<Notification[]> => {
   try {
     const q = query(collection(db, NOTIFICATIONS_COLLECTION), orderBy('createdAt', 'desc'));
     const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Notification));
+    return querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Notification));
   } catch (error) {
     console.error('Error in fetchNotifications:', error);
     throw error;
@@ -1071,6 +1090,141 @@ export const markNotificationRead = async (id: string): Promise<void> => {
     await updateDoc(doc(db, NOTIFICATIONS_COLLECTION, id), { isRead: true });
   } catch (error) {
     console.error('Error in markNotificationRead:', error);
+    throw error;
+  }
+};
+
+export interface ParsedImportSale {
+  date: string; // YYYY-MM-DD
+  productName: string;
+  productId?: string;
+  quantity: number;
+  price: number;
+  discount: number;
+  platform: 'Website' | 'WhatsApp' | 'Instagram' | 'Facebook' | 'Jiji' | 'Walk-in' | 'Referral';
+  notes?: string;
+}
+
+export const bulkImportSales = async (salesList: ParsedImportSale[]): Promise<{
+  importedCount: number;
+  revenue: number;
+  profit: number;
+  stockUpdatedCount: number;
+}> => {
+  try {
+    const batch = writeBatch(db);
+    let totalRevenue = 0;
+    let totalProfit = 0;
+    let stockUpdatedCount = 0;
+
+    // Load all products to calculate costPrice / match ID if missing
+    const productsSnap = await getDocs(collection(db, PRODUCTS_COLLECTION));
+    const productsMap = new Map<string, Product>();
+    const productsByNameMap = new Map<string, Product>();
+
+    productsSnap.forEach(d => {
+      const p = { ...d.data(), id: d.id } as Product;
+      productsMap.set(d.id, p);
+      productsByNameMap.set(p.name.toLowerCase().trim(), p);
+    });
+
+    for (const item of salesList) {
+      let productId = item.productId || '';
+      let officialProductName = item.productName;
+      let costPrice = 0;
+
+      // Try matching by name if ID was not supplied or unmatched
+      if (!productId) {
+        const matched = productsByNameMap.get(item.productName.toLowerCase().trim());
+        if (matched) {
+          productId = matched.id;
+          officialProductName = matched.name;
+          costPrice = matched.costPrice || 0;
+        }
+      } else {
+        const prod = productsMap.get(productId);
+        if (prod) {
+          officialProductName = prod.name;
+          costPrice = prod.costPrice || 0;
+        }
+      }
+
+      const saleId = doc(collection(db, SALES_COLLECTION)).id;
+      const revenue = item.price * item.quantity;
+      const profit = revenue - (costPrice * item.quantity) - item.discount;
+
+      totalRevenue += revenue;
+      totalProfit += profit;
+
+      // Normalize date to Timestamp (with hours/minutes for ordering)
+      const selectedDate = new Date(item.date);
+      const now = new Date();
+      selectedDate.setHours(now.getHours(), now.getMinutes(), now.getSeconds(), now.getMilliseconds());
+      const timestamp = Timestamp.fromDate(selectedDate);
+
+      // 1. Queue sale document write
+      const saleRef = doc(db, SALES_COLLECTION, saleId);
+      batch.set(saleRef, cleanUndefined({
+        id: saleId,
+        productId,
+        productName: officialProductName,
+        quantity: item.quantity,
+        price: item.price,
+        costPrice,
+        profit,
+        platform: item.platform,
+        paymentMethod: 'MoMo', // default
+        discount: item.discount,
+        deliveryFee: 0,
+        notes: item.notes || '',
+        createdAt: timestamp
+      }));
+
+      // 2. Queue product stock update
+      if (productId) {
+        const productRef = doc(db, PRODUCTS_COLLECTION, productId);
+        const prod = productsMap.get(productId);
+        if (prod) {
+          const currentStock = prod.currentStock !== undefined ? prod.currentStock : 0;
+          const newStock = Math.max(0, currentStock - item.quantity);
+          
+          // Update product map so subsequent sales in the same import reflect correct stock
+          prod.currentStock = newStock;
+          productsMap.set(productId, prod);
+
+          batch.update(productRef, {
+            currentStock: newStock,
+            isOutOfStock: newStock <= 0,
+            updatedAt: Timestamp.now()
+          });
+          stockUpdatedCount++;
+
+          // 3. Queue inventory log write
+          const logId = doc(collection(db, INVENTORY_LOGS_COLLECTION)).id;
+          batch.set(doc(db, INVENTORY_LOGS_COLLECTION, logId), {
+            id: logId,
+            productId,
+            productName: officialProductName,
+            type: 'out',
+            changeQty: item.quantity,
+            newQty: newStock,
+            reason: `Bulk Import Sale (ID: ${saleId})`,
+            createdAt: timestamp
+          });
+        }
+      }
+    }
+
+    await batch.commit();
+
+    return {
+      importedCount: salesList.length,
+      revenue: totalRevenue,
+      profit: totalProfit,
+      stockUpdatedCount
+    };
+  } catch (error) {
+    console.error("Error in bulkImportSales:", error);
     throw error;
   }
 };

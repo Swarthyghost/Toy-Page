@@ -37,6 +37,8 @@ export default function AdminDashboard() {
     openingStock: '',
     minimumStock: '5',
     status: 'active' as 'active' | 'draft' | 'archived',
+    productType: 'Adult Products' as 'Adult Products' | 'General Merchandise',
+    websiteVisibility: 'Website' as 'Website' | 'Retail Only' | 'Both',
   });
   const [editingOrder, setEditingOrder] = useState<CustomerOrder | null>(null);
   const [orderFormData, setOrderFormData] = useState({
@@ -57,6 +59,8 @@ export default function AdminDashboard() {
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('All');
   const [statusFilter, setStatusFilter] = useState('All');
+  const [productTypeFilter, setProductTypeFilter] = useState('All');
+  const [websiteVisibilityFilter, setWebsiteVisibilityFilter] = useState('All');
 
   // Modals for Stock Management
   const [isRestockModalOpen, setIsRestockModalOpen] = useState(false);
@@ -117,6 +121,8 @@ export default function AdminDashboard() {
     const name = (product.productName || product.name || '').toLowerCase();
     if (searchTerm && !name.includes(searchTerm.toLowerCase())) return false;
     if (categoryFilter !== 'All' && product.category !== categoryFilter) return false;
+    if (productTypeFilter !== 'All' && (product.productType || 'Adult Products') !== productTypeFilter) return false;
+    if (websiteVisibilityFilter !== 'All' && (product.websiteVisibility || 'Website') !== websiteVisibilityFilter) return false;
 
     // Stock Status
     const current = product.currentStock || 0;
@@ -292,6 +298,8 @@ export default function AdminDashboard() {
         currentStock,
         minimumStock: parsedMinimumStock,
         status: formData.status,
+        productType: formData.productType,
+        websiteVisibility: formData.websiteVisibility,
       };
 
       const validAdditionalFiles = additionalImageFiles.filter((f): f is File => f !== null);
@@ -307,7 +315,7 @@ export default function AdminDashboard() {
       setImageFile(null);
       setAdditionalImageFiles([]);
       setSelectedProductIds([]);
-      setFormData({ name: '', price: '', originalPrice: '', image: '', images: [], category: 'Vibrators', description: '', isOutOfStock: false, featured: false, hide_product: true, costPrice: '', openingStock: '', minimumStock: '5', status: 'active' });
+      setFormData({ name: '', price: '', originalPrice: '', image: '', images: [], category: 'Vibrators', description: '', isOutOfStock: false, featured: false, hide_product: true, costPrice: '', openingStock: '', minimumStock: '5', status: 'active', productType: 'Adult Products', websiteVisibility: 'Website' });
       loadProducts();
       alert("Product saved successfully.");
     } catch (error) {
@@ -335,6 +343,8 @@ export default function AdminDashboard() {
       openingStock: (product.currentStock || 0).toString(),
       minimumStock: (product.minimumStock || 5).toString(),
       status: product.status || 'active',
+      productType: product.productType || 'Adult Products',
+      websiteVisibility: product.websiteVisibility || 'Website',
     });
     setImageFile(null);
     setAdditionalImageFiles(new Array(product.images?.length || 0).fill(null));
@@ -370,6 +380,8 @@ export default function AdminDashboard() {
       openingStock: (product.currentStock || 0).toString(),
       minimumStock: (product.minimumStock || 5).toString(),
       status: 'active',
+      productType: product.productType || 'Adult Products',
+      websiteVisibility: product.websiteVisibility || 'Website',
     });
     setImageFile(null);
     setAdditionalImageFiles([]);
@@ -652,7 +664,7 @@ export default function AdminDashboard() {
                   setEditingProduct(null);
                   setImageFile(null);
                   setAdditionalImageFiles([]);
-                  setFormData({ name: '', price: '', originalPrice: '', image: '', images: [], category: 'Vibrators', description: '', isOutOfStock: false, featured: false, hide_product: true, costPrice: '', openingStock: '', minimumStock: '5', status: 'active' });
+                  setFormData({ name: '', price: '', originalPrice: '', image: '', images: [], category: 'Vibrators', description: '', isOutOfStock: false, featured: false, hide_product: true, costPrice: '', openingStock: '', minimumStock: '5', status: 'active', productType: 'Adult Products', websiteVisibility: 'Website' });
                   setIsModalOpen(true);
                 }}
                 className="px-6 py-3 bg-primary text-white font-bold rounded-2xl flex items-center gap-2 hover:scale-105 transition-transform text-xs"
@@ -689,18 +701,30 @@ export default function AdminDashboard() {
           </div>
 
           {/* Visibility Filters, Search, Category Dropdowns */}
-          <div className="grid md:grid-cols-4 gap-4 items-center">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 items-center">
             {/* Search */}
-            <div className="relative md:col-span-2">
+            <div className="relative">
               <Search size={16} className="absolute left-3.5 top-3 text-zinc-500" />
               <input 
                 type="text"
-                placeholder="Search catalog products by name..."
+                placeholder="Search products..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-10 pr-4 py-2.5 bg-zinc-900 border border-white/10 rounded-xl focus:outline-none focus:border-primary text-xs text-white"
               />
             </div>
+            
+            {/* Product Type Filter */}
+            <select
+              value={productTypeFilter}
+              onChange={(e) => setProductTypeFilter(e.target.value)}
+              className="px-4 py-2.5 bg-zinc-900 border border-white/10 rounded-xl focus:outline-none focus:border-primary text-xs text-zinc-400"
+            >
+              <option value="All">All Product Types</option>
+              <option value="Adult Products">Adult Products</option>
+              <option value="General Merchandise">General Merchandise</option>
+            </select>
+
             {/* Category Dropdown */}
             <select
               value={categoryFilter}
@@ -708,10 +732,23 @@ export default function AdminDashboard() {
               className="px-4 py-2.5 bg-zinc-900 border border-white/10 rounded-xl focus:outline-none focus:border-primary text-xs text-zinc-400"
             >
               <option value="All">All Categories</option>
-              {['Vibrators', 'BDSM', 'Lubricants', 'Mens Toy', 'Accessories', 'Other Products'].map(c => (
+              {['Vibrators', 'BDSM', 'Lubricants', "Men's Toys", 'Accessories', 'Electronics', 'Home & Kitchen', 'Personal Care', 'Miscellaneous'].map(c => (
                 <option key={c} value={c}>{c}</option>
               ))}
             </select>
+
+            {/* Website Visibility Filter */}
+            <select
+              value={websiteVisibilityFilter}
+              onChange={(e) => setWebsiteVisibilityFilter(e.target.value)}
+              className="px-4 py-2.5 bg-zinc-900 border border-white/10 rounded-xl focus:outline-none focus:border-primary text-xs text-zinc-400"
+            >
+              <option value="All">All Visibilities</option>
+              <option value="Website">Website Only</option>
+              <option value="Retail Only">Retail Only</option>
+              <option value="Both">Both</option>
+            </select>
+
             {/* Status Dropdown */}
             <select
               value={statusFilter}
@@ -827,6 +864,12 @@ export default function AdminDashboard() {
                             <div className="flex flex-col">
                               <span className="font-bold text-white">{product.name}</span>
                               <div className="flex flex-wrap gap-1 mt-1">
+                                <span className="px-2 py-0.5 bg-zinc-800 text-zinc-300 text-[8px] font-bold uppercase tracking-wider rounded-full border border-white/5">
+                                  {product.productType || 'Adult Products'}
+                                </span>
+                                <span className="px-2 py-0.5 bg-primary/10 text-primary text-[8px] font-bold uppercase tracking-wider rounded-full border border-primary/10">
+                                  Vis: {product.websiteVisibility || 'Website'}
+                                </span>
                                 {product.featured && (
                                   <span className="flex items-center gap-1 px-2 py-0.5 bg-yellow-400/25 text-yellow-400 text-[8px] font-bold uppercase tracking-wider rounded-full border border-yellow-400/20">
                                     <Star size={8} className="fill-yellow-400" /> Featured
@@ -1115,6 +1158,41 @@ export default function AdminDashboard() {
                   </div>
                 </div>
 
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-white/40 ml-1">
+                      Product Type
+                    </label>
+                    <select
+                      value={formData.productType}
+                      onChange={(e) => {
+                        const newType = e.target.value as 'Adult Products' | 'General Merchandise';
+                        const defaultCat = newType === 'Adult Products' ? 'Vibrators' : 'Electronics';
+                        setFormData({ ...formData, productType: newType, category: defaultCat });
+                      }}
+                      className="w-full px-6 py-4 bg-zinc-900 border border-white/10 rounded-2xl focus:border-primary focus:outline-none transition-colors"
+                    >
+                      <option value="Adult Products">Adult Products</option>
+                      <option value="General Merchandise">General Merchandise</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-white/40 ml-1">
+                      Website Visibility
+                    </label>
+                    <select
+                      value={formData.websiteVisibility}
+                      onChange={(e) => setFormData({ ...formData, websiteVisibility: e.target.value as any })}
+                      className="w-full px-6 py-4 bg-zinc-900 border border-white/10 rounded-2xl focus:border-primary focus:outline-none transition-colors"
+                    >
+                      <option value="Website">Website</option>
+                      <option value="Retail Only">Retail Only</option>
+                      <option value="Both">Both</option>
+                    </select>
+                  </div>
+                </div>
+
                 <div className="space-y-2">
                   <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-white/40 ml-1">
                     <Tag size={14} /> Category
@@ -1122,14 +1200,24 @@ export default function AdminDashboard() {
                   <select
                     value={formData.category}
                     onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    className="w-full px-6 py-4 bg-white/5 border border-white/10 rounded-2xl focus:border-primary focus:outline-none transition-colors appearance-none"
+                    className="w-full px-6 py-4 bg-zinc-900 border border-white/10 rounded-2xl focus:border-primary focus:outline-none transition-colors"
                   >
-                    <option value="Vibrators">Vibrators</option>
-                    <option value="BDSM">BDSM</option>
-                    <option value="Lubricants">Lubricants</option>
-                    <option value="Mens Toy">Mens Toy</option>
-                    <option value="Accessories">Accessories</option>
-                    <option value="Other Products">Other Products</option>
+                    {formData.productType === 'General Merchandise' ? (
+                      <>
+                        <option value="Electronics">Electronics</option>
+                        <option value="Home & Kitchen">Home & Kitchen</option>
+                        <option value="Personal Care">Personal Care</option>
+                        <option value="Miscellaneous">Miscellaneous</option>
+                      </>
+                    ) : (
+                      <>
+                        <option value="Vibrators">Vibrators</option>
+                        <option value="BDSM">BDSM</option>
+                        <option value="Lubricants">Lubricants</option>
+                        <option value="Men's Toys">Men's Toys</option>
+                        <option value="Accessories">Accessories</option>
+                      </>
+                    )}
                   </select>
                 </div>
 

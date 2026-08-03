@@ -73,7 +73,7 @@ export async function GET() {
     const q = query(collection(db, 'products'), orderBy('updatedAt', 'desc'));
     const querySnapshot = await getDocs(q);
     const products = querySnapshot.docs
-      .map(doc => ({ id: doc.id, ...doc.data() } as any))
+      .map(doc => ({ ...doc.data(), id: doc.id } as any))
       .filter(product => !product.hide_product);
 
     for (const product of products) {

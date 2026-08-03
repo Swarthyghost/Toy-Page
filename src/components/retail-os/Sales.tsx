@@ -29,6 +29,7 @@ const saleFormSchema = z.object({
   productId: z.string().min(1, 'Please select a product'),
   quantity: z.coerce.number().int().min(1, 'Quantity must be 1 or more'),
   price: z.coerce.number().min(0.01, 'Price must be greater than 0'),
+  costPrice: z.coerce.number().min(0, 'Cost price must be positive'),
   platform: z.enum(['Website', 'WhatsApp', 'Instagram', 'Facebook', 'Jiji', 'Walk-in', 'Referral']),
   paymentMethod: z.enum(['Cash', 'MoMo', 'Card', 'Bank Transfer']),
   discount: z.coerce.number().min(0, 'Discount must be positive').default(0),
@@ -54,6 +55,7 @@ export default function Sales() {
       productId: '',
       quantity: 1,
       price: 0,
+      costPrice: 0,
       platform: 'Website' as const,
       paymentMethod: 'MoMo' as const,
       discount: 0,
@@ -73,6 +75,7 @@ export default function Sales() {
       const prod = products.find(p => p.id === selectedProductId);
       if (prod) {
         setValue('price', prod.price);
+        setValue('costPrice', prod.costPrice || 0);
       }
     }
   }, [selectedProductId, products, setValue, editingSale]);
@@ -98,6 +101,7 @@ export default function Sales() {
     setValue('productId', sale.productId);
     setValue('quantity', sale.quantity);
     setValue('price', sale.price);
+    setValue('costPrice', sale.costPrice || 0);
     setValue('platform', sale.platform);
     setValue('paymentMethod', sale.paymentMethod);
     setValue('discount', sale.discount || 0);
@@ -136,7 +140,7 @@ export default function Sales() {
         }
       }
 
-      const costPrice = prod.costPrice || 0;
+      const costPrice = data.costPrice !== undefined ? data.costPrice : (prod.costPrice || 0);
       const revenue = data.price * data.quantity;
       const profit = revenue - (costPrice * data.quantity) - data.discount;
 
@@ -155,6 +159,20 @@ export default function Sales() {
         createdAt: data.soldAt,
       };
 
+      console.log("Saving Sale Payload:", {
+        saleId: editingSale?.id || 'new',
+        productName: prod.name,
+        quantity: data.quantity,
+        sellingPrice: data.price,
+        costPrice,
+        profit,
+        platform: data.platform,
+        paymentMethod: data.paymentMethod,
+        notes: data.notes || '',
+        date: data.soldAt,
+        time: new Date().toLocaleTimeString(),
+      });
+
       if (editingSale) {
         await updateSale(editingSale.id!, payload);
         alert('Sale record updated and inventory reconciled successfully!');
@@ -165,9 +183,10 @@ export default function Sales() {
 
       handleCloseModal();
       await loadSalesData();
-    } catch (err) {
-      console.error(err);
-      alert(editingSale ? 'Error updating sale.' : 'Error logging sale.');
+    } catch (err: any) {
+      console.error("Failed to save sale record:", err);
+      const msg = err.message || 'An unexpected database error occurred.';
+      alert(editingSale ? `Error updating sale: ${msg}` : `Error logging sale: ${msg}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -341,27 +360,38 @@ export default function Sales() {
                 {errors.productId && <p className="text-[10px] text-rose-400 font-bold ml-1">{errors.productId.message}</p>}
               </div>
 
-              {/* Qty & Price */}
-              <div className="grid grid-cols-2 gap-4">
+              {/* Qty, Price & Cost Price */}
+              <div className="grid grid-cols-3 gap-3">
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 ml-1">Quantity</label>
                   <input 
                     type="number"
                     {...register('quantity')}
-                    className="w-full px-4 py-3 bg-black border border-white/5 rounded-xl text-xs focus:outline-none focus:border-primary text-white"
+                    className="w-full px-3 py-3 bg-black border border-white/5 rounded-xl text-xs focus:outline-none focus:border-primary text-white"
                   />
                   {errors.quantity && <p className="text-[10px] text-rose-400 font-bold ml-1">{errors.quantity.message}</p>}
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 ml-1">Selling Price (GH₵)</label>
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 ml-1">Selling Price</label>
                   <input 
                     type="number"
                     step="0.01"
                     {...register('price')}
-                    className="w-full px-4 py-3 bg-black border border-white/5 rounded-xl text-xs focus:outline-none focus:border-primary text-white"
+                    className="w-full px-3 py-3 bg-black border border-white/5 rounded-xl text-xs focus:outline-none focus:border-primary text-white"
                   />
                   {errors.price && <p className="text-[10px] text-rose-400 font-bold ml-1">{errors.price.message}</p>}
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 ml-1">Cost Price</label>
+                  <input 
+                    type="number"
+                    step="0.01"
+                    {...register('costPrice')}
+                    className="w-full px-3 py-3 bg-black border border-white/5 rounded-xl text-xs focus:outline-none focus:border-primary text-white"
+                  />
+                  {errors.costPrice && <p className="text-[10px] text-rose-400 font-bold ml-1">{errors.costPrice.message}</p>}
                 </div>
               </div>
 

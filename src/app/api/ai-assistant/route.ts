@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
 
     // 2. Prepare concise summaries to save tokens
     const productSummary = products.map((p: any) => 
-      `- ${p.name} (ID: ${p.id}) | Category: ${p.category} | Stock: ${p.currentStock}/${p.minimumStock} | Cost: GH₵${p.costPrice} | Retail: GH₵${p.price}`
+      `- ${p.name} (ID: ${p.id}) | Category: ${p.category} | Type: ${p.productType || 'Adult Products'} | Stock: ${p.currentStock}/${p.minimumStock} | Cost: GH₵${p.costPrice} | Retail: GH₵${p.price}`
     ).join('\n');
 
     const salesSummary = sales.map((s: any) => 
@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
     ).join('\n');
 
     // 3. Construct System Prompt
-    const systemPrompt = `You are a premium Retail OS Business Assistant for PleasureToys GH.
+    const systemPrompt = `You are a premium Retail OS Business Operations Assistant for PleasureToys GH.
 You have read-only access to the store's current inventory, sales ledger, and expenses outlays.
 Answer business questions accurately based ONLY on the provided store data below.
 
@@ -73,10 +73,10 @@ CURRENT LOCAL TIME: ${new Date().toISOString()}
 === INVENTORY DATABASE ===
 ${productSummary || 'No products available.'}
 
-=== SALES LEDGER (From Cloud Firestore) ===
+=== SALES LEDGER ===
 ${salesSummary || 'No sales logged.'}
 
-=== EXPENSES OUTLAYS (From Cloud Firestore) ===
+=== EXPENSES OUTLAYS ===
 ${expensesSummary || 'No expenses recorded.'}
 
 === BUSINESS ENGINE FORMULAS ===
@@ -85,9 +85,28 @@ ${expensesSummary || 'No expenses recorded.'}
 - Gross Profit = Revenue - COGS - Discount
 - Net Profit = Gross Profit - Total Expenses
 
-Ensure all calculations are precise. If a user asks for restock recommendation, highlight items where stock <= minimumStock.
-If they ask for run-out estimation, calculate daily sales velocity of the product (total quantity sold / number of active days in sales log) and divide current stock by that velocity.
-Answer clearly, concisely, using Markdown formatting with professional styling.`;
+=== PRIMARY DUTIES ===
+1. **Chat & Business Intelligence:**
+   - Answer operational questions (e.g., profit today, low stock, compare months, category revenues).
+   - Generate Daily, Weekly, Monthly, Quarterly, and Yearly reports when requested.
+   - Use professional markdown formatting in your response.
+
+2. **Smart Sales Import:**
+   - If the user provides a copied-and-pasted list of sales transactions (e.g. "Rose Sucker 350", "Rose Sucker x2 700", "1 July Rose Sucker"), parse them.
+   - Match product names against the INVENTORY DATABASE using fuzzy matching (e.g. "Rose Tongue" -> "Rose Tongue Licker", "AV Wand" -> "AV Wand Vibrator").
+   - Set the correct "productId" and normalized "productName" from the database.
+   - If multiple products match, or no product matches, leave "productId" empty, add a warning, and ask the user to clarify.
+   - Default date to the current date (YYYY-MM-DD) if no date is specified.
+   - Default platform to "Walk-in" and paymentMethod to "MoMo" if not specified.
+   - Set "responseType" to "import_preview", list the parsed sales in "parsedSales", and explain the preview in your "reply".
+
+=== OUTPUT FORMAT REQUIREMENTS ===
+You must output a single JSON object matching the requested schema:
+- "responseType": "chat" or "import_preview"
+- "reply": Your assistant markdown response.
+- "parsedSales": (only for import_preview) list of parsed sales records.
+- "warnings": list of match warnings.
+- "skippedRows": list of rows that could not be parsed.`;
 
     const apiKey = process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
     if (!apiKey) {
@@ -116,10 +135,50 @@ Answer clearly, concisely, using Markdown formatting with professional styling.`
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
       contents,
+      config: {
+        responseMimeType: 'application/json',
+        responseSchema: {
+          type: 'OBJECT',
+          properties: {
+            responseType: { type: 'STRING', enum: ['chat', 'import_preview'] },
+            reply: { type: 'STRING', description: 'Your main chat reply or import explanation in markdown format.' },
+            parsedSales: {
+              type: 'ARRAY',
+              items: {
+                type: 'OBJECT',
+                properties: {
+                  date: { type: 'STRING', description: 'Normalized transaction date in YYYY-MM-DD format.' },
+                  productName: { type: 'STRING', description: 'Normalized product name matched in the catalog.' },
+                  productId: { type: 'STRING', description: 'Firestore product ID. Must be empty string if unmatched.' },
+                  quantity: { type: 'INTEGER', description: 'Quantity sold. Defaults to 1 if not specified.' },
+                  price: { type: 'NUMBER', description: 'Selling price per item.' },
+                  discount: { type: 'NUMBER', description: 'Discount applied to the transaction. Defaults to 0.' },
+                  platform: { type: 'STRING', enum: ['Website', 'WhatsApp', 'Instagram', 'Facebook', 'Jiji', 'Walk-in', 'Referral'] },
+                  notes: { type: 'STRING', description: 'Any notes or additional info. Default to empty string.' }
+                },
+                required: ['date', 'productName', 'quantity', 'price', 'discount', 'platform']
+              }
+            },
+            skippedRows: {
+              type: 'ARRAY',
+              items: { type: 'STRING' }
+            },
+            warnings: {
+              type: 'ARRAY',
+              items: { type: 'STRING' }
+            }
+          },
+          required: ['responseType', 'reply']
+        }
+      }
     });
 
-    const reply = response.text || "I apologize, but I couldn't formulate a response. Please try again.";
-    return NextResponse.json({ reply });
+    let text = response.text || '{}';
+    if (text.startsWith('```')) {
+      text = text.replace(/^```json\s*/, '').replace(/```\s*$/, '');
+    }
+    const result = JSON.parse(text);
+    return NextResponse.json(result);
 
   } catch (error) {
     console.error('Error in AI Assistant API route:', error);
