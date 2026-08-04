@@ -7,3 +7,5 @@ coverage/
 *.log
 .env*
 !.env.example
+toy-page-firebase-adminsdk-fbsvc-*.json
+*.json.local
