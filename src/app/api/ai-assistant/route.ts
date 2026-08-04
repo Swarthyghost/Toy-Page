@@ -1,7 +1,5 @@
-import { GoogleGenAI } from '@google/genai';
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '../../../config/firebase';
-import { collection, getDocs } from 'firebase/firestore';
+import { dbAdmin } from '../../../config/firebaseAdmin';
 
 export async function POST(req: NextRequest) {
   try {
@@ -11,10 +9,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Message is required' }, { status: 400 });
     }
 
-    // 1. Fetch current business data
-    const productsSnap = await getDocs(collection(db, 'products'));
-    const salesSnap = await getDocs(collection(db, 'sales'));
-    const expensesSnap = await getDocs(collection(db, 'expenses'));
+    // 1. Fetch current business data using Admin SDK to bypass security rules
+    const productsSnap = await dbAdmin.collection('products').get();
+    const salesSnap = await dbAdmin.collection('sales').get();
+    const expensesSnap = await dbAdmin.collection('expenses').get();
 
     const products = productsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
     const sales = salesSnap.docs.map(d => {
@@ -23,6 +21,8 @@ export async function POST(req: NextRequest) {
       if (data.createdAt) {
         if (typeof data.createdAt.toDate === 'function') {
           dateStr = data.createdAt.toDate().toISOString();
+        } else if (data.createdAt._seconds) {
+          dateStr = new Date(data.createdAt._seconds * 1000).toISOString();
         } else {
           dateStr = new Date(data.createdAt).toISOString();
         }
@@ -39,6 +39,8 @@ export async function POST(req: NextRequest) {
       if (data.createdAt) {
         if (typeof data.createdAt.toDate === 'function') {
           dateStr = data.createdAt.toDate().toISOString();
+        } else if (data.createdAt._seconds) {
+          dateStr = new Date(data.createdAt._seconds * 1000).toISOString();
         } else {
           dateStr = new Date(data.createdAt).toISOString();
         }
@@ -110,136 +112,125 @@ You must output a single JSON object matching the requested schema:
 
     const groqKey = process.env.GROQ_API_KEY;
 
-    if (groqKey) {
-      // 1. Determine Endpoint & Model
-      let endpoint = 'https://openrouter.ai/api/v1/chat/completions';
-      let model = 'google/gemini-2.5-flash';
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${groqKey}`
-      };
+    if (!groqKey) {
+      console.error("[AI Assistant] Error: Missing GROQ_API_KEY environment variable.");
+      return NextResponse.json({
+        error: "Missing GROQ_API_KEY. Please ensure the GROQ_API_KEY environment variable is configured in your .env file."
+      }, { status: 400 });
+    }
 
-      if (groqKey.startsWith('gsk_')) {
-        endpoint = 'https://api.groq.com/openai/v1/chat/completions';
-        model = 'llama-3.3-70b-specdec';
-      } else {
-        headers['HTTP-Referer'] = 'https://pleasuretoysgh.com/';
-        headers['X-Title'] = 'PleasureToys GH';
+    // 1. Determine Endpoint, Provider & Model
+    let endpoint = 'https://openrouter.ai/api/v1/chat/completions';
+    let model = 'meta-llama/llama-3.3-70b-instruct';
+    let provider = "OpenRouter";
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${groqKey}`
+    };
+
+    if (groqKey.startsWith('gsk_')) {
+      endpoint = 'https://api.groq.com/openai/v1/chat/completions';
+      model = 'llama-3.3-70b-specdec';
+      provider = "Groq Direct";
+    } else {
+      headers['HTTP-Referer'] = 'https://pleasuretoysgh.com/';
+      headers['X-Title'] = 'PleasureToys GH';
+    }
+
+    console.log(`[AI Assistant] Request received. Provider: ${provider}, Model: ${model}`);
+
+    // 2. Format Messages for OpenAI Chat Completions API spec
+    const chatCompletionsMessages = [
+      { role: 'system', content: systemPrompt }
+    ];
+
+    if (chatHistory && Array.isArray(chatHistory)) {
+      for (const msg of chatHistory) {
+        chatCompletionsMessages.push({
+          role: msg.role === 'user' ? 'user' : 'assistant',
+          content: msg.content
+        });
       }
+    }
 
-      // 2. Prepare Messages Array
-      const openRouterMessages = [
-        { role: 'system', content: systemPrompt }
-      ];
-      if (chatHistory && Array.isArray(chatHistory)) {
-        for (const msg of chatHistory) {
-          openRouterMessages.push({
-            role: msg.role === 'user' ? 'user' : 'assistant',
-            content: msg.content
-          });
-        }
-      }
-      openRouterMessages.push({
-        role: 'user',
-        content: `User Question: ${message}`
-      });
+    chatCompletionsMessages.push({
+      role: 'user',
+      content: `User Question: ${message}`
+    });
 
-      // 3. Request Completion
-      const res = await fetch(endpoint, {
+    // 3. Execute Request
+    console.log(`[AI Assistant] API request started to ${provider} (${endpoint})...`);
+    const startTime = Date.now();
+    let res;
+
+    try {
+      res = await fetch(endpoint, {
         method: 'POST',
         headers,
         body: JSON.stringify({
           model,
-          messages: openRouterMessages,
+          messages: chatCompletionsMessages,
+          max_tokens: 2048,
           response_format: { type: 'json_object' }
         })
       });
-
-      if (!res.ok) {
-        const errorText = await res.text();
-        throw new Error(`AI API request failed: ${res.status} - ${errorText}`);
-      }
-
-      const responseData = await res.json();
-      let text = responseData.choices?.[0]?.message?.content || '{}';
-      if (text.startsWith('```')) {
-        text = text.replace(/^```json\s*/, '').replace(/```\s*$/, '');
-      }
-      const result = JSON.parse(text);
-      return NextResponse.json(result);
+    } catch (netErr: any) {
+      console.error("[AI Assistant] Network Error calling API:", netErr);
+      return NextResponse.json({
+        error: `Network Error: Failed to connect to ${provider} API. ${netErr.message || netErr}`
+      }, { status: 502 });
     }
 
-    const apiKey = process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
-    if (!apiKey) {
-      return NextResponse.json({ error: 'Gemini API Key is not configured' }, { status: 500 });
-    }
+    const duration = Date.now() - startTime;
+    console.log(`[AI Assistant] API response received in ${duration}ms. Status: ${res.status}`);
 
-    const ai = new GoogleGenAI({ apiKey });
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error(`[AI Assistant] API Error response (Status ${res.status}):`, errorText);
+      let errorMsg = `API Error (Status ${res.status})`;
 
-    // Format chat history for Gemini
-    const contents = [];
-    if (chatHistory && Array.isArray(chatHistory)) {
-      for (const msg of chatHistory) {
-        contents.push({
-          role: msg.role === 'user' ? 'user' : 'model',
-          parts: [{ text: msg.content }]
-        });
+      try {
+        const parsed = JSON.parse(errorText);
+        errorMsg = parsed.error?.message || parsed.message || errorMsg;
+      } catch (_) {}
+
+      // Map upstream HTTP status codes to clean developer descriptions
+      if (res.status === 401) {
+        return NextResponse.json({ error: "Unauthorized: Invalid API Key. Please verify your GROQ_API_KEY configuration." }, { status: 401 });
+      } else if (res.status === 404) {
+        return NextResponse.json({ error: `Model Not Found: The model '${model}' is not available on ${provider}.` }, { status: 404 });
+      } else if (res.status === 429) {
+        return NextResponse.json({ error: "Rate Limit Exceeded: Too many requests sent to the AI provider." }, { status: 429 });
+      } else if (res.status === 400) {
+        return NextResponse.json({ error: `Invalid Request: The provider rejected the payload. Details: ${errorMsg}` }, { status: 400 });
+      } else {
+        return NextResponse.json({ error: `Upstream API Failure: ${errorMsg}` }, { status: res.status });
       }
     }
-    
-    // Add current user message
-    contents.push({
-      role: 'user',
-      parts: [{ text: `${systemPrompt}\n\nUser Question: ${message}` }]
-    });
 
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents,
-      config: {
-        responseMimeType: 'application/json',
-        responseSchema: {
-          type: 'OBJECT',
-          properties: {
-            responseType: { type: 'STRING', enum: ['chat', 'import_preview'] },
-            reply: { type: 'STRING', description: 'Your main chat reply or import explanation in markdown format.' },
-            parsedSales: {
-              type: 'ARRAY',
-              items: {
-                type: 'OBJECT',
-                properties: {
-                  date: { type: 'STRING', description: 'Normalized transaction date in YYYY-MM-DD format.' },
-                  productName: { type: 'STRING', description: 'Normalized product name matched in the catalog.' },
-                  productId: { type: 'STRING', description: 'Firestore product ID. Must be empty string if unmatched.' },
-                  quantity: { type: 'INTEGER', description: 'Quantity sold. Defaults to 1 if not specified.' },
-                  price: { type: 'NUMBER', description: 'Selling price per item.' },
-                  discount: { type: 'NUMBER', description: 'Discount applied to the transaction. Defaults to 0.' },
-                  platform: { type: 'STRING', enum: ['Website', 'WhatsApp', 'Instagram', 'Facebook', 'Jiji', 'Walk-in', 'Referral'] },
-                  notes: { type: 'STRING', description: 'Any notes or additional info. Default to empty string.' }
-                },
-                required: ['date', 'productName', 'quantity', 'price', 'discount', 'platform']
-              }
-            },
-            skippedRows: {
-              type: 'ARRAY',
-              items: { type: 'STRING' }
-            },
-            warnings: {
-              type: 'ARRAY',
-              items: { type: 'STRING' }
-            }
-          },
-          required: ['responseType', 'reply']
-        }
-      }
-    });
+    const responseData = await res.json();
+    const choice = responseData.choices?.[0];
 
-    let text = response.text || '{}';
+    if (choice?.finish_reason === 'error' && choice?.error) {
+      const errorMsg = choice.error.message || JSON.stringify(choice.error);
+      console.error("[AI Assistant] Upstream choice error:", errorMsg);
+      return NextResponse.json({ error: `Upstream API Error: ${errorMsg}` }, { status: 502 });
+    }
+
+    let text = choice?.message?.content || '{}';
     if (text.startsWith('```')) {
       text = text.replace(/^```json\s*/, '').replace(/```\s*$/, '');
     }
-    const result = JSON.parse(text);
-    return NextResponse.json(result);
+
+    try {
+      const result = JSON.parse(text);
+      return NextResponse.json(result);
+    } catch (jsonErr) {
+      console.error("[AI Assistant] JSON parse error of AI response:", text, jsonErr);
+      return NextResponse.json({
+        error: "Invalid Request: Failed to parse structural response output from AI provider."
+      }, { status: 500 });
+    }
 
   } catch (error) {
     console.error('Error in AI Assistant API route:', error);

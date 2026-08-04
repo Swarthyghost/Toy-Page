@@ -67,6 +67,40 @@ export default function AIAssistant() {
   } | null>(null);
 
   const [mobileTab, setMobileTab] = useState<'chat' | 'import'>('chat');
+  const [healthStatus, setHealthStatus] = useState<{
+    status: 'loading' | 'ok' | 'error';
+    provider?: string;
+    model?: string;
+    error?: string;
+  }>({ status: 'loading' });
+
+  useEffect(() => {
+    async function checkHealth() {
+      try {
+        const res = await fetch('/api/health');
+        const data = await res.json();
+        if (res.ok && data.status === 'ok') {
+          setHealthStatus({
+            status: 'ok',
+            provider: data.checks?.provider || 'Unknown',
+            model: data.checks?.model || 'Unknown'
+          });
+        } else {
+          setHealthStatus({
+            status: 'error',
+            error: data.error || 'Failed to connect to the AI Assistant.'
+          });
+        }
+      } catch (err: any) {
+        setHealthStatus({
+          status: 'error',
+          error: err.message || 'Network error performing status checks.'
+        });
+      }
+    }
+    checkHealth();
+  }, []);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const samplePrompts = [
@@ -103,7 +137,10 @@ export default function AIAssistant() {
       });
       const data = await response.json();
       
-      if (data.responseType === 'import_preview') {
+      if (!response.ok || data.error) {
+        const errMsg = data.error || `HTTP Error ${response.status}: Failed to get response.`;
+        setMessages(prev => [...prev, { role: 'assistant', content: `❌ **Error:** ${errMsg}` }]);
+      } else if (data.responseType === 'import_preview') {
         setParsedSales(data.parsedSales || []);
         setWarnings(data.warnings || []);
         setSkippedRows(data.skippedRows || []);
@@ -143,6 +180,12 @@ export default function AIAssistant() {
       });
       const data = await response.json();
       
+      if (!response.ok || data.error) {
+        const errMsg = data.error || `HTTP Error ${response.status}: Failed to parse logs.`;
+        setMessages(prev => [...prev, { role: 'assistant', content: `❌ **Error:** ${errMsg}` }]);
+        return;
+      }
+
       setParsedSales(data.parsedSales || []);
       setWarnings(data.warnings || []);
       setSkippedRows(data.skippedRows || []);
@@ -267,6 +310,32 @@ export default function AIAssistant() {
               <h2 className="text-sm font-bold font-display text-white">AI Operations Assistant</h2>
               <p className="text-[10px] text-zinc-500 mt-0.5 font-medium">Reconcile stock, import sales logs, or query reports.</p>
             </div>
+          </div>
+
+          {/* Health Status Pill */}
+          <div className="flex items-center gap-2">
+            {healthStatus.status === 'loading' && (
+              <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-zinc-900 border border-white/5 text-[9px] font-bold text-zinc-400">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                AI Checking...
+              </span>
+            )}
+            {healthStatus.status === 'ok' && (
+              <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[9px] font-bold text-emerald-400" title={`Model: ${healthStatus.model}`}>
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                AI Online ({healthStatus.provider})
+              </span>
+            )}
+            {healthStatus.status === 'error' && (
+              <span 
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-rose-500/10 border border-rose-500/20 text-[9px] font-bold text-rose-400 cursor-pointer animate-pulse"
+                title={healthStatus.error}
+                onClick={() => alert(`AI Connection Error:\n${healthStatus.error}`)}
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-rose-400" />
+                AI Offline
+              </span>
+            )}
           </div>
         </div>
 
