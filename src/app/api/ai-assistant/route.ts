@@ -108,6 +108,67 @@ You must output a single JSON object matching the requested schema:
 - "warnings": list of match warnings.
 - "skippedRows": list of rows that could not be parsed.`;
 
+    const groqKey = process.env.GROQ_API_KEY;
+
+    if (groqKey) {
+      // 1. Determine Endpoint & Model
+      let endpoint = 'https://openrouter.ai/api/v1/chat/completions';
+      let model = 'google/gemini-2.5-flash';
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${groqKey}`
+      };
+
+      if (groqKey.startsWith('gsk_')) {
+        endpoint = 'https://api.groq.com/openai/v1/chat/completions';
+        model = 'llama-3.3-70b-specdec';
+      } else {
+        headers['HTTP-Referer'] = 'https://pleasuretoysgh.com/';
+        headers['X-Title'] = 'PleasureToys GH';
+      }
+
+      // 2. Prepare Messages Array
+      const openRouterMessages = [
+        { role: 'system', content: systemPrompt }
+      ];
+      if (chatHistory && Array.isArray(chatHistory)) {
+        for (const msg of chatHistory) {
+          openRouterMessages.push({
+            role: msg.role === 'user' ? 'user' : 'assistant',
+            content: msg.content
+          });
+        }
+      }
+      openRouterMessages.push({
+        role: 'user',
+        content: `User Question: ${message}`
+      });
+
+      // 3. Request Completion
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          model,
+          messages: openRouterMessages,
+          response_format: { type: 'json_object' }
+        })
+      });
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(`AI API request failed: ${res.status} - ${errorText}`);
+      }
+
+      const responseData = await res.json();
+      let text = responseData.choices?.[0]?.message?.content || '{}';
+      if (text.startsWith('```')) {
+        text = text.replace(/^```json\s*/, '').replace(/```\s*$/, '');
+      }
+      const result = JSON.parse(text);
+      return NextResponse.json(result);
+    }
+
     const apiKey = process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
     if (!apiKey) {
       return NextResponse.json({ error: 'Gemini API Key is not configured' }, { status: 500 });
