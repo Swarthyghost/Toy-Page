@@ -250,6 +250,7 @@ export default function Expenses() {
           <table className="w-full text-left text-xs">
             <thead>
               <tr className="border-b border-white/5 text-zinc-500 uppercase tracking-wider text-[9px] font-bold">
+                <th className="p-4 w-12 text-center">S/N</th>
                 <th className="p-4">Date</th>
                 <th className="p-4">Description</th>
                 <th className="p-4">Category</th>
@@ -261,15 +262,16 @@ export default function Expenses() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="text-center py-20 text-zinc-500">Loading expense logs...</td>
+                  <td colSpan={7} className="text-center py-20 text-zinc-500">Loading expense logs...</td>
                 </tr>
               ) : filteredExpenses.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="text-center py-20 text-zinc-500">No expenses recorded matching filters.</td>
+                  <td colSpan={7} className="text-center py-20 text-zinc-500">No expenses recorded matching filters.</td>
                 </tr>
               ) : (
-                filteredExpenses.map((exp) => (
+                filteredExpenses.map((exp, index) => (
                   <tr key={exp.id} className="border-b border-white/5 hover:bg-white/[0.01] transition-colors">
+                    <td className="p-4 text-center text-zinc-500 font-medium">{index + 1}</td>
                     <td className="p-4 text-zinc-400 whitespace-nowrap">
                       {exp.createdAt?.toDate().toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                     </td>

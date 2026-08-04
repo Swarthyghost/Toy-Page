@@ -259,6 +259,7 @@ export default function Sales() {
           <table className="w-full text-left text-xs">
             <thead>
               <tr className="border-b border-white/5 text-zinc-500 uppercase tracking-wider text-[9px] font-bold">
+                <th className="p-4 w-12 text-center">S/N</th>
                 <th className="p-4">Date</th>
                 <th className="p-4">Product Name</th>
                 <th className="p-4 text-center">Qty</th>
@@ -274,17 +275,18 @@ export default function Sales() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={10} className="text-center py-20 text-zinc-500">Loading sales records...</td>
+                  <td colSpan={11} className="text-center py-20 text-zinc-500">Loading sales records...</td>
                 </tr>
               ) : filteredSales.length === 0 ? (
                 <tr>
-                  <td colSpan={10} className="text-center py-20 text-zinc-500">No sales recorded matching criteria.</td>
+                  <td colSpan={11} className="text-center py-20 text-zinc-500">No sales recorded matching criteria.</td>
                 </tr>
               ) : (
-                filteredSales.map((sale) => {
+                filteredSales.map((sale, index) => {
                   const revenue = (sale.price * sale.quantity) - (sale.discount || 0) + (sale.deliveryFee || 0);
                   return (
                     <tr key={sale.id} className="border-b border-white/5 hover:bg-white/[0.01] transition-colors">
+                      <td className="p-4 text-center text-zinc-500 font-medium">{index + 1}</td>
                       <td className="p-4 text-zinc-400 whitespace-nowrap">
                         {sale.createdAt?.toDate().toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                       </td>
