@@ -463,6 +463,33 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleOpenRestockModal = () => {
+    let preselectedId = '';
+    if (selectedProductIds.length === 1) {
+      preselectedId = selectedProductIds[0];
+    }
+    setRestockForm({
+      productId: preselectedId,
+      quantity: '',
+      costPrice: '',
+    });
+    setIsRestockModalOpen(true);
+  };
+
+  const handleOpenAdjustmentModal = () => {
+    let preselectedId = '';
+    if (selectedProductIds.length === 1) {
+      preselectedId = selectedProductIds[0];
+    }
+    setAdjustForm({
+      productId: preselectedId,
+      type: 'add',
+      adjustQty: '',
+      reason: '',
+    });
+    setIsAdjustmentModalOpen(true);
+  };
+
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -646,14 +673,14 @@ export default function AdminDashboard() {
             </div>
             <div className="flex flex-wrap items-center gap-3">
               <button 
-                onClick={() => setIsAdjustmentModalOpen(true)}
+                onClick={handleOpenAdjustmentModal}
                 className="flex items-center gap-2 px-4 py-2.5 bg-zinc-900 border border-white/10 text-white font-bold rounded-xl hover:bg-zinc-800 transition-all cursor-pointer text-xs"
               >
                 <Settings size={14} />
                 <span>Adjustment</span>
               </button>
               <button 
-                onClick={() => setIsRestockModalOpen(true)}
+                onClick={handleOpenRestockModal}
                 className="flex items-center gap-2 px-4 py-2.5 bg-zinc-900 border border-white/10 text-white font-bold rounded-xl hover:bg-zinc-800 transition-all cursor-pointer text-xs"
               >
                 <PlusCircle size={14} />
@@ -1693,6 +1720,8 @@ export default function AdminDashboard() {
               </form>
             </div>
           )}
+        </div>
+      )}
       {/* Restock Modal */}
       {isRestockModalOpen && (
         <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
@@ -1722,6 +1751,20 @@ export default function AdminDashboard() {
                 </select>
               </div>
 
+              {restockForm.productId && (() => {
+                const p = products.find(prod => prod.id === restockForm.productId);
+                if (!p) return null;
+                return (
+                  <div className="p-3 bg-white/5 border border-white/10 rounded-xl text-[11px] space-y-1">
+                    <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider block">Current Stock Status</span>
+                    <div className="flex justify-between text-white font-medium">
+                      <span className="truncate max-w-[200px]">{p.name}</span>
+                      <span className="font-bold text-primary">{p.currentStock !== undefined ? p.currentStock : 0} items</span>
+                    </div>
+                  </div>
+                );
+              })()}
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 ml-1">Restock Qty</label>
@@ -1732,6 +1775,7 @@ export default function AdminDashboard() {
                     onChange={(e) => setRestockForm({ ...restockForm, quantity: e.target.value })}
                     className="w-full px-4 py-3 bg-black border border-white/10 rounded-xl text-xs focus:outline-none focus:border-primary text-white"
                     required
+                    autoFocus
                   />
                 </div>
 
@@ -1798,6 +1842,20 @@ export default function AdminDashboard() {
                 </select>
               </div>
 
+              {adjustForm.productId && (() => {
+                const p = products.find(prod => prod.id === adjustForm.productId);
+                if (!p) return null;
+                return (
+                  <div className="p-3 bg-white/5 border border-white/10 rounded-xl text-[11px] space-y-1">
+                    <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider block">Current Stock Status</span>
+                    <div className="flex justify-between text-white font-medium">
+                      <span className="truncate max-w-[200px]">{p.name}</span>
+                      <span className="font-bold text-primary">{p.currentStock !== undefined ? p.currentStock : 0} items</span>
+                    </div>
+                  </div>
+                );
+              })()}
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 ml-1">Adjustment Type</label>
@@ -1821,6 +1879,7 @@ export default function AdminDashboard() {
                     onChange={(e) => setAdjustForm({ ...adjustForm, adjustQty: e.target.value })}
                     className="w-full px-4 py-3 bg-black border border-white/10 rounded-xl text-xs focus:outline-none focus:border-primary text-white"
                     required
+                    autoFocus
                   />
                 </div>
               </div>
@@ -1905,8 +1964,6 @@ export default function AdminDashboard() {
               )}
             </div>
           </div>
-        </div>
-      )}
         </div>
       )}
     </div>
