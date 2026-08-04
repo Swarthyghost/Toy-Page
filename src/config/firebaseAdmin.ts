@@ -6,8 +6,8 @@ const clientEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
 const rawPrivateKey = process.env.GOOGLE_PRIVATE_KEY;
 
 // Normalize private key formatting to support multiline keys in env values
-const privateKey = rawPrivateKey 
-  ? rawPrivateKey.replace(/\\n/g, '\n').replace(/^"(.*)"$/, '$1')
+const privateKey = rawPrivateKey
+  ? rawPrivateKey.replace(/^"(.*)"$/s, '$1').replace(/\\n/g, '\n')
   : undefined;
 
 let app;
