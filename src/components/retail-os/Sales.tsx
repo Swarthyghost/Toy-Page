@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -48,6 +48,90 @@ export default function Sales() {
   const [platformFilter, setPlatformFilter] = useState('All');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingSale, setEditingSale] = useState<Sale | null>(null);
+
+  // Memoized stats calculation for summaries
+  const summaries = useMemo(() => {
+    const now = new Date();
+    
+    // Start of today (00:00:00.000)
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    
+    // Start of current calendar week (Monday to Sunday)
+    const currentDay = now.getDay();
+    const distanceToMonday = currentDay === 0 ? 6 : currentDay - 1;
+    const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - distanceToMonday);
+    startOfWeek.setHours(0, 0, 0, 0);
+
+    // Start of current calendar month (1st day)
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    
+    // Start of current calendar year (Jan 1st)
+    const startOfYear = new Date(now.getFullYear(), 0, 1);
+
+    const initStats = () => ({ revenue: 0, orders: 0, profit: 0 });
+
+    const stats = {
+      today: initStats(),
+      week: initStats(),
+      month: initStats(),
+      year: initStats(),
+    };
+
+    sales.forEach(sale => {
+      const saleDate = sale.createdAt 
+        ? (typeof (sale.createdAt as any).toDate === 'function' ? (sale.createdAt as any).toDate() : new Date(sale.createdAt as any))
+        : new Date();
+
+      const rev = (sale.price * sale.quantity) - (sale.discount || 0) + (sale.deliveryFee || 0);
+      const prof = sale.profit || 0;
+
+      if (saleDate >= startOfToday) {
+        stats.today.revenue += rev;
+        stats.today.orders += 1;
+        stats.today.profit += prof;
+      }
+      if (saleDate >= startOfWeek) {
+        stats.week.revenue += rev;
+        stats.week.orders += 1;
+        stats.week.profit += prof;
+      }
+      if (saleDate >= startOfMonth) {
+        stats.month.revenue += rev;
+        stats.month.orders += 1;
+        stats.month.profit += prof;
+      }
+      if (saleDate >= startOfYear) {
+        stats.year.revenue += rev;
+        stats.year.orders += 1;
+        stats.year.profit += prof;
+      }
+    });
+
+    return stats;
+  }, [sales]);
+
+  const cardConfigs = [
+    {
+      title: "Today's Sales",
+      data: summaries.today,
+      color: "from-primary/20 to-primary/5 border-primary/20 text-primary"
+    },
+    {
+      title: "This Week's Sales",
+      data: summaries.week,
+      color: "from-blue-500/20 to-blue-500/5 border-blue-500/20 text-blue-400"
+    },
+    {
+      title: "This Month's Sales",
+      data: summaries.month,
+      color: "from-emerald-500/20 to-emerald-500/5 border-emerald-500/20 text-emerald-400"
+    },
+    {
+      title: "This Year's Sales",
+      data: summaries.year,
+      color: "from-purple-500/20 to-purple-500/5 border-purple-500/20 text-purple-400"
+    }
+  ];
 
   const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm({
     resolver: zodResolver(saleFormSchema),
@@ -227,6 +311,45 @@ export default function Sales() {
           <Plus size={16} />
           <span>Record Sale</span>
         </button>
+      </div>
+
+      {/* Sales Summary Dashboard */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {cardConfigs.map((card, idx) => (
+          <div 
+            key={idx} 
+            className={`bg-zinc-900/40 border border-white/5 rounded-3xl p-5 shadow-xl backdrop-blur-sm transition-all hover:scale-[1.01] duration-300`}
+          >
+            <div className="flex items-center justify-between mb-3.5">
+              <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest block">
+                {card.title}
+              </span>
+              <div className={`w-1.5 h-1.5 rounded-full bg-gradient-to-r ${card.color.includes('primary') ? 'bg-primary' : card.color.includes('emerald') ? 'bg-emerald-400' : card.color.includes('blue') ? 'bg-blue-400' : 'bg-purple-400'}`} />
+            </div>
+            
+            <div className="space-y-3">
+              <div>
+                <span className="text-[9px] font-semibold text-zinc-500 uppercase tracking-wider block">Revenue</span>
+                <span className="text-lg font-bold font-display text-white">
+                  GH₵ {card.data.revenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </span>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-white/5">
+                <div>
+                  <span className="text-[9px] font-semibold text-zinc-500 uppercase tracking-wider block">Orders</span>
+                  <span className="text-xs font-bold text-zinc-300">{card.data.orders}</span>
+                </div>
+                <div>
+                  <span className="text-[9px] font-semibold text-zinc-500 uppercase tracking-wider block">Profit</span>
+                  <span className="text-xs font-bold text-emerald-400">
+                    GH₵ {card.data.profit.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
 
       {/* Filters */}
