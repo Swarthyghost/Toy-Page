@@ -66,6 +66,7 @@ export default function AIAssistant() {
     durationMs: number;
   } | null>(null);
 
+  const [mobileTab, setMobileTab] = useState<'chat' | 'import'>('chat');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const samplePrompts = [
@@ -107,6 +108,7 @@ export default function AIAssistant() {
         setWarnings(data.warnings || []);
         setSkippedRows(data.skippedRows || []);
         setShowPreview(true);
+        setMobileTab('import');
         
         const introMsg = data.reply || "I've parsed the sales records you supplied. You can review and modify them in the Operations preview panel on the right before committing.";
         setMessages(prev => [...prev, { role: 'assistant', content: introMsg }]);
@@ -145,6 +147,7 @@ export default function AIAssistant() {
       setWarnings(data.warnings || []);
       setSkippedRows(data.skippedRows || []);
       setShowPreview(true);
+      setMobileTab('import');
       
       const introMsg = data.reply || "Successfully parsed the sales logs. Please verify the entries in the Operations preview table.";
       setMessages(prev => [...prev, { role: 'assistant', content: introMsg }]);
@@ -225,9 +228,35 @@ export default function AIAssistant() {
   };
 
   return (
-    <div className="px-6 space-y-6 max-w-7xl mx-auto flex flex-col lg:flex-row gap-6 h-[calc(100vh-140px)]">
+    <div className="px-6 space-y-6 max-w-7xl mx-auto flex flex-col lg:flex-row gap-6 h-[calc(100vh-220px)] lg:h-[calc(100vh-140px)]">
+      
+      {/* Mobile Tab Switcher */}
+      <div className="flex lg:hidden bg-zinc-900 border border-white/5 p-1 rounded-2xl w-full flex-shrink-0">
+        <button 
+          onClick={() => setMobileTab('chat')}
+          className={`flex-1 py-3 text-xs font-bold rounded-xl transition-all cursor-pointer ${
+            mobileTab === 'chat' ? 'bg-primary text-white shadow' : 'text-zinc-400 hover:text-white'
+          }`}
+        >
+          AI Chat
+        </button>
+        <button 
+          onClick={() => setMobileTab('import')}
+          className={`flex-1 py-3 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+            mobileTab === 'import' ? 'bg-primary text-white shadow' : 'text-zinc-400 hover:text-white'
+          }`}
+        >
+          Smart Import
+          {parsedSales.length > 0 && (
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+          )}
+        </button>
+      </div>
+
       {/* Column 1: Chat Assistant */}
-      <div className="flex-1 flex flex-col bg-zinc-950 border border-white/5 rounded-[2rem] p-6 h-full overflow-hidden">
+      <div className={`flex-1 flex flex-col bg-zinc-950 border border-white/5 rounded-[2rem] p-6 h-full overflow-hidden ${
+        mobileTab === 'chat' ? 'flex' : 'hidden lg:flex'
+      }`}>
         {/* Header */}
         <div className="flex items-center justify-between border-b border-white/5 pb-4 flex-shrink-0">
           <div className="flex items-center gap-3">
@@ -336,7 +365,9 @@ export default function AIAssistant() {
       </div>
 
       {/* Column 2: Import & Operations Panel */}
-      <div className="w-full lg:w-[450px] bg-zinc-950 border border-white/5 rounded-[2rem] p-6 h-full flex flex-col overflow-y-auto space-y-6 scrollbar-thin scrollbar-thumb-zinc-800">
+      <div className={`w-full lg:w-[450px] bg-zinc-950 border border-white/5 rounded-[2rem] p-6 h-full flex flex-col overflow-y-auto space-y-6 scrollbar-thin scrollbar-thumb-zinc-800 ${
+        mobileTab === 'import' ? 'flex' : 'hidden lg:flex'
+      }`}>
         
         {/* Upload & Raw Text Parse Zone */}
         <div className="space-y-4">
