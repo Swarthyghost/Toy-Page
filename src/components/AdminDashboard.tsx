@@ -290,7 +290,7 @@ export default function AdminDashboard() {
         images: formData.images.filter(img => !img.startsWith('data:')),
         category: formData.category,
         description: formData.description,
-        isOutOfStock: currentStock === 0,
+        isOutOfStock: currentStock === 0 || formData.isOutOfStock,
         featured: formData.featured,
         hide_product: formData.hide_product,
         costPrice: parsedCostPrice,
