@@ -759,7 +759,7 @@ export default function AdminDashboard() {
               className="px-4 py-2.5 bg-zinc-900 border border-white/10 rounded-xl focus:outline-none focus:border-primary text-xs text-zinc-400"
             >
               <option value="All">All Categories</option>
-              {['Vibrators', 'BDSM', 'Lubricants', "Men's Toys", 'Accessories', 'Electronics', 'Home & Kitchen', 'Personal Care', 'Miscellaneous'].map(c => (
+              {['Vibrators', 'BDSM', 'Lubricants', "Mens Toy", 'Accessories', 'Electronics', 'Home & Kitchen', 'Personal Care', 'Miscellaneous'].map(c => (
                 <option key={c} value={c}>{c}</option>
               ))}
             </select>
@@ -1241,7 +1241,7 @@ export default function AdminDashboard() {
                         <option value="Vibrators">Vibrators</option>
                         <option value="BDSM">BDSM</option>
                         <option value="Lubricants">Lubricants</option>
-                        <option value="Men's Toys">Men's Toys</option>
+                        <option value="Mens Toy">Men's Toys</option>
                         <option value="Accessories">Accessories</option>
                       </>
                     )}
