@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { toLocalDate, formatLocalDateToYYYYMMDD, formatLocalDateForDisplay } from '../../utils/dateHelper';
 import { 
   Plus, 
   Trash2, 
@@ -32,7 +33,7 @@ export default function Expenses() {
     category: 'Advertising' as Expense['category'],
     amount: '',
     description: '',
-    spentAt: new Date().toISOString().substring(0, 10),
+    spentAt: formatLocalDateToYYYYMMDD(new Date()),
   });
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
@@ -76,15 +77,7 @@ export default function Expenses() {
 
   const handleEditClick = (exp: Expense) => {
     setEditingExpense(exp);
-    let dateStr = new Date().toISOString().substring(0, 10);
-    if (exp.createdAt) {
-      const created = exp.createdAt as any;
-      if (typeof created.toDate === 'function') {
-        dateStr = created.toDate().toISOString().substring(0, 10);
-      } else {
-        dateStr = new Date(created).toISOString().substring(0, 10);
-      }
-    }
+    const dateStr = formatLocalDateToYYYYMMDD(exp.createdAt);
     setForm({
       category: exp.category,
       amount: exp.amount.toString(),
@@ -103,7 +96,7 @@ export default function Expenses() {
       category: 'Advertising',
       amount: '',
       description: '',
-      spentAt: new Date().toISOString().substring(0, 10),
+      spentAt: formatLocalDateToYYYYMMDD(new Date()),
     });
     setReceiptFile(null);
     setReceiptPreview(null);
@@ -172,10 +165,10 @@ export default function Expenses() {
   const startOfYear = new Date(now.getFullYear(), 0, 1);
 
   // Filters
-  const dailyExpenses = expenses.filter(e => e.createdAt?.toDate() >= startOfToday);
-  const weeklyExpenses = expenses.filter(e => e.createdAt?.toDate() >= startOfWeek);
-  const monthlyExpenses = expenses.filter(e => e.createdAt?.toDate() >= startOfMonth);
-  const yearlyExpenses = expenses.filter(e => e.createdAt?.toDate() >= startOfYear);
+  const dailyExpenses = expenses.filter(e => toLocalDate(e.createdAt) >= startOfToday);
+  const weeklyExpenses = expenses.filter(e => toLocalDate(e.createdAt) >= startOfWeek);
+  const monthlyExpenses = expenses.filter(e => toLocalDate(e.createdAt) >= startOfMonth);
+  const yearlyExpenses = expenses.filter(e => toLocalDate(e.createdAt) >= startOfYear);
 
   // Aggregated totals
   const dailyTotal = dailyExpenses.reduce((acc, e) => acc + e.amount, 0);
@@ -273,7 +266,7 @@ export default function Expenses() {
                   <tr key={exp.id} className="border-b border-white/5 hover:bg-white/[0.01] transition-colors">
                     <td className="p-4 text-center text-zinc-500 font-medium">{index + 1}</td>
                     <td className="p-4 text-zinc-400 whitespace-nowrap">
-                      {exp.createdAt?.toDate().toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                      {formatLocalDateForDisplay(exp.createdAt, false)}
                     </td>
                     <td className="p-4 font-bold text-white/90">{exp.description}</td>
                     <td className="p-4">

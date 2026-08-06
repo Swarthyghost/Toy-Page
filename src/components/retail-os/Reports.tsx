@@ -22,6 +22,7 @@ import {
   Expense, 
   Product 
 } from '../../services/firebaseApi';
+import { toLocalDate } from '../../utils/dateHelper';
 
 export default function Reports() {
   const [sales, setSales] = useState<Sale[]>([]);
@@ -79,22 +80,16 @@ export default function Reports() {
         start = new Date(now.getFullYear(), 0, 1);
         break;
       case 'custom':
-        if (startDate) start = new Date(startDate);
+        if (startDate) start = toLocalDate(startDate);
         if (endDate) {
-          end = new Date(endDate);
+          end = toLocalDate(endDate);
           end.setHours(23,59,59,999);
         }
         break;
     }
 
     const filteredSales = sales.filter(s => {
-      let dateVal: Date;
-      if (s.createdAt && typeof (s.createdAt as any).toDate === 'function') {
-        dateVal = (s.createdAt as any).toDate();
-      } else {
-        dateVal = new Date(s.createdAt as any);
-      }
-      
+      const dateVal = toLocalDate(s.createdAt);
       if (reportType === 'custom') {
         return dateVal >= start && dateVal <= end;
       }
@@ -102,13 +97,7 @@ export default function Reports() {
     });
 
     const filteredExpenses = expenses.filter(e => {
-      let dateVal: Date;
-      if (e.createdAt && typeof (e.createdAt as any).toDate === 'function') {
-        dateVal = (e.createdAt as any).toDate();
-      } else {
-        dateVal = new Date(e.createdAt as any);
-      }
-
+      const dateVal = toLocalDate(e.createdAt);
       if (reportType === 'custom') {
         return dateVal >= start && dateVal <= end;
       }
@@ -143,12 +132,7 @@ export default function Reports() {
     // 1. Sales CSV
     const salesHeaders = ['Sale ID', 'Date', 'Product', 'Quantity', 'Price (GHC)', 'Cost Price (GHC)', 'Profit (GHC)', 'Platform', 'Payment Method', 'Discount', 'Delivery Fee', 'Notes'];
     const salesRows = filteredSales.map(s => {
-      let dateStr = '';
-      if (s.createdAt) {
-        dateStr = typeof (s.createdAt as any).toDate === 'function' 
-          ? (s.createdAt as any).toDate().toISOString() 
-          : new Date(s.createdAt as any).toISOString();
-      }
+      const dateStr = s.createdAt ? toLocalDate(s.createdAt).toISOString() : '';
       return [
         s.id || '',
         dateStr,
@@ -170,12 +154,7 @@ export default function Reports() {
     // 2. Expenses CSV
     const expHeaders = ['Expense ID', 'Date', 'Category', 'Amount (GHC)', 'Description'];
     const expRows = filteredExpenses.map(e => {
-      let dateStr = '';
-      if (e.createdAt) {
-        dateStr = typeof (e.createdAt as any).toDate === 'function' 
-          ? (e.createdAt as any).toDate().toISOString() 
-          : new Date(e.createdAt as any).toISOString();
-      }
+      const dateStr = e.createdAt ? toLocalDate(e.createdAt).toISOString() : '';
       return [
         e.id || '',
         dateStr,
@@ -193,12 +172,7 @@ export default function Reports() {
   const handleExportExcel = () => {
     const salesHeaders = ['Sale ID', 'Date', 'Product', 'Quantity', 'Price (GHC)', 'Cost Price (GHC)', 'Profit (GHC)', 'Platform', 'Payment Method'];
     const salesRows = filteredSales.map(s => {
-      let dateStr = '';
-      if (s.createdAt) {
-        dateStr = typeof (s.createdAt as any).toDate === 'function' 
-          ? (s.createdAt as any).toDate().toISOString() 
-          : new Date(s.createdAt as any).toISOString();
-      }
+      const dateStr = s.createdAt ? toLocalDate(s.createdAt).toISOString() : '';
       return [s.id, dateStr, s.productName, s.quantity, s.price, s.costPrice, s.profit, s.platform, s.paymentMethod];
     });
     const salesCSV = convertToCSV(salesHeaders, salesRows);

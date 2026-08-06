@@ -22,6 +22,7 @@ import {
   Sale, 
   Expense 
 } from '../../services/firebaseApi';
+import { toLocalDate } from '../../utils/dateHelper';
 import { 
   BarChart, 
   Bar, 
@@ -151,7 +152,7 @@ export default function Analytics() {
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
   const soldProductIdsIn30Days = new Set(
     sales
-      .filter(s => s.createdAt?.toDate() >= thirtyDaysAgo)
+      .filter(s => toLocalDate(s.createdAt) >= thirtyDaysAgo)
       .map(s => s.productId)
   );
   const notSoldProducts = products
@@ -174,7 +175,7 @@ export default function Analytics() {
   }
 
   sales.forEach(s => {
-    const dateStr = s.createdAt?.toDate().toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+    const dateStr = toLocalDate(s.createdAt).toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
     if (monthlyRevenueMap[dateStr] !== undefined) {
       monthlyRevenueMap[dateStr] += s.price * s.quantity;
     }

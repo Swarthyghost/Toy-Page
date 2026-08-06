@@ -20,6 +20,7 @@ import {
   Sale, 
   Expense 
 } from '../../services/firebaseApi';
+import { toLocalDate } from '../../utils/dateHelper';
 import { 
   AreaChart, 
   Area, 
@@ -74,9 +75,9 @@ export default function Overview() {
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
   // Filters
-  const todaySales = sales.filter(s => s.createdAt?.toDate() >= startOfToday);
-  const todayExpenses = expenses.filter(e => e.createdAt?.toDate() >= startOfToday);
-  const monthSales = sales.filter(s => s.createdAt?.toDate() >= startOfMonth);
+  const todaySales = sales.filter(s => toLocalDate(s.createdAt) >= startOfToday);
+  const todayExpenses = expenses.filter(e => toLocalDate(e.createdAt) >= startOfToday);
+  const monthSales = sales.filter(s => toLocalDate(s.createdAt) >= startOfMonth);
 
   // Aggregated KPIs
   const todaySalesRevenue = todaySales.reduce((acc, s) => acc + (s.price * s.quantity), 0);
@@ -101,7 +102,7 @@ export default function Overview() {
     }
 
     sales.forEach(s => {
-      const dateStr = s.createdAt?.toDate().toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      const dateStr = toLocalDate(s.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
       if (trendMap[dateStr]) {
         trendMap[dateStr].revenue += s.price * s.quantity;
         trendMap[dateStr].profit += s.profit;

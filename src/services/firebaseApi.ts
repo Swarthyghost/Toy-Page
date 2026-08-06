@@ -15,6 +15,7 @@ import {
   writeBatch
 } from 'firebase/firestore';
 import { db } from '../config/firebase';
+import { toLocalDate } from '../utils/dateHelper';
 import { uploadImage } from '../config/cloudinary';
 
 export interface Product {
@@ -709,7 +710,7 @@ export const logSale = async (saleData: Omit<Sale, 'createdAt'> & { createdAt?: 
     const saleId = doc(collection(db, SALES_COLLECTION)).id;
     let timestamp = Timestamp.now();
     if (saleData.createdAt) {
-      const selectedDate = new Date(saleData.createdAt);
+      const selectedDate = toLocalDate(saleData.createdAt);
       const now = new Date();
       selectedDate.setHours(now.getHours(), now.getMinutes(), now.getSeconds(), now.getMilliseconds());
       timestamp = Timestamp.fromDate(selectedDate);
@@ -808,7 +809,7 @@ export const updateSale = async (
 
     let timestamp = originalSale.createdAt;
     if (updatedData.createdAt) {
-      const selectedDate = new Date(updatedData.createdAt);
+      const selectedDate = toLocalDate(updatedData.createdAt);
       const now = new Date();
       selectedDate.setHours(now.getHours(), now.getMinutes(), now.getSeconds(), now.getMilliseconds());
       timestamp = Timestamp.fromDate(selectedDate);
@@ -930,7 +931,7 @@ export const logExpense = async (data: Omit<Expense, 'id' | 'createdAt'> & { cre
     const expenseId = doc(collection(db, EXPENSES_COLLECTION)).id;
     let timestamp = Timestamp.now();
     if (data.createdAt) {
-      const selectedDate = new Date(data.createdAt);
+      const selectedDate = toLocalDate(data.createdAt);
       const now = new Date();
       selectedDate.setHours(now.getHours(), now.getMinutes(), now.getSeconds(), now.getMilliseconds());
       timestamp = Timestamp.fromDate(selectedDate);
@@ -974,7 +975,7 @@ export const updateExpense = async (
 
     let timestamp = originalExpense.createdAt;
     if (updatedData.createdAt) {
-      const selectedDate = new Date(updatedData.createdAt);
+      const selectedDate = toLocalDate(updatedData.createdAt);
       const now = new Date();
       selectedDate.setHours(now.getHours(), now.getMinutes(), now.getSeconds(), now.getMilliseconds());
       timestamp = Timestamp.fromDate(selectedDate);
@@ -1157,7 +1158,7 @@ export const bulkImportSales = async (salesList: ParsedImportSale[]): Promise<{
       totalProfit += profit;
 
       // Normalize date to Timestamp (with hours/minutes for ordering)
-      const selectedDate = new Date(item.date);
+      const selectedDate = toLocalDate(item.date);
       const now = new Date();
       selectedDate.setHours(now.getHours(), now.getMinutes(), now.getSeconds(), now.getMilliseconds());
       const timestamp = Timestamp.fromDate(selectedDate);

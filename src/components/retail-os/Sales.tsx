@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
+import { toLocalDate, formatLocalDateToYYYYMMDD, formatLocalDateForDisplay } from '../../utils/dateHelper';
 import { 
   Plus, 
   Search, 
@@ -78,9 +79,7 @@ export default function Sales() {
     };
 
     sales.forEach(sale => {
-      const saleDate = sale.createdAt 
-        ? (typeof (sale.createdAt as any).toDate === 'function' ? (sale.createdAt as any).toDate() : new Date(sale.createdAt as any))
-        : new Date();
+      const saleDate = toLocalDate(sale.createdAt);
 
       const rev = (sale.price * sale.quantity) - (sale.discount || 0) + (sale.deliveryFee || 0);
       const prof = sale.profit || 0;
@@ -143,7 +142,7 @@ export default function Sales() {
       platform: 'Website' as const,
       paymentMethod: 'MoMo' as const,
       discount: 0,
-      soldAt: new Date().toISOString().substring(0, 10),
+      soldAt: formatLocalDateToYYYYMMDD(new Date()),
       notes: '',
     }
   });
@@ -190,16 +189,7 @@ export default function Sales() {
     setValue('paymentMethod', sale.paymentMethod);
     setValue('discount', sale.discount || 0);
     
-    let dateStr = new Date().toISOString().substring(0, 10);
-    if (sale.createdAt) {
-      const created = sale.createdAt as any;
-      if (typeof created.toDate === 'function') {
-        dateStr = created.toDate().toISOString().substring(0, 10);
-      } else {
-        dateStr = new Date(created).toISOString().substring(0, 10);
-      }
-    }
-    setValue('soldAt', dateStr);
+    setValue('soldAt', formatLocalDateToYYYYMMDD(sale.createdAt));
     setValue('notes', sale.notes || '');
     setIsModalOpen(true);
   };
@@ -411,7 +401,7 @@ export default function Sales() {
                     <tr key={sale.id} className="border-b border-white/5 hover:bg-white/[0.01] transition-colors">
                       <td className="p-4 text-center text-zinc-500 font-medium">{index + 1}</td>
                       <td className="p-4 text-zinc-400 whitespace-nowrap">
-                        {sale.createdAt?.toDate().toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                        {formatLocalDateForDisplay(sale.createdAt, false)}
                       </td>
                       <td className="p-4 font-bold text-white/90 truncate max-w-[150px]">{sale.productName}</td>
                       <td className="p-4 text-center font-semibold text-zinc-300">{sale.quantity}</td>
