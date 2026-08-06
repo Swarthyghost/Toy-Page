@@ -14,6 +14,9 @@ export default function robots(): MetadataRoute.Robots {
         '/checkout',
       ],
     },
-    sitemap: 'https://pleasuretoysgh.com/sitemap.xml',
+    sitemap: [
+      'https://pleasuretoysgh.com/sitemap.xml',
+      'https://pleasuretoysgh.com/guides/sitemap.xml'
+    ],
   };
 }

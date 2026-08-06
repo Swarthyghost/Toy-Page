@@ -110,3 +110,27 @@ export function getCategoryMetadata(categoryName: string) {
 
   return { title, description, keywords };
 }
+
+/**
+ * Standardized SEO Title, Description, and Keywords generator for Guides & Articles.
+ */
+export function getGuideMetadata(guide: any) {
+  if (!guide) {
+    return {
+      title: "Pleasure & Intimacy Guides | PleasureToys GH",
+      description: "Read expert articles on sexual wellness, adult toy guides, intimacy tips for couples, and body safety from the specialists at PleasureToys GH.",
+      keywords: "sexual wellness, guides, intimacy tips, PleasureToys GH"
+    };
+  }
+
+  const title = guide.metaTitle || guide.title || "Intimacy Guide";
+  const rawDesc = guide.metaDescription || guide.excerpt || guide.body || "";
+  const description = rawDesc
+    .replace(/[#*`_\[\]()\-]/g, '')
+    .substring(0, 155)
+    .trim() + (rawDesc.length > 155 ? "..." : "");
+
+  const keywords = `${guide.title.toLowerCase()}, sexual wellness Ghana, adult toy guide, ${guide.category || 'intimacy'} guide PleasureToys`;
+
+  return { title: `${title} | PleasureToys GH`, description, keywords };
+}
