@@ -9,6 +9,7 @@ import { fetchGuideBySlug, fetchPublishedGuides, Guide } from '../../../services
 import { useProducts } from '../../../context/ProductContext';
 import { useSEO } from '../../../hooks/useSEO';
 import { parseMarkdown } from '../../../utils/markdown';
+import { slugify } from '../../../utils/seoHelper';
 
 export default function GuideDetailPage() {
   const params = useParams();
@@ -223,7 +224,7 @@ export default function GuideDetailPage() {
                        />
                       <div className="min-w-0 flex-grow">
                         <h3 className="font-bold text-sm truncate group-hover:text-primary transition-colors">
-                          <Link href={`/product/${product.id}`}>
+                          <Link href={`/product/${slugify(product.name)}`}>
                             {product.name}
                           </Link>
                         </h3>
@@ -233,7 +234,7 @@ export default function GuideDetailPage() {
                         <div className="flex items-center justify-between">
                           <span className="text-sm text-emerald-400 font-bold font-display">GHS {product.price.toFixed(2)}</span>
                           <Link
-                            href={`/product/${product.id}`}
+                            href={`/product/${slugify(product.name)}`}
                             className="text-[10px] font-bold text-primary uppercase tracking-widest hover:underline"
                           >
                             View {product.name}

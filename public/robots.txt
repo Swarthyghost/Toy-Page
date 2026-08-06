@@ -1,7 +1,0 @@
-User-agent: *
-Allow: /
-Disallow: /admin
-Disallow: /admin-login
-
-Sitemap: https://pleasuretoysgh.com/sitemap.xml
-Host: https://pleasuretoysgh.com

@@ -16,6 +16,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { toLocalDate } from '../utils/dateHelper';
+import { slugify } from '../utils/seoHelper';
 import { uploadImage } from '../config/cloudinary';
 
 export interface Product {
@@ -80,15 +81,40 @@ export const fetchProducts = async (): Promise<Product[]> => {
 };
 
 export const fetchProductById = async (id: string): Promise<Product | null> => {
-  const docRef = doc(db, PRODUCTS_COLLECTION, id);
-  const docSnap = await getDoc(docRef);
-  
-  if (docSnap.exists()) {
-    return {
-      ...docSnap.data(),
-      id: docSnap.id
-    } as Product;
+  // First, check if the ID is valid by doing a direct document read
+  try {
+    const docRef = doc(db, PRODUCTS_COLLECTION, id);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      return {
+        ...docSnap.data(),
+        id: docSnap.id
+      } as Product;
+    }
+  } catch (e) {
+    // Suppress document ID invalid format errors and proceed to slug search
   }
+
+  // If not found by direct ID, search through the products collection for a slug match
+  try {
+    const q = query(collection(db, PRODUCTS_COLLECTION));
+    const querySnapshot = await getDocs(q);
+    const slugTarget = id.toLowerCase().trim();
+    
+    for (const docObj of querySnapshot.docs) {
+      const data = docObj.data();
+      const name = data.name || '';
+      if (slugify(name) === slugTarget) {
+        return {
+          ...data,
+          id: docObj.id
+        } as Product;
+      }
+    }
+  } catch (error) {
+    console.error('Error finding product by slug:', error);
+  }
+  
   return null;
 };
 
