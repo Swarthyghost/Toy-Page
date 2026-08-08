@@ -11,29 +11,38 @@ import { useSEO } from '../../../hooks/useSEO';
 import { parseMarkdown } from '../../../utils/markdown';
 import { slugify } from '../../../utils/seoHelper';
 
-export default function GuideDetailPage() {
+interface GuideDetailPageProps {
+  initialGuide?: Guide;
+}
+
+export default function GuideDetailPage({ initialGuide }: GuideDetailPageProps = {}) {
   const params = useParams();
   const slug = params?.slug as string;
   const router = useRouter();
   const { products } = useProducts();
 
-  const [guide, setGuide] = useState<Guide | null>(null);
+  const [guide, setGuide] = useState<Guide | null>(initialGuide || null);
   const [allGuides, setAllGuides] = useState<Guide[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!initialGuide);
   const [copiedShare, setCopiedShare] = useState(false);
 
   useEffect(() => {
     if (!slug) return;
     
     const loadGuideData = async () => {
-      setLoading(true);
+      if (!initialGuide) {
+        setLoading(true);
+      }
       try {
-        const post = await fetchGuideBySlug(slug);
-        if (post) {
-          setGuide(post);
-        } else {
-          // If post doesn't exist or slug is wrong, route to 404/Guides
-          router.replace('/guides');
+        if (!initialGuide) {
+          const post = await fetchGuideBySlug(slug);
+          if (post) {
+            setGuide(post);
+          } else {
+            // If post doesn't exist or slug is wrong, route to 404/Guides
+            router.replace('/guides');
+            return;
+          }
         }
         
         // Load other guides for the "Related Posts" section
@@ -47,14 +56,14 @@ export default function GuideDetailPage() {
     };
 
     loadGuideData();
-  }, [slug, router]);
+  }, [slug, router, initialGuide]);
 
   // Set page SEO metadata
   useSEO({
     title: guide?.metaTitle || guide?.title,
     description: guide?.metaDescription || guide?.excerpt,
     image: guide?.featuredImage,
-    url: `/guides/${slug}`,
+    url: guide ? `/guides/${guide.slug}` : `/guides/${slug}`,
     type: 'article',
   });
 
@@ -158,9 +167,12 @@ export default function GuideDetailPage() {
 
         {/* Post Title & Category Header */}
         <div className="text-center md:text-left mb-10 space-y-4">
-          <span className="px-3 py-1 bg-primary/10 border border-primary/20 text-primary text-xs font-bold uppercase tracking-widest rounded-full">
+          <Link
+            href={`/category/${encodeURIComponent(guide.category)}`}
+            className="px-3 py-1 bg-primary/10 border border-primary/20 text-primary hover:bg-primary/20 text-xs font-bold uppercase tracking-widest rounded-full transition-all"
+          >
             {guide.category}
-          </span>
+          </Link>
           <h1 className="text-3xl md:text-5xl font-display font-bold leading-tight mt-4">
             {guide.title}
           </h1>
@@ -319,7 +331,12 @@ export default function GuideDetailPage() {
                     )}
                   </Link>
                   <div className="p-4 flex flex-col flex-grow space-y-2">
-                    <span className="text-[9px] font-bold uppercase tracking-widest text-white/40">{item.category}</span>
+                    <Link
+                      href={`/category/${encodeURIComponent(item.category)}`}
+                      className="text-[9px] font-bold uppercase tracking-widest text-white/40 hover:text-primary transition-colors"
+                    >
+                      {item.category}
+                    </Link>
                     <h3 className="font-bold text-base font-display line-clamp-1 group-hover:text-primary transition-colors">
                       <Link href={`/guides/${item.slug}`}>{item.title}</Link>
                     </h3>

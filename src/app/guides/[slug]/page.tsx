@@ -3,36 +3,46 @@ import GuideDetailClient from "./GuideDetailClient";
 import { Metadata } from "next";
 import { fetchGuideBySlug } from "../../../services/firebaseApi";
 import { getGuideMetadata } from "../../../utils/seoHelper";
+import { permanentRedirect, notFound } from "next/navigation";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const guide = await fetchGuideBySlug(slug);
+  
+  if (!guide) {
+    return {
+      title: "Guide Not Found | PleasureToys GH",
+      description: "This guide could not be found.",
+    };
+  }
+
   const { title, description, keywords } = getGuideMetadata(guide);
-  const imageUrl = guide?.featuredImage || "https://pleasuretoysgh.com/toy-og.png";
+  const imageUrl = guide.featuredImage || "https://pleasuretoysgh.com/toy-og.png";
+  const canonicalUrl = `https://pleasuretoysgh.com/guides/${guide.slug}`;
 
   return {
     title,
     description,
     keywords,
     alternates: {
-      canonical: `https://pleasuretoysgh.com/guides/${slug}`,
+      canonical: canonicalUrl,
     },
     openGraph: {
       title,
       description,
-      url: `https://pleasuretoysgh.com/guides/${slug}`,
+      url: canonicalUrl,
       siteName: "PleasureToys GH",
       images: [
         {
           url: imageUrl,
           width: 1200,
           height: 630,
-          alt: guide?.featuredImageAlt || title,
+          alt: guide.featuredImageAlt || title,
         },
       ],
       type: "article",
-      publishedTime: guide?.publishDate ? toISODateString(guide.publishDate) : undefined,
-      modifiedTime: guide?.updatedAt ? toISODateString(guide.updatedAt) : (guide?.publishDate ? toISODateString(guide.publishDate) : undefined),
+      publishedTime: guide.publishDate ? toISODateString(guide.publishDate) : undefined,
+      modifiedTime: guide.updatedAt ? toISODateString(guide.updatedAt) : (guide.publishDate ? toISODateString(guide.publishDate) : undefined),
     },
     twitter: {
       card: "summary_large_image",
@@ -57,6 +67,18 @@ function toISODateString(timestamp: any): string | undefined {
   return undefined;
 }
 
-export default function GuideDetailPage() {
-  return <GuideDetailClient />;
+export default async function GuideDetailPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const guide = await fetchGuideBySlug(slug);
+
+  if (!guide) {
+    notFound();
+  }
+
+  // Redirect to exact canonical lowercase slug if mismatch
+  if (slug !== guide.slug) {
+    permanentRedirect(`/guides/${guide.slug}`);
+  }
+
+  return <GuideDetailClient initialGuide={guide} />;
 }

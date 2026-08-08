@@ -22,6 +22,7 @@ import { uploadImage } from '../config/cloudinary';
 export interface Product {
   id: string;
   name: string;
+  slug?: string;
   price: number;
   originalPrice?: number;
   image: string;
@@ -80,10 +81,55 @@ export const fetchProducts = async (): Promise<Product[]> => {
   } as Product));
 };
 
-export const fetchProductById = async (id: string): Promise<Product | null> => {
-  // First, check if the ID is valid by doing a direct document read
+export const generateUniqueSlug = async (name: string, productId?: string): Promise<string> => {
+  const baseSlug = slugify(name);
+  if (!baseSlug) return 'product';
+  
+  let slug = baseSlug;
+  let counter = 1;
+  let isUnique = false;
+
+  while (!isUnique) {
+    const q = query(collection(db, PRODUCTS_COLLECTION), where('slug', '==', slug));
+    const querySnapshot = await getDocs(q);
+    
+    if (querySnapshot.empty) {
+      isUnique = true;
+    } else {
+      const otherDocs = querySnapshot.docs.filter(doc => doc.id !== productId);
+      if (otherDocs.length === 0) {
+        isUnique = true;
+      } else {
+        slug = `${baseSlug}-${counter}`;
+        counter++;
+      }
+    }
+  }
+  return slug;
+};
+
+export const fetchProductBySlugOrId = async (slugOrId: string): Promise<Product | null> => {
+  if (!slugOrId) return null;
+  const target = slugOrId.toLowerCase().trim();
+
+  // 1. Try fetching by slug field directly
   try {
-    const docRef = doc(db, PRODUCTS_COLLECTION, id);
+    const q = query(collection(db, PRODUCTS_COLLECTION), where('slug', '==', target));
+    const querySnapshot = await getDocs(q);
+    if (!querySnapshot.empty) {
+      const docSnap = querySnapshot.docs[0];
+      return {
+        ...docSnap.data(),
+        id: docSnap.id
+      } as Product;
+    }
+  } catch (error) {
+    console.error('Error fetching product by slug field:', error);
+  }
+
+  // 2. Try fetching by document ID
+  try {
+    const docRef = doc(db, PRODUCTS_COLLECTION, slugOrId);
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
       return {
@@ -92,19 +138,19 @@ export const fetchProductById = async (id: string): Promise<Product | null> => {
       } as Product;
     }
   } catch (e) {
-    // Suppress document ID invalid format errors and proceed to slug search
+    // Suppress invalid document path errors
   }
 
-  // If not found by direct ID, search through the products collection for a slug match
+  // 3. Fallback: Search all products for a match on slugify(name) or slug field (legacy fallback)
   try {
     const q = query(collection(db, PRODUCTS_COLLECTION));
     const querySnapshot = await getDocs(q);
-    const slugTarget = id.toLowerCase().trim();
     
     for (const docObj of querySnapshot.docs) {
       const data = docObj.data();
       const name = data.name || '';
-      if (slugify(name) === slugTarget) {
+      const productSlug = data.slug || slugify(name);
+      if (productSlug.toLowerCase().trim() === target || slugify(name) === target) {
         return {
           ...data,
           id: docObj.id
@@ -112,10 +158,14 @@ export const fetchProductById = async (id: string): Promise<Product | null> => {
       }
     }
   } catch (error) {
-    console.error('Error finding product by slug:', error);
+    console.error('Error in fetchProductBySlugOrId fallback:', error);
   }
-  
+
   return null;
+};
+
+export const fetchProductById = async (id: string): Promise<Product | null> => {
+  return fetchProductBySlugOrId(id);
 };
 
 export const createProduct = async (productData: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>, imageFile?: File, additionalImageFiles?: File[]): Promise<string> => {
@@ -141,8 +191,11 @@ export const createProduct = async (productData: Omit<Product, 'id' | 'createdAt
       console.log('Additional images uploaded successfully');
     }
 
+    const slug = productData.slug || await generateUniqueSlug(productData.name);
+
     const product = {
       ...productData,
+      slug,
       image: imageUrl,
       images: additionalImageUrls,
       isOutOfStock: productData.isOutOfStock || false,
@@ -200,14 +253,23 @@ export const updateProduct = async (id: string, productData: Partial<Product>, i
     additionalImageUrls = [...additionalImageUrls, ...uploadedUrls];
   }
 
+  const docRef = doc(db, PRODUCTS_COLLECTION, id);
+  const docSnap = await getDoc(docRef);
+  let existingSlug = docSnap.exists() ? docSnap.data().slug : undefined;
+
+  let slug = productData.slug || existingSlug;
+  if (!slug) {
+    const name = productData.name || (docSnap.exists() ? docSnap.data().name : "");
+    slug = await generateUniqueSlug(name, id);
+  }
+
   const updates = {
     ...productData,
+    slug,
     ...(imageUrl && { image: imageUrl }),
     images: additionalImageUrls,
     updatedAt: Timestamp.now(),
   };
-
-  const docRef = doc(db, PRODUCTS_COLLECTION, id);
 
   if (productData.featured === true) {
     const q = query(collection(db, PRODUCTS_COLLECTION), where('featured', '==', true));

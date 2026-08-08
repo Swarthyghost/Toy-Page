@@ -81,7 +81,7 @@ export default function Cart() {
     const orderList = cart
       .map(
         (item, index) =>
-          `*${index + 1}. ${item.name}* (x${item.quantity})\nPrice: GHS ${(item.price * item.quantity).toFixed(2)}\nView Product: ${window.location.origin}/product/${slugify(item.name)}`,
+          `*${index + 1}. ${item.name}* (x${item.quantity})\nPrice: GHS ${(item.price * item.quantity).toFixed(2)}\nView Product: ${window.location.origin}/product/${item.slug || slugify(item.name)}`,
       )
       .join("\n\n");
 
@@ -222,7 +222,7 @@ Please confirm my order. Thank you!`;
     const orderList = cart
       .map(
         (item, index) =>
-          `*${index + 1}. ${item.name}* (x${item.quantity})\nPrice: GHS ${(item.price * item.quantity).toFixed(2)}\nView Product: ${window.location.origin}/product/${slugify(item.name)}`,
+          `*${index + 1}. ${item.name}* (x${item.quantity})\nPrice: GHS ${(item.price * item.quantity).toFixed(2)}\nView Product: ${window.location.origin}/product/${item.slug || slugify(item.name)}`,
       )
       .join("\n\n");
 

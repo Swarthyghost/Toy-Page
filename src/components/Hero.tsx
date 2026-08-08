@@ -253,7 +253,7 @@ export default function Hero() {
                         GHS {displayProduct.price}
                       </span>
                       <Link
-                        href={`/product/${slugify(displayProduct.name)}`}
+                        href={`/product/${displayProduct.slug || slugify(displayProduct.name)}`}
                         className="group flex items-center gap-2 px-5 py-3 bg-white text-black text-sm font-bold rounded-xl hover:bg-primary hover:text-white transition-all"
                       >
                         View

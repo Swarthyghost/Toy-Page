@@ -11,28 +11,42 @@ import {
   ShieldCheck,
   Truck,
   Package,
+  Clock,
 } from "lucide-react";
 import { useCart, Product } from "../context/CartContext";
 import { useSiteSettings } from "../context/SiteSettingsContext";
-import { fetchProductById } from "../services/firebaseApi";
+import { fetchProductById, fetchPublishedGuides, Guide } from "../services/firebaseApi";
+import { useProducts } from "../context/ProductContext";
 import { useSEO } from "../hooks/useSEO";
 import { flyToCart } from "../utils/animations";
 import { parseMarkdown } from "../utils/markdown";
+import { slugify } from "../utils/seoHelper";
+import ProductCard from "./ProductCard";
 
-export default function ProductDetail() {
+interface ProductDetailProps {
+  initialProduct?: Product;
+}
+
+export default function ProductDetail({ initialProduct }: ProductDetailProps = {}) {
   const params = useParams();
   const router = useRouter();
-  const id = params?.id as string | undefined;
-  const [product, setProduct] = useState<Product | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [activeImage, setActiveImage] = useState<string>("");
+  const slug = params?.slug as string | undefined;
+  const [product, setProduct] = useState<Product | null>(initialProduct || null);
+  const [loading, setLoading] = useState(!initialProduct);
+  const [activeImage, setActiveImage] = useState<string>(initialProduct?.image || "");
   const { addToCart } = useCart();
   const { siteSettings } = useSiteSettings();
+  const { products } = useProducts();
+  const [relevantGuides, setRelevantGuides] = useState<Guide[]>([]);
   const showDiscount = siteSettings?.isDiscountTagsActive !== false && product?.originalPrice && product.originalPrice > product.price;
 
   useEffect(() => {
-    if (id) {
-      fetchProductById(id)
+    if (initialProduct) {
+      setProduct(initialProduct);
+      if (initialProduct.image) setActiveImage(initialProduct.image);
+      setLoading(false);
+    } else if (slug) {
+      fetchProductById(slug)
         .then((data) => {
           if (data?.hide_product) {
             router.replace("/");
@@ -43,7 +57,28 @@ export default function ProductDetail() {
         })
         .finally(() => setLoading(false));
     }
-  }, [id, router]);
+  }, [slug, router, initialProduct]);
+
+  useEffect(() => {
+    if (product) {
+      fetchPublishedGuides()
+        .then((guides) => {
+          const filtered = guides.filter(g => 
+            (g.relatedProductIds && g.relatedProductIds.includes(product.id)) ||
+            (g.category?.toLowerCase() === product.category?.toLowerCase())
+          ).slice(0, 3);
+          setRelevantGuides(filtered);
+        })
+        .catch(err => console.error("Error loading relevant guides:", err));
+    }
+  }, [product]);
+
+  const relatedProducts = useMemo(() => {
+    if (!product || !products) return [];
+    return products
+      .filter(p => p.category === product.category && p.id !== product.id && !p.hide_product)
+      .slice(0, 4);
+  }, [products, product]);
 
   // SEO optimization for product pages
   const productKeywords = product 
@@ -101,7 +136,7 @@ export default function ProductDetail() {
     description: seoDetails.description,
     keywords: productKeywords,
     image: product?.image,
-    url: id ? `/product/${id}` : undefined,
+    url: product ? `/product/${product.slug || slugify(product.name)}` : undefined,
     type: "product",
   });
 
@@ -223,13 +258,14 @@ export default function ProductDetail() {
             "image": absoluteImages,
             "description": product.description || "",
             "sku": sku,
+            "category": product.category,
             "brand": {
               "@type": "Brand",
               "name": "PleasureToys GH"
             },
             "offers": {
               "@type": "Offer",
-              "url": `https://pleasuretoysgh.com/product/${product.id}`,
+              "url": `https://pleasuretoysgh.com/product/${product.slug || slugify(product.name)}`,
               "priceCurrency": "GHS",
               "price": product.price.toString(),
               "availability": product.isOutOfStock 
@@ -256,13 +292,13 @@ export default function ProductDetail() {
                 "@type": "ListItem",
                 "position": 2,
                 "name": product.category,
-                "item": `https://pleasuretoysgh.com/category/${product.category}`
+                "item": `https://pleasuretoysgh.com/category/${encodeURIComponent(product.category)}`
               },
               {
                 "@type": "ListItem",
                 "position": 3,
                 "name": product.name,
-                "item": `https://pleasuretoysgh.com/product/${product.id}`
+                "item": `https://pleasuretoysgh.com/product/${product.slug || slugify(product.name)}`
               }
             ]
           })
@@ -335,9 +371,12 @@ export default function ProductDetail() {
         </div>
 
         <div className="flex flex-col justify-center">
-          <div className="inline-flex px-3 py-1 bg-primary/10 border border-primary/20 text-primary text-xs font-bold uppercase tracking-widest rounded-full w-fit mb-6">
+          <Link
+            href={`/category/${encodeURIComponent(product.category)}`}
+            className="inline-flex px-3 py-1 bg-primary/10 border border-primary/20 text-primary hover:bg-primary/20 text-xs font-bold uppercase tracking-widest rounded-full w-fit mb-6 transition-all"
+          >
             {product.category}
-          </div>
+          </Link>
 
           {showDiscount && (
             <div className="inline-flex ml-3 px-3 py-1 bg-red-600/20 border border-red-500 text-red-500 text-xs font-bold uppercase tracking-widest rounded-full w-fit mb-6 animate-pulse">
@@ -410,6 +449,69 @@ export default function ProductDetail() {
           )}
         </div>
       </div>
+
+      {/* Related Products Section */}
+      {relatedProducts.length > 0 && (
+        <div className="mt-24 pt-16 border-t border-white/10">
+          <div className="flex flex-col gap-2 mb-10">
+            <span className="text-xs font-bold uppercase tracking-widest text-primary">Discover More</span>
+            <h2 className="text-3xl font-display font-bold">Related Products</h2>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {relatedProducts.map((item) => (
+              <ProductCard key={item.id} product={item} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Relevant Guides Section */}
+      {relevantGuides.length > 0 && (
+        <div className="mt-24 pt-16 border-t border-white/10">
+          <div className="flex flex-col gap-2 mb-10">
+            <span className="text-xs font-bold uppercase tracking-widest text-primary">Wellness Tips</span>
+            <h2 className="text-3xl font-display font-bold">Intimacy & Wellness Guides</h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {relevantGuides.map((guideItem) => (
+              <div
+                key={guideItem.id}
+                className="bg-zinc-900/30 border border-white/10 rounded-2xl overflow-hidden hover:border-primary/40 transition-colors flex flex-col group"
+              >
+                <Link href={`/guides/${guideItem.slug}`} className="block relative aspect-video overflow-hidden">
+                  {guideItem.featuredImage ? (
+                    <Image
+                      src={guideItem.featuredImage}
+                      alt={guideItem.featuredImageAlt || "Guide thumbnail"}
+                      className="object-cover group-hover:scale-105 transition-transform duration-500"
+                      fill
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 33vw, 350px"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-white/5 flex items-center justify-center text-white/20">
+                      <Clock size={24} />
+                    </div>
+                  )}
+                </Link>
+                <div className="p-4 flex flex-col flex-grow space-y-2">
+                  <Link
+                    href={`/category/${encodeURIComponent(guideItem.category)}`}
+                    className="text-[9px] font-bold uppercase tracking-widest text-white/40 hover:text-primary transition-colors"
+                  >
+                    {guideItem.category}
+                  </Link>
+                  <h3 className="font-bold text-base font-display line-clamp-1 group-hover:text-primary transition-colors">
+                    <Link href={`/guides/${guideItem.slug}`}>{guideItem.title}</Link>
+                  </h3>
+                  <p className="text-xs text-white/40 line-clamp-2 leading-relaxed flex-grow">
+                    {guideItem.excerpt}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -42,7 +42,7 @@ export default function ProductCard({ product, index }: ProductCardProps) {
         {!product.isOutOfStock && (
           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
             <Link
-              href={`/product/${slugify(product.name)}`}
+              href={`/product/${product.slug || slugify(product.name)}`}
               className="p-3 bg-white text-black rounded-full hover:bg-primary hover:text-white transition-colors"
             >
               <Eye size={20} />
@@ -73,7 +73,7 @@ export default function ProductCard({ product, index }: ProductCardProps) {
 
       {/* Content */}
       <div className="p-3 sm:p-6">
-        <Link href={`/product/${slugify(product.name)}`}>
+        <Link href={`/product/${product.slug || slugify(product.name)}`}>
           <h3 className="text-sm sm:text-lg font-bold mb-1 truncate group-hover:text-primary transition-colors">
             {product.name}
           </h3>

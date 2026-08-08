@@ -33,6 +33,15 @@ const nextConfig: NextConfig = {
     "@firebase/analytics",
     "@firebase/util",
   ],
+  async redirects() {
+    return [
+      {
+        source: "/privacy",
+        destination: "/privacy-policy",
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default nextConfig;

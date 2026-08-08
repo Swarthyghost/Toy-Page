@@ -19,7 +19,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${baseUrl}/about`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.6 },
     { url: `${baseUrl}/contact`, lastModified: new Date(), changeFrequency: 'yearly', priority: 0.5 },
     { url: `${baseUrl}/shipping`, lastModified: new Date(), changeFrequency: 'yearly', priority: 0.4 },
-    { url: `${baseUrl}/privacy`, lastModified: new Date(), changeFrequency: 'yearly', priority: 0.3 },
     { url: `${baseUrl}/guides`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.8 },
     { url: `${baseUrl}/faq`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },
     { url: `${baseUrl}/delivery-information`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },
@@ -69,7 +68,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     for (const product of products) {
       productPages.push({
-        url: `${baseUrl}/product/${slugify(product.name)}`,
+        url: `${baseUrl}/product/${product.slug || slugify(product.name)}`,
         lastModified: product.updatedAt ? product.updatedAt.toDate() : new Date(),
         changeFrequency: 'weekly',
         priority: 0.8
