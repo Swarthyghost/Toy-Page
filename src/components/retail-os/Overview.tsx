@@ -43,6 +43,7 @@ export default function Overview() {
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [trendPeriod, setTrendPeriod] = useState<'week' | 'month' | 'year'>('week');
 
   useEffect(() => {
     setMounted(true);
@@ -92,27 +93,45 @@ export default function Overview() {
   const monthlyRevenue = monthSales.reduce((acc, s) => acc + (s.price * s.quantity), 0);
   const monthlyProfit = monthSales.reduce((acc, s) => acc + s.profit, 0);
 
-  // Trend mapping (last 7 days)
-  const getTrendData = () => {
-    const trendMap: { [key: string]: { date: string; revenue: number; profit: number } } = {};
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
-      const key = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-      trendMap[key] = { date: key, revenue: 0, profit: 0 };
+  // Trend mapping — buckets by day (week/month) or by month (year)
+  const getTrendData = (period: 'week' | 'month' | 'year') => {
+    type Bucket = { label: string; start: Date; end: Date; revenue: number; profit: number };
+    const buckets: Bucket[] = [];
+
+    if (period === 'week') {
+      for (let i = 6; i >= 0; i--) {
+        const start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+        const end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 1);
+        buckets.push({ label: start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }), start, end, revenue: 0, profit: 0 });
+      }
+    } else if (period === 'month') {
+      for (let i = 29; i >= 0; i--) {
+        const start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+        const end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 1);
+        buckets.push({ label: start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }), start, end, revenue: 0, profit: 0 });
+      }
+    } else {
+      for (let i = 11; i >= 0; i--) {
+        const start = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const end = new Date(start.getFullYear(), start.getMonth() + 1, 1);
+        buckets.push({ label: start.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }), start, end, revenue: 0, profit: 0 });
+      }
     }
 
     sales.forEach(s => {
-      const dateStr = toLocalDate(s.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-      if (trendMap[dateStr]) {
-        trendMap[dateStr].revenue += s.price * s.quantity;
-        trendMap[dateStr].profit += s.profit;
+      const d = toLocalDate(s.createdAt);
+      const bucket = buckets.find(b => d >= b.start && d < b.end);
+      if (bucket) {
+        bucket.revenue += s.price * s.quantity;
+        bucket.profit += s.profit;
       }
     });
 
-    return Object.values(trendMap);
+    return buckets.map(({ label, revenue, profit }) => ({ date: label, revenue, profit }));
   };
 
-  const chartData = getTrendData();
+  const chartData = getTrendData(trendPeriod);
+  const trendPeriodLabel = trendPeriod === 'week' ? 'the last 7 days' : trendPeriod === 'month' ? 'the last 30 days' : 'the last 12 months';
 
   // Platform Distribution
   const platformMap: { [key: string]: number } = {
@@ -209,9 +228,30 @@ export default function Overview() {
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Sales & Profit trend */}
           <div className="bg-zinc-900/40 border border-white/5 rounded-3xl p-6 lg:col-span-2 shadow-xl backdrop-blur-sm">
-            <div>
-              <h3 className="text-sm font-bold text-white font-display">Sales & Profit Trend</h3>
-              <p className="text-[10px] text-zinc-500 mt-0.5">Performance values compiled over the last 7 days.</p>
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+              <div>
+                <h3 className="text-sm font-bold text-white font-display">Sales & Profit Trend</h3>
+                <p className="text-[10px] text-zinc-500 mt-0.5">Performance values compiled over {trendPeriodLabel}.</p>
+              </div>
+              <div className="flex items-center gap-1 bg-black border border-white/5 rounded-xl p-1 self-start">
+                {([
+                  { key: 'week', label: '1W' },
+                  { key: 'month', label: '1M' },
+                  { key: 'year', label: '1Y' },
+                ] as const).map(opt => (
+                  <button
+                    key={opt.key}
+                    onClick={() => setTrendPeriod(opt.key)}
+                    className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-colors cursor-pointer ${
+                      trendPeriod === opt.key
+                        ? 'bg-primary text-white'
+                        : 'text-zinc-500 hover:text-zinc-300'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
             </div>
             <div className="h-64 mt-6">
               <ResponsiveContainer width="100%" height="100%">
