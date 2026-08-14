@@ -80,5 +80,14 @@ export default async function GuideDetailPage({ params }: { params: Promise<{ sl
     permanentRedirect(`/guides/${guide.slug}`);
   }
 
-  return <GuideDetailClient initialGuide={guide} />;
+  // Firestore Timestamp instances can't be passed as Client Component props
+  // (React Flight only supports plain serializable values) — convert to ISO strings.
+  const serializedGuide = {
+    ...guide,
+    publishDate: toISODateString(guide.publishDate) || guide.publishDate,
+    createdAt: toISODateString(guide.createdAt) || guide.createdAt,
+    updatedAt: toISODateString(guide.updatedAt) || guide.updatedAt,
+  };
+
+  return <GuideDetailClient initialGuide={serializedGuide} />;
 }

@@ -10,9 +10,16 @@ import { useProducts } from '../../../context/ProductContext';
 import { useSEO } from '../../../hooks/useSEO';
 import { parseMarkdown } from '../../../utils/markdown';
 import { slugify } from '../../../utils/seoHelper';
+import { toLocalDate } from '../../../utils/dateHelper';
+
+type SerializableGuide = Omit<Guide, 'publishDate' | 'createdAt' | 'updatedAt'> & {
+  publishDate: Guide['publishDate'] | string;
+  createdAt: Guide['createdAt'] | string;
+  updatedAt: Guide['updatedAt'] | string;
+};
 
 interface GuideDetailPageProps {
-  initialGuide?: Guide;
+  initialGuide?: SerializableGuide;
 }
 
 export default function GuideDetailPage({ initialGuide }: GuideDetailPageProps = {}) {
@@ -21,7 +28,7 @@ export default function GuideDetailPage({ initialGuide }: GuideDetailPageProps =
   const router = useRouter();
   const { products } = useProducts();
 
-  const [guide, setGuide] = useState<Guide | null>(initialGuide || null);
+  const [guide, setGuide] = useState<Guide | SerializableGuide | null>(initialGuide || null);
   const [allGuides, setAllGuides] = useState<Guide[]>([]);
   const [loading, setLoading] = useState(!initialGuide);
   const [copiedShare, setCopiedShare] = useState(false);
@@ -130,8 +137,8 @@ export default function GuideDetailPage({ initialGuide }: GuideDetailPageProps =
             "@type": "BlogPosting",
             "headline": guide.title,
             "image": guide.featuredImage ? [guide.featuredImage] : ["https://pleasuretoysgh.com/toy-og.png"],
-            "datePublished": guide.publishDate?.toDate().toISOString(),
-            "dateModified": guide.updatedAt?.toDate().toISOString() || guide.publishDate?.toDate().toISOString(),
+            "datePublished": guide.publishDate ? toLocalDate(guide.publishDate).toISOString() : undefined,
+            "dateModified": toLocalDate(guide.updatedAt || guide.publishDate).toISOString(),
             "author": [{
               "@type": "Organization",
               "name": "PleasureToys GH",
@@ -180,7 +187,7 @@ export default function GuideDetailPage({ initialGuide }: GuideDetailPageProps =
           <div className="flex flex-wrap items-center justify-center md:justify-start gap-6 text-xs text-white/40 pt-2 border-t border-white/5 font-medium uppercase tracking-wider">
             <span className="flex items-center gap-1.5">
               <Calendar size={14} />
-              {guide.publishDate?.toDate()?.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+              {guide.publishDate && toLocalDate(guide.publishDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
             </span>
             <span className="flex items-center gap-1.5">
               <Clock size={14} />

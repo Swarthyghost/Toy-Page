@@ -14,6 +14,14 @@ export function toLocalDate(input: any): Date {
     return input.toDate();
   }
 
+  // If it's a Firestore Timestamp serialized across a Server/Client Component
+  // boundary (plain object of shape { seconds, nanoseconds }, no toDate method)
+  if (input && typeof input === 'object' && typeof input.seconds === 'number') {
+    const ms = input.seconds * 1000 + Math.round((input.nanoseconds || 0) / 1e6);
+    const d = new Date(ms);
+    return isNaN(d.getTime()) ? new Date() : d;
+  }
+
   // If it's already a JS Date
   if (input instanceof Date) {
     return isNaN(input.getTime()) ? new Date() : input;
