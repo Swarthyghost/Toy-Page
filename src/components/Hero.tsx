@@ -138,7 +138,7 @@ export default function Hero() {
               >
                 Sex Toys in <span className="text-gradient">Accra</span>
                 <br />
-                — Discreet, <span className="text-gradient">Same-Day</span> Delivery
+                Discreet & <span className="text-gradient">Same-Day</span> Delivery
               </motion.h1>
 
               {/* Subtext */}
