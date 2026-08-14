@@ -70,7 +70,7 @@ export default function RootLayout({
               "name": "PleasureToys GH",
               "image": "https://pleasuretoysgh.com/toy-og.png",
               "url": "https://pleasuretoysgh.com/",
-              "telephone": "+233-26-618-1581",
+              "telephone": "+233 26 618 1581",
               "priceRange": "GH₵",
               "address": {
                 "@type": "PostalAddress",

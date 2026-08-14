@@ -29,7 +29,7 @@ export default function Footer() {
             Majesty Road (GA-577), off Olebu Amamoley Road, Ablekuma,<br />
             Accra, Ga Central Municipal District, Greater Accra, Ghana<br />
             Digital Address: GW-0635-6571<br />
-            Phone: <a href="tel:+233266181581" className="text-white/60 hover:text-primary transition-colors">0266 181 581</a>
+            Phone: <a href="tel:+233266181581" className="text-white/60 hover:text-primary transition-colors">+233 26 618 1581</a>
           </address>
           <div className="flex flex-col gap-6">
             <div className="flex gap-4">
@@ -53,7 +53,7 @@ export default function Footer() {
               <div className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-primary group-hover:border-primary transition-all">
                 <Phone size={18} />
               </div>
-              <span className="font-medium tracking-wide">0266181581</span>
+              <span className="font-medium tracking-wide">+233 26 618 1581</span>
             </a>
           </div>
         </div>
@@ -64,6 +64,7 @@ export default function Footer() {
             <li><Link href="/category/Vibrators" className="hover:text-primary transition-colors">Vibrators</Link></li>
             <li><Link href="/category/BDSM" className="hover:text-primary transition-colors">BDSM & Bondage</Link></li>
             <li><Link href="/category/Lubricants" className="hover:text-primary transition-colors">Lubricants</Link></li>
+            <li><Link href="/category/Mens Toy" className="hover:text-primary transition-colors">Men's Toys</Link></li>
             <li><Link href="/category/Accessories" className="hover:text-primary transition-colors">Accessories</Link></li>
           </ul>
         </div>

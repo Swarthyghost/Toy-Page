@@ -3,8 +3,8 @@ import SafetyGuideClient from "./SafetyGuideClient";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Adult Toy Safety & Hygiene Guide | PleasureToys GH",
-  description: "Learn how to use, wash, and store your adult toys safely. Tips on body-safe materials, body-safe lubricants, and intimate hygiene from PleasureToys GH.",
+  title: "Adult Toy Safety Guide | PleasureToys GH, Accra",
+  description: "How to choose and use sex toys safely: materials, cleaning and storage tips from PleasureToys GH, Accra's discreet adult toy shop.",
   alternates: {
     canonical: "https://pleasuretoysgh.com/adult-toy-safety-guide",
   },

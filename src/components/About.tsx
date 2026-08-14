@@ -8,9 +8,9 @@ import { useSEO } from "../hooks/useSEO";
 
 export default function About() {
   useSEO({
-    title: "Our Story",
+    title: "About PleasureToys GH | Sex Toy Shop in Accra",
     description:
-      "Learn about PleasureToys GH - Ghana's premier adult toy store. Empowering individuals and couples with quality products, discretion, and absolute privacy since 2020.",
+      "PleasureToys GH is a discreet, trusted online sex toy shop based in Accra, Ghana, offering body-safe products and fast delivery nationwide.",
     url: "/about",
   });
 
@@ -21,11 +21,14 @@ export default function About() {
         animate={{ opacity: 1, y: 0 }}
         className="text-center max-w-3xl mx-auto mb-24"
       >
-        <h1 className="text-6xl font-display font-bold mb-8">Our Story</h1>
+        <h1 className="text-6xl font-display font-bold mb-8">About PleasureToys GH — Accra, Ghana</h1>
         <p className="text-xl text-white/60 leading-relaxed">
           PleasureToys GH was founded with a simple mission: to empower
           individuals and couples in Ghana to explore their desires with
           confidence, elegance, and absolute privacy.
+        </p>
+        <p className="text-sm text-white/40 mt-6">
+          Majesty Road (GA-577), off Olebu Amamoley Road, Ablekuma, Accra
         </p>
       </motion.div>
 

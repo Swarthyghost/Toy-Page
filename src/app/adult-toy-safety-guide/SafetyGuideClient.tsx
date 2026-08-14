@@ -42,8 +42,8 @@ function AccordionItem({ question, answer, isOpen, onClick }: { question: string
 
 export default function AdultToySafetyGuidePage() {
   useSEO({
-    title: "Adult Toy Safety & Hygiene Guide | PleasureToysGH",
-    description: "Learn about adult toy safety, body-safe materials, antibacterial toy cleaner, silicone care, storage tips, and water-based lubricant compatibility in Ghana.",
+    title: "Adult Toy Safety Guide | PleasureToys GH, Accra",
+    description: "How to choose and use sex toys safely: materials, cleaning and storage tips from PleasureToys GH, Accra's discreet adult toy shop.",
     url: "/adult-toy-safety-guide"
   });
 

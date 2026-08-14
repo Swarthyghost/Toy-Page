@@ -77,38 +77,45 @@ export function getProductMetadata(product: any) {
 export function getCategoryMetadata(categoryName: string) {
   if (!categoryName) {
     return {
-      title: "Premium Adult Toy Categories in Ghana | PleasureToys GH",
-      description: "Browse our premium categories of adult toys, vibrators, and accessories. Fast, 100% discreet delivery in Accra and across Ghana.",
-      keywords: "sex toys Ghana, categories, adult shop Accra"
+      title: "Sex Toys in Accra, Ghana | PleasureToys GH",
+      description: "Browse our premium categories of sex toys, vibrators, and accessories. Fast, 100% discreet delivery in Accra and across Ghana.",
+      keywords: "sex toys Ghana, categories, adult shop Accra",
+      h1: "Shop by Category"
     };
   }
 
   const decodedName = decodeURIComponent(categoryName).trim();
   const cleanCategory = decodedName.toLowerCase();
-  
-  let title = `${decodedName} in Ghana — Discreet Same-Day Delivery Accra | PleasureToys GH`;
-  let description = `Shop high-quality ${decodedName.toLowerCase()} in Accra and nationwide. 100% private, secure online sex toy shopping with discreet packaging.`;
-  
+
+  let title = `${decodedName} in Accra, Ghana | PleasureToys GH`;
+  let description = `Shop ${decodedName.toLowerCase()} online in Accra, Ghana. Body-safe products, 100% discreet packaging, same-day Accra delivery.`;
+  let h1 = `${decodedName} — Shop in Accra`;
+
   if (cleanCategory.includes('vibrator')) {
-    title = "Buy Vibrators in Ghana — Discreet Same-Day Delivery Accra";
-    description = "Shop rechargeable, silent, and waterproof vibrators in Ghana. Browse rose toys, G-spot, wand, and clitoral vibrators. 100% discreet packaging.";
+    title = "Vibrators in Accra, Ghana | PleasureToys GH";
+    description = "Buy vibrators online in Accra & across Ghana. Clitoral, G-spot & wand vibrators, all body-safe. Discreet packaging, same-day Accra delivery.";
+    h1 = "Vibrators — Shop Online in Accra";
   } else if (cleanCategory.includes('bdsm') || cleanCategory.includes('bondage')) {
-    title = "BDSM Gear & Bondage Kits Ghana | Discreet Adult Toy Shop Accra";
-    description = "Explore high-quality BDSM gear, leather constraints, handcuffs, and bondage kits in Ghana. 100% private shopping & same-day delivery in Accra.";
+    title = "BDSM Toys & Bondage Gear in Accra | PleasureToys GH";
+    description = "Shop BDSM toys, restraints & bondage gear online in Accra, Ghana. Discreet packaging, secure payment, same-day Accra delivery.";
+    h1 = "BDSM & Bondage Gear — Shop in Accra";
   } else if (cleanCategory.includes('lubricant') || cleanCategory.includes('lube')) {
-    title = "Body-Safe Personal Lubricants Ghana | Buy Lube Online Accra";
-    description = "Shop organic water-based and silicone-based personal lubricants in Ghana. Enhance intimacy with skin-safe lube. Discreet nationwide shipping.";
+    title = "Lubricants Online in Accra, Ghana | PleasureToys GH";
+    description = "Buy water-based, silicone & flavored lubricants online in Accra, Ghana. Discreet packaging, same-day Accra delivery, nationwide shipping.";
+    h1 = "Lubricants — Buy Lube Online in Accra";
   } else if (cleanCategory.includes('men') || cleanCategory.includes('mens') || cleanCategory.includes('male')) {
-    title = "Male Masturbators & Pocket Pussies Ghana | Private Delivery Accra";
-    description = "Explore premium male masturbators, automatic cups, and realistic pocket pussies in Ghana. Confidential shipping and payment on delivery options.";
+    title = "Men's Sex Toys in Accra, Ghana | PleasureToys GH";
+    description = "Shop men's sex toys online in Accra & Ghana: strokers, masturbators & more. 100% discreet packaging, same-day Accra delivery.";
+    h1 = "Men's Sex Toys — Shop in Accra";
   } else if (cleanCategory.includes('accessories') || cleanCategory.includes('accessory')) {
-    title = "Adult Toy Accessories & Cleaners Ghana | PleasureToys GH";
-    description = "Buy battery chargers, toy cleaners, storage bags, and intimacy accessories in Ghana. Fast, discreet shipping in Accra and other regions.";
+    title = "Adult Toy Accessories in Accra | PleasureToys GH";
+    description = "Shop adult toy accessories, cleaners & storage in Accra, Ghana. Discreet packaging, fast delivery across Accra and nationwide.";
+    h1 = "Adult Toy Accessories — Shop in Accra";
   }
 
-  const keywords = `${decodedName} Ghana, buy ${decodedName.toLowerCase()} Accra, discreet adult toys delivery, PleasureToys GH category`;
+  const keywords = `${decodedName} Ghana, sex toys Accra, buy ${decodedName.toLowerCase()} Accra, discreet adult toys delivery, PleasureToys GH category`;
 
-  return { title, description, keywords };
+  return { title, description, keywords, h1 };
 }
 
 /**

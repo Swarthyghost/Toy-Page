@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { SlidersHorizontal } from "lucide-react";
 import { Product } from "../context/CartContext";
 import { useSEO } from "../hooks/useSEO";
+import { getCategoryMetadata } from "../utils/seoHelper";
 
 const ProductCardSkeleton = () => {
   return (
@@ -216,53 +217,27 @@ export default function ProductListing() {
     return keywordMap[category] || keywordMap["All"];
   };
 
+  // Single source of truth for category SEO copy — shared with the server-rendered
+  // generateMetadata() in category/[categoryName]/page.tsx, so the SSR title/description
+  // and the client-hydrated title/description never diverge.
   const seoDetails = useMemo(() => {
     if (activeCategory === "All") {
       if (categoryName) {
         return {
           title: "Our Collection",
-          description: "Browse Ghana's premier collection of adult toys, vibrators, BDSM gear, lubricants and accessories. 100% discreet packaging, fast delivery across Ghana."
+          description: "Browse Ghana's premier collection of adult toys, vibrators, BDSM gear, lubricants and accessories. 100% discreet packaging, fast delivery across Ghana.",
+          h1: "Our Collection"
         };
       } else {
         return {
-          title: "Buy Vibrators Online Ghana | PleasureToysGH",
-          description: "Shop at PleasureToysGH, a discreet adult shop in Accra. Buy vibrators online in Ghana with fast delivery. Confidential packaging & payment on delivery."
+          title: "Sex Toys in Accra, Ghana | PleasureToys GH",
+          description: "Shop sex toys in Accra, Ghana: vibrators, BDSM gear, lubricants & more. Body-safe products, 100% discreet packaging, same-day Accra delivery.",
+          h1: "Buy Vibrators Online Ghana"
         };
       }
     }
-    
-    switch (activeCategory) {
-      case "Vibrators":
-        return {
-          title: "Vibrators Ghana — Buy Online | Fast Discreet Shipping",
-          description: "Shop premium vibrators online in Ghana. Buy clitoral vibrators, couples toys in Accra with 100% confidential packaging and nationwide delivery."
-        };
-      case "BDSM":
-        return {
-          title: "BDSM Gear Ghana — Discreet Adult Shop Accra",
-          description: "Buy premium BDSM gear and bondage kits in Ghana. Secure private sex toy shopping, confidential packaging, and payment on delivery in Accra."
-        };
-      case "Lubricants":
-        return {
-          title: "Lubricants Ghana — Body-Safe Lube | Discreet Delivery",
-          description: "Buy organic water-based and silicone lubricants in Ghana. Shop premium body-safe lubes with 100% private packaging and fast delivery in Accra."
-        };
-      case "Mens Toy":
-        return {
-          title: "Male Masturbators Ghana — Private Shopping Accra",
-          description: "Shop male masturbators, pocket pussies, and prostate massagers in Ghana. Discreet sex toys delivery, payment on delivery, complete privacy."
-        };
-      case "Accessories":
-        return {
-          title: "Sensual Accessories Ghana — Discreet Delivery Accra",
-          description: "Buy premium adult accessories and toy cleaners in Ghana. Shop online with confidential packaging, fast shipping, and secure local payments."
-        };
-      default:
-        return {
-          title: `${activeCategory} Ghana — Discreet Delivery Accra`,
-          description: `Explore high-quality ${activeCategory.toLowerCase()} on PleasureToysGH. Secure payment on delivery and confidential packaging across Ghana.`
-        };
-    }
+
+    return getCategoryMetadata(activeCategory);
   }, [activeCategory, categoryName]);
 
   useSEO({
@@ -307,11 +282,11 @@ export default function ProductListing() {
         <div>
           {categoryName ? (
             <h1 className="text-3xl md:text-5xl font-display font-bold mb-4">
-              {activeCategory === "All" ? "Our Collection" : `${activeCategory} Ghana`}
+              {seoDetails.h1}
             </h1>
           ) : (
             <h2 className="text-3xl md:text-5xl font-display font-bold mb-4">
-              {activeCategory === "All" ? "Buy Vibrators Online Ghana" : `${activeCategory} Ghana`}
+              {activeCategory === "All" ? "Buy Vibrators Online Ghana" : seoDetails.h1}
             </h2>
           )}
           <p className="text-white/40 max-w-md text-sm md:text-base font-normal">

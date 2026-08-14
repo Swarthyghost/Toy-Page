@@ -50,9 +50,9 @@ export default function GuidesPage() {
   }, []);
 
   useSEO({
-    title: activeCategory === 'All' ? 'Guides & Wellness Articles' : `${activeCategory} Guides`,
+    title: activeCategory === 'All' ? 'Sex Toy Guides & Tips | PleasureToys GH, Ghana' : `${activeCategory} Guides`,
     description: activeCategory === 'All'
-      ? "Explore PleasureToys GH's educational wellness guides, beginner product tutorials, and expert self-care tips for premium adult lifestyle in Ghana."
+      ? "Guides on choosing, using and caring for sex toys in Ghana — safety, materials, cleaning and more, from PleasureToys GH in Accra."
       : `Read premium articles and guides on ${activeCategory} to elevate your pleasure and self-care journey. 100% discreet advice and insights.`,
     url: `/guides`,
   });
@@ -110,7 +110,7 @@ export default function GuidesPage() {
         {/* Banner/Header */}
         <div className="text-center py-12 md:py-16 max-w-2xl mx-auto">
           <h1 className="text-4xl md:text-6xl font-display font-bold tracking-tight mb-4">
-            Guides & <span className="text-primary">Articles</span>
+            Sex Toy Guides — <span className="text-primary">Tips, Safety & How-Tos</span>
           </h1>
           <p className="text-white/60 text-sm md:text-base leading-relaxed">
             Tasteful, self-care-focused education on relationships, wellness, and product guides. Elevate your intimacy knowledge with pleasure-positive insights.

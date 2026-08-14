@@ -7,9 +7,9 @@ import { useSEO } from "../hooks/useSEO";
 
 export default function Contact() {
   useSEO({
-    title: "Contact Us",
+    title: "Contact PleasureToys GH | Sex Toy Shop, Accra",
     description:
-      "Contact PleasureToys GH for questions about adult toys, orders, and delivery in Ghana. Call/WhatsApp: +233 26 618 1581, Email: pleasuretoysgh@gmail.com",
+      "Contact PleasureToys GH in Ablekuma, Accra for questions about orders, delivery or products. Reach us by phone, WhatsApp or email.",
     url: "/contact",
   });
 
@@ -17,7 +17,7 @@ export default function Contact() {
     <div className="max-w-7xl mx-auto px-6 py-24">
       <div className="grid lg:grid-cols-2 gap-16">
         <div>
-          <h1 className="text-6xl font-display font-bold mb-8">Get in Touch</h1>
+          <h1 className="text-6xl font-display font-bold mb-8">Contact Us — PleasureToys GH, Accra</h1>
           <p className="text-xl text-white/60 mb-12 leading-relaxed">
             Have questions about our products or your order? We're here to help.
             Reach out to us through any of these channels.
@@ -58,7 +58,7 @@ export default function Contact() {
                 <div className="text-sm font-bold uppercase tracking-widest text-white/40 mb-1">
                   Location
                 </div>
-                <div className="text-xl font-bold">Accra, Ghana (Ablekuma)</div>
+                <div className="text-xl font-bold">Majesty Road (GA-577), off Olebu Amamoley Road, Ablekuma, Accra</div>
               </div>
             </div>
           </div>
