@@ -6,12 +6,13 @@ import {
   deleteDoc, 
   getDocs, 
   getDoc,
-  query, 
+  query,
   orderBy,
   Timestamp,
   onSnapshot,
   setDoc,
   where,
+  limit,
   writeBatch
 } from 'firebase/firestore';
 import { db } from '../config/firebase';
@@ -79,6 +80,19 @@ export const fetchProducts = async (): Promise<Product[]> => {
     ...doc.data(),
     id: doc.id
   } as Product));
+};
+
+// Lightweight, server-safe fetch for just the homepage hero's featured product —
+// lets the Hero LCP image render in the initial server-rendered HTML instead of
+// waiting on the client-side ProductContext Firestore round-trip.
+export const fetchFeaturedProduct = async (): Promise<Product | null> => {
+  const q = query(collection(db, PRODUCTS_COLLECTION), where('featured', '==', true), limit(5));
+  const querySnapshot = await getDocs(q);
+  const products = querySnapshot.docs.map(doc => ({
+    ...doc.data(),
+    id: doc.id
+  } as Product));
+  return products.find(p => !p.hide_product) || null;
 };
 
 export const generateUniqueSlug = async (name: string, productId?: string): Promise<string> => {

@@ -9,6 +9,19 @@ import { useSEO } from "../hooks/useSEO";
 import { useProducts } from "../context/ProductContext";
 import { slugify } from "../utils/seoHelper";
 
+// Minimal, plain-serializable shape for the server-fetched featured product —
+// deliberately excludes Firestore Timestamp fields (createdAt/updatedAt) and
+// anything else Hero doesn't render.
+interface FeaturedProductPreview {
+  id: string;
+  name: string;
+  slug?: string;
+  price: number;
+  image: string;
+  category: string;
+  description: string;
+}
+
 const MARQUEE_ITEMS = [
   "Premium Quality",
   "Discreet Delivery",
@@ -54,21 +67,15 @@ const features = [
   { icon: Truck, text: "Fast Delivery" },
 ];
 
-export default function Hero() {
+export default function Hero({ initialFeaturedProduct }: { initialFeaturedProduct?: FeaturedProductPreview | null } = {}) {
   const containerRef = useRef<HTMLDivElement>(null);
   const { products } = useProducts();
   const featuredProduct = products.find(p => p.featured === true);
 
-  // Fallback product commented out so it only shows selected featured product
-  // const displayProduct = featuredProduct || {
-  //   id: "pcNPkD2LuoQ8hdODSntW",
-  //   name: "Rose Thrusting & Sucking Vibrator",
-  //   price: 450,
-  //   image: "/rosetoy2in1.webp",
-  //   category: "Vibrators",
-  //   description: "Advanced suction technology with dual stimulation modes",
-  // };
-  const displayProduct = featuredProduct;
+  // Prefer the live client-fetched product once ProductContext resolves; until then,
+  // fall back to the server-fetched product so the LCP image is already in the
+  // initial HTML instead of waiting on a client-side Firestore round-trip.
+  const displayProduct = featuredProduct || initialFeaturedProduct || undefined;
 
   // SEO optimization for homepage
   useSEO({
@@ -224,8 +231,8 @@ export default function Hero() {
                       className="w-full h-full object-cover transition-transform duration-700 hover:scale-105 bg-white"
                       width={800}
                       height={600}
+                      sizes="(min-width: 1024px) 420px, 100vw"
                       priority
-                      unoptimized
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
 
