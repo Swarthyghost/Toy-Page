@@ -8,6 +8,7 @@ import { useRef } from "react";
 import { useSEO } from "../hooks/useSEO";
 import { useProducts } from "../context/ProductContext";
 import { slugify } from "../utils/seoHelper";
+import { stripMarkdown } from "../utils/markdown";
 
 // Minimal, plain-serializable shape for the server-fetched featured product —
 // deliberately excludes Firestore Timestamp fields (createdAt/updatedAt) and
@@ -252,7 +253,7 @@ export default function Hero({ initialFeaturedProduct }: { initialFeaturedProduc
                       {displayProduct.name}
                     </h3>
                     <p className="text-white/40 text-sm mb-5 line-clamp-1">
-                      {displayProduct.description}
+                      {stripMarkdown(displayProduct.description)}
                     </p>
 
                     <div className="flex items-center justify-between">

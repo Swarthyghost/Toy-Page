@@ -12,7 +12,10 @@
 @layer base {
   html, body {
     max-width: 100%;
-    overflow-x: hidden;
+    /* overflow-x: clip (not hidden) avoids implicitly forcing overflow-y to
+       "auto", which would make html/body a scroll container and break
+       position: sticky for any descendant (e.g. the PDP image gallery). */
+    overflow-x: clip;
   }
   body {
     @apply bg-black text-white font-sans antialiased;
@@ -23,9 +26,24 @@
   .glass {
     @apply bg-white/5 backdrop-blur-lg border border-white/10;
   }
-  
+
   .text-gradient {
     @apply bg-clip-text text-transparent bg-gradient-to-r from-primary via-secondary to-primary;
+  }
+
+  /* Quick-view/quick-add card overlays: only reveal on genuine hover-capable
+     pointers (mouse/trackpad). On touch devices, :hover can get "stuck" after
+     a tap, so gate visibility behind the hover media feature entirely rather
+     than relying on group-hover alone. */
+  .hover-reveal {
+    opacity: 0;
+    pointer-events: none;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .group:hover .hover-reveal {
+      opacity: 1;
+      pointer-events: auto;
+    }
   }
 }
 

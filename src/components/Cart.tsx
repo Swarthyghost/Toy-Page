@@ -309,7 +309,7 @@ Please confirm receipt of payment and process my order. Thank you!`;
         </div>
         <h2 className="text-2xl font-bold mb-2">Your cart is empty</h2>
         <p className="text-white/40 mb-8 text-center max-w-xs">
-          Looks like you haven't added anything to your pleasure collection yet.
+          Looks like you haven't added anything to your cart yet.
         </p>
         <Link
           href="/"
@@ -323,7 +323,7 @@ Please confirm receipt of payment and process my order. Thank you!`;
 
   return (
     <div className="max-w-7xl mx-auto px-4 md:px-6 pt-24 pb-12 md:py-24">
-      <h1 className="text-2xl md:text-4xl font-display font-bold mb-8 md:mb-12">Your Collection</h1>
+      <h1 className="text-2xl md:text-4xl font-display font-bold mb-8 md:mb-12">Your Cart</h1>
 
       <div className="grid lg:grid-cols-3 gap-6 md:gap-12">
         {/* Cart Items */}

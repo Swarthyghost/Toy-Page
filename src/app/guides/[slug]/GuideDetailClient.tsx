@@ -8,7 +8,7 @@ import { Calendar, Clock, Share2, ArrowLeft, Send, Check } from 'lucide-react';
 import { fetchGuideBySlug, fetchPublishedGuides, Guide } from '../../../services/firebaseApi';
 import { useProducts } from '../../../context/ProductContext';
 import { useSEO } from '../../../hooks/useSEO';
-import { parseMarkdown } from '../../../utils/markdown';
+import { parseMarkdown, stripMarkdown } from '../../../utils/markdown';
 import { slugify } from '../../../utils/seoHelper';
 import { toLocalDate } from '../../../utils/dateHelper';
 
@@ -248,7 +248,7 @@ export default function GuideDetailPage({ initialGuide }: GuideDetailPageProps =
                           </Link>
                         </h3>
                         <p className="text-xs text-white/40 line-clamp-1 mb-2">
-                          {product.description}
+                          {stripMarkdown(product.description)}
                         </p>
                         <div className="flex items-center justify-between">
                           <span className="text-sm text-emerald-400 font-bold font-display">GHS {product.price.toFixed(2)}</span>

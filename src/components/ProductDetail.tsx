@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { motion } from "motion/react";
@@ -39,6 +39,26 @@ export default function ProductDetail({ initialProduct }: ProductDetailProps = {
   const { products } = useProducts();
   const [relevantGuides, setRelevantGuides] = useState<Guide[]>([]);
   const showDiscount = siteSettings?.isDiscountTagsActive !== false && product?.originalPrice && product.originalPrice > product.price;
+  const topCtaRef = useRef<HTMLDivElement>(null);
+  const [showStickyBar, setShowStickyBar] = useState(false);
+
+  // Show the mobile sticky "Add to Cart" bar once the user has scrolled past
+  // the primary CTA near the top of the page.
+  useEffect(() => {
+    const target = topCtaRef.current;
+    if (!target) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        // Only reveal the sticky bar once the CTA has scrolled above the
+        // viewport (top < 0) — not simply because it hasn't been scrolled
+        // to yet on initial load (which is also "not intersecting").
+        setShowStickyBar(!entry.isIntersecting && entry.boundingClientRect.top < 0);
+      },
+      { threshold: 0 }
+    );
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [product]);
 
   useEffect(() => {
     if (initialProduct) {
@@ -246,7 +266,7 @@ export default function ProductDetail({ initialProduct }: ProductDetailProps = {
   );
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-24">
+    <div className="max-w-7xl mx-auto px-6 pt-24 pb-32 md:pb-24">
       {/* Product JSON-LD Structured Data */}
       <script
         type="application/ld+json"
@@ -314,7 +334,7 @@ export default function ProductDetail({ initialProduct }: ProductDetailProps = {
       </Link>
 
       <div className="grid lg:grid-cols-2 gap-16">
-        <div className="space-y-6">
+        <div className="space-y-6 lg:sticky lg:top-24">
           <motion.div
             key={activeImage}
             initial={{ opacity: 0, scale: 0.9 }}
@@ -405,7 +425,26 @@ export default function ProductDetail({ initialProduct }: ProductDetailProps = {
             )}
           </div>
 
-          <div 
+          <div ref={topCtaRef}>
+            {product.isOutOfStock ? (
+              <div className="w-full py-5 bg-white/5 border border-white/10 text-primary font-bold rounded-2xl flex items-center justify-center gap-3 mb-10">
+                 Restocking soon
+              </div>
+            ) : (
+              <button
+                onClick={(e) => {
+                  flyToCart(e);
+                  addToCart(product);
+                }}
+                className="w-full py-5 bg-primary text-white font-bold rounded-2xl flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-primary/20 group mb-10"
+              >
+                <ShoppingCart size={24} />
+                Add to Cart
+              </button>
+            )}
+          </div>
+
+          <div
             className="rich-text-content text-white/60 text-lg leading-relaxed mb-10"
             dangerouslySetInnerHTML={{ __html: parseMarkdown(richDescription) }}
           />
@@ -444,11 +483,34 @@ export default function ProductDetail({ initialProduct }: ProductDetailProps = {
               className="w-full py-5 bg-primary text-white font-bold rounded-2xl flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-primary/20 group"
             >
               <ShoppingCart size={24} />
-              Add to Collection
+              Add to Cart
             </button>
           )}
         </div>
       </div>
+
+      {/* Mobile sticky Add to Cart bar — appears once scrolled past the primary CTA */}
+      {showStickyBar && !product.isOutOfStock && (
+        <div
+          className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-black/95 backdrop-blur-md border-t border-white/10 flex items-center gap-4 pl-4 pr-4"
+          style={{ paddingTop: '0.75rem', paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom))', marginRight: '5.5rem' }}
+        >
+          <div className="flex-1 min-w-0">
+            <p className="text-xs text-white/40 truncate">{product.name}</p>
+            <p className="text-lg font-display font-bold text-primary">GHS {product.price.toFixed(2)}</p>
+          </div>
+          <button
+            onClick={(e) => {
+              flyToCart(e);
+              addToCart(product);
+            }}
+            className="flex items-center gap-2 px-6 py-3 bg-primary text-white font-bold rounded-2xl shadow-xl shadow-primary/20 active:scale-95 transition-all flex-shrink-0"
+          >
+            <ShoppingCart size={20} />
+            Add to Cart
+          </button>
+        </div>
+      )}
 
       {/* Related Products Section */}
       {relatedProducts.length > 0 && (

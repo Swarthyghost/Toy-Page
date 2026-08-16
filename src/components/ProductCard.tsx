@@ -9,6 +9,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { flyToCart } from '../utils/animations';
 import { slugify } from '../utils/seoHelper';
+import { stripMarkdown } from '../utils/markdown';
 
 interface ProductCardProps {
   product: Product;
@@ -40,7 +41,7 @@ export default function ProductCard({ product, index }: ProductCardProps) {
           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
         />
         {!product.isOutOfStock && (
-          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
+          <div className="hover-reveal absolute inset-0 bg-black/40 transition-opacity flex items-center justify-center gap-4">
             <Link
               href={`/product/${product.slug || slugify(product.name)}`}
               className="p-3 bg-white text-black rounded-full hover:bg-primary hover:text-white transition-colors"
@@ -79,7 +80,7 @@ export default function ProductCard({ product, index }: ProductCardProps) {
           </h3>
         </Link>
         <p className="text-white/40 text-xs sm:text-sm mb-3 sm:mb-4 line-clamp-1">
-          {product.description}
+          {stripMarkdown(product.description)}
         </p>
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 md:gap-0">
           <div className="flex flex-col">

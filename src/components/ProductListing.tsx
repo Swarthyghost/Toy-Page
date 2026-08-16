@@ -189,6 +189,11 @@ export default function ProductListing() {
   const router = useRouter();
   const { products, loading } = useProducts();
   const [activeCategory, setActiveCategory] = useState(categoryName || "All");
+  const [showFilters, setShowFilters] = useState(false);
+  const [sortBy, setSortBy] = useState<"featured" | "price-asc" | "price-desc">("featured");
+  const [inStockOnly, setInStockOnly] = useState(false);
+  const [minPrice, setMinPrice] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
 
   const currentSEOContent = CATEGORY_SEO_CONTENT[activeCategory] || CATEGORY_SEO_CONTENT["All"];
 
@@ -266,18 +271,32 @@ export default function ProductListing() {
   };
 
   const filteredProducts = useMemo(() => {
-    let result = activeCategory === "All" 
-      ? products.filter(p => p.category?.trim() !== "Other Products") 
+    let result = activeCategory === "All"
+      ? products.filter(p => p.category?.trim() !== "Other Products")
       : products.filter((p) => p.category?.trim() === activeCategory);
-      
-    return result.sort((a, b) => {
+
+    if (inStockOnly) {
+      result = result.filter((p) => !p.isOutOfStock);
+    }
+    const min = parseFloat(minPrice);
+    if (!isNaN(min)) {
+      result = result.filter((p) => p.price >= min);
+    }
+    const max = parseFloat(maxPrice);
+    if (!isNaN(max)) {
+      result = result.filter((p) => p.price <= max);
+    }
+
+    return [...result].sort((a, b) => {
+      if (sortBy === "price-asc") return a.price - b.price;
+      if (sortBy === "price-desc") return b.price - a.price;
       if (a.isOutOfStock === b.isOutOfStock) return 0;
       return a.isOutOfStock ? 1 : -1;
     });
-  }, [activeCategory, products]);
+  }, [activeCategory, products, inStockOnly, minPrice, maxPrice, sortBy]);
 
   return (
-    <div id="collection" className="max-w-7xl mx-auto px-4 md:px-6 pt-12 md:pt-20 pb-12 md:pb-24">
+    <div id="collection" className="max-w-7xl mx-auto px-4 md:px-6 pt-12 md:pt-20 pb-28 md:pb-24">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 md:gap-8 mb-6 md:mb-12 max-w-full overflow-hidden">
         <div>
           {categoryName ? (
@@ -312,11 +331,73 @@ export default function ProductListing() {
               </button>
             ))}
           </div>
-          <button className="p-2.5 md:p-3 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 transition-colors">
+          <button
+            onClick={() => setShowFilters((v) => !v)}
+            aria-expanded={showFilters}
+            className={`p-2.5 md:p-3 rounded-2xl border transition-colors ${
+              showFilters
+                ? "bg-primary border-primary text-white"
+                : "bg-white/5 border-white/10 hover:bg-white/10"
+            }`}
+          >
             <SlidersHorizontal size={18} />
           </button>
         </div>
       </div>
+
+      {showFilters && (
+        <div className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 md:p-6 mb-6 md:mb-8 grid sm:grid-cols-3 gap-4">
+          <div>
+            <label className="text-[10px] font-bold uppercase tracking-wider text-white/40 block mb-2">
+              Sort By
+            </label>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as "featured" | "price-asc" | "price-desc")}
+              className="w-full px-4 py-2.5 bg-black border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-primary"
+            >
+              <option value="featured">Featured</option>
+              <option value="price-asc">Price: Low to High</option>
+              <option value="price-desc">Price: High to Low</option>
+            </select>
+          </div>
+          <div>
+            <label className="text-[10px] font-bold uppercase tracking-wider text-white/40 block mb-2">
+              Price Range (GHS)
+            </label>
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                inputMode="decimal"
+                placeholder="Min"
+                value={minPrice}
+                onChange={(e) => setMinPrice(e.target.value)}
+                className="w-full px-3 py-2.5 bg-black border border-white/10 rounded-xl text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-primary"
+              />
+              <span className="text-white/30">–</span>
+              <input
+                type="number"
+                inputMode="decimal"
+                placeholder="Max"
+                value={maxPrice}
+                onChange={(e) => setMaxPrice(e.target.value)}
+                className="w-full px-3 py-2.5 bg-black border border-white/10 rounded-xl text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-primary"
+              />
+            </div>
+          </div>
+          <div className="flex items-end">
+            <label className="flex items-center gap-2 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={inStockOnly}
+                onChange={(e) => setInStockOnly(e.target.checked)}
+                className="w-4 h-4 accent-primary"
+              />
+              <span className="text-sm text-white/70">In Stock Only</span>
+            </label>
+          </div>
+        </div>
+      )}
 
       <div
         className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8"

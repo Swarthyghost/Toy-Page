@@ -4,12 +4,13 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { ShoppingCart, Menu, X } from 'lucide-react';
+import { ShoppingCart, Menu, X, Search } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { motion, AnimatePresence } from 'motion/react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { useSiteSettings } from '../context/SiteSettingsContext';
+import SearchOverlay from './SearchOverlay';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -26,6 +27,7 @@ const categories = [
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const { siteSettings } = useSiteSettings();
   const { totalItems } = useCart();
@@ -42,6 +44,18 @@ export default function Navbar() {
     setIsOpen(false);
   }, [pathname]);
 
+  // Lock body scroll while the full-screen mobile menu is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isOpen]);
+
   const hasBanner = siteSettings?.isSalesNotificationActive;
 
   return (
@@ -52,7 +66,7 @@ export default function Navbar() {
         scrolled ? 'bg-black/80 backdrop-blur-md border-b border-white/10 py-3' : 'bg-transparent'
       )}
     >
-      <div className="max-w-7xl mx-auto flex items-center justify-between">
+      <div className="relative z-10 max-w-7xl mx-auto flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 group">
           <div className="w-10 h-10 rounded-xl overflow-hidden border border-white/10 group-hover:rotate-12 transition-transform">
@@ -87,6 +101,13 @@ export default function Navbar() {
 
         {/* Actions */}
         <div className="flex items-center gap-4">
+          <button
+            onClick={() => setIsSearchOpen(true)}
+            aria-label="Search products"
+            className="p-2 hover:bg-white/10 rounded-full transition-colors"
+          >
+            <Search size={22} />
+          </button>
           <Link href="/cart" id="navbar-cart-icon" className="relative p-2 hover:bg-white/10 rounded-full transition-colors origin-center">
             <ShoppingCart size={22} />
             {totalItems > 0 && (
@@ -108,20 +129,32 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Mobile Menu */}
+      {/* Mobile Menu — full-screen overlay */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="absolute top-full left-0 right-0 bg-black border-b border-white/10 p-6 md:hidden"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-0 h-[100dvh] w-full bg-black/98 backdrop-blur-md p-6 pt-28 overflow-y-auto md:hidden"
           >
             <div className="flex flex-col gap-6">
+              <button
+                onClick={() => {
+                  setIsOpen(false);
+                  setIsSearchOpen(true);
+                }}
+                className="flex items-center justify-between p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-colors"
+              >
+                <span className="font-medium">Search Products</span>
+                <Search size={20} />
+              </button>
+
               {categories.map((cat) => (
                 <Link
                   key={cat.name}
                   href={cat.path}
+                  onClick={() => setIsOpen(false)}
                   className="text-lg font-medium hover:text-primary transition-colors"
                 >
                   {cat.name}
@@ -130,6 +163,7 @@ export default function Navbar() {
 
               <Link
                 href="/cart"
+                onClick={() => setIsOpen(false)}
                 className="flex items-center justify-between p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-colors"
               >
                 <span className="font-medium">View Cart</span>
@@ -142,6 +176,8 @@ export default function Navbar() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <SearchOverlay isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
     </nav>
   );
 }
