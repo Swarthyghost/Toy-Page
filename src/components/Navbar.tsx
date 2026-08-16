@@ -61,15 +61,15 @@ export default function Navbar() {
   return (
     <nav
       className={cn(
-        'fixed left-0 right-0 z-[40] transition-all duration-300 px-6 py-4',
+        'fixed left-0 right-0 z-[40] transition-all duration-300 px-4 sm:px-6 py-4',
         hasBanner ? 'top-8 md:top-9' : 'top-0',
         scrolled ? 'bg-black/80 backdrop-blur-md border-b border-white/10 py-3' : 'bg-transparent'
       )}
     >
       <div className="relative z-10 max-w-7xl mx-auto flex items-center justify-between">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2 group">
-          <div className="w-10 h-10 rounded-xl overflow-hidden border border-white/10 group-hover:rotate-12 transition-transform">
+        <Link href="/" className="flex items-center gap-1.5 sm:gap-2 group flex-shrink-0">
+          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl overflow-hidden border border-white/10 group-hover:rotate-12 transition-transform flex-shrink-0">
             <Image
               src="/toy.webp"
               alt="Logo"
@@ -78,7 +78,7 @@ export default function Navbar() {
               height={40}
             />
           </div>
-          <span className="text-xl font-display font-bold tracking-tight">
+          <span className="text-sm sm:text-xl font-display font-bold tracking-tight whitespace-nowrap">
             PleasureToys <span className="text-primary">GH</span>
           </span>
         </Link>
@@ -100,7 +100,7 @@ export default function Navbar() {
         </div>
 
         {/* Actions */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-1 sm:gap-4 flex-shrink-0">
           <button
             onClick={() => setIsSearchOpen(true)}
             aria-label="Search products"

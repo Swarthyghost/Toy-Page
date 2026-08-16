@@ -429,7 +429,7 @@ export default function FloatingWhatsApp() {
       >
         <button
           onClick={handleOpenWhatsApp}
-          className="w-14 h-14 rounded-full bg-[#25D366] text-white flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#25D366] focus:ring-offset-black transition-all hover:scale-108 active:scale-95 group relative cursor-pointer"
+          className="w-14 h-14 rounded-full bg-[#25D366]/25 backdrop-blur-xl border border-[#25D366]/40 text-white flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#25D366] focus:ring-offset-black transition-all hover:scale-108 active:scale-95 group relative cursor-pointer"
           aria-label="Open chat on WhatsApp"
         >
           {/* Pulsing ring indicator */}

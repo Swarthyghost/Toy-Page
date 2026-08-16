@@ -325,7 +325,7 @@ Please confirm receipt of payment and process my order. Thank you!`;
     <div className="max-w-7xl mx-auto px-4 md:px-6 pt-24 pb-12 md:py-24">
       <h1 className="text-2xl md:text-4xl font-display font-bold mb-8 md:mb-12">Your Cart</h1>
 
-      <div className="grid lg:grid-cols-3 gap-6 md:gap-12">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-12">
         {/* Cart Items */}
         <div className="lg:col-span-2 space-y-4 md:space-y-6">
           <AnimatePresence mode="popLayout">
