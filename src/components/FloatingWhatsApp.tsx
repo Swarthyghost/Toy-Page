@@ -375,7 +375,7 @@ export default function FloatingWhatsApp() {
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 10, scale: 0.95 }}
           transition={{ duration: 0.25, ease: "easeOut" }}
-          className="bg-black/95 backdrop-blur-md border border-white/10 text-white rounded-2xl p-4 shadow-2xl relative w-72 max-w-[calc(100vw-48px)] pointer-events-auto flex flex-col"
+          className="bg-black/40 backdrop-blur-xl border border-white/15 text-white rounded-2xl p-4 shadow-2xl relative w-72 max-w-[calc(100vw-48px)] pointer-events-auto flex flex-col"
         >
           {/* Close button for entire widget dismissal */}
           <button

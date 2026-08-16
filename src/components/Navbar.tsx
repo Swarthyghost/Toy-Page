@@ -78,7 +78,7 @@ export default function Navbar() {
               height={40}
             />
           </div>
-          <span className="text-sm sm:text-xl font-display font-bold tracking-tight whitespace-nowrap">
+          <span className="text-base sm:text-xl font-display font-bold tracking-tight whitespace-nowrap">
             PleasureToys <span className="text-primary">GH</span>
           </span>
         </Link>
