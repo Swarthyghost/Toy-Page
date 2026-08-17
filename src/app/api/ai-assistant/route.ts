@@ -110,34 +110,28 @@ You must output a single JSON object matching the requested schema:
 - "warnings": list of match warnings.
 - "skippedRows": list of rows that could not be parsed.`;
 
-    const groqKey = process.env.GROQ_API_KEY;
+    const geminiKey = process.env.GEMINI_API_KEY;
 
-    if (!groqKey) {
-      console.error("[AI Assistant] Error: Missing GROQ_API_KEY environment variable.");
+    if (!geminiKey) {
+      console.error("[AI Assistant] Error: Missing GEMINI_API_KEY environment variable.");
       return NextResponse.json({
-        error: "Missing GROQ_API_KEY. Please ensure the GROQ_API_KEY environment variable is configured in your .env file."
+        error: "Missing GEMINI_API_KEY. Please ensure the GEMINI_API_KEY environment variable is configured (get a free key at https://aistudio.google.com/apikey)."
       }, { status: 400 });
     }
 
-    // 1. Determine Endpoint, Provider & Model
-    let endpoint = 'https://openrouter.ai/api/v1/chat/completions';
-    let model = 'meta-llama/llama-3.3-70b-instruct';
-    let provider = "OpenRouter";
+    // Google Gemini's OpenAI-compatible endpoint — free tier, no credit card required.
+    // https://ai.google.dev/gemini-api/docs/openai
+    const endpoint = 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions';
+    // Try the full flash model first; fall back to flash-lite (separate capacity
+    // pool, usually available even when flash is under high demand) on 429/503.
+    const modelsToTry = ['gemini-flash-latest', 'gemini-flash-lite-latest'];
+    const provider = "Gemini";
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${groqKey}`
+      'Authorization': `Bearer ${geminiKey}`
     };
 
-    if (groqKey.startsWith('gsk_')) {
-      endpoint = 'https://api.groq.com/openai/v1/chat/completions';
-      model = 'llama-3.3-70b-specdec';
-      provider = "Groq Direct";
-    } else {
-      headers['HTTP-Referer'] = 'https://pleasuretoysgh.com/';
-      headers['X-Title'] = 'PleasureToys GH';
-    }
-
-    console.log(`[AI Assistant] Request received. Provider: ${provider}, Model: ${model}`);
+    console.log(`[AI Assistant] Request received. Provider: ${provider}, Models: ${modelsToTry.join(', ')}`);
 
     // 2. Format Messages for OpenAI Chat Completions API spec
     const chatCompletionsMessages = [
@@ -158,31 +152,64 @@ You must output a single JSON object matching the requested schema:
       content: `User Question: ${message}`
     });
 
-    // 3. Execute Request
+    // 3. Execute Request — retry transient overload errors, then fall back to
+    // the lite model, before giving up.
     console.log(`[AI Assistant] API request started to ${provider} (${endpoint})...`);
     const startTime = Date.now();
-    let res;
+    let res: Response | undefined;
+    let model = modelsToTry[0];
+    let lastNetErr: any = null;
+    const attempts: { model: string; attempt: number }[] = [];
 
-    try {
-      res = await fetch(endpoint, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          model,
-          messages: chatCompletionsMessages,
-          max_tokens: 2048,
-          response_format: { type: 'json_object' }
-        })
-      });
-    } catch (netErr: any) {
-      console.error("[AI Assistant] Network Error calling API:", netErr);
-      return NextResponse.json({
-        error: `Network Error: Failed to connect to ${provider} API. ${netErr.message || netErr}`
-      }, { status: 502 });
+    outer: for (const candidateModel of modelsToTry) {
+      for (let attempt = 1; attempt <= 2; attempt++) {
+        attempts.push({ model: candidateModel, attempt });
+        try {
+          res = await fetch(endpoint, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({
+              model: candidateModel,
+              messages: chatCompletionsMessages,
+              max_tokens: 2048,
+              response_format: { type: 'json_object' }
+            })
+          });
+          lastNetErr = null;
+        } catch (netErr: any) {
+          // Transient network blips (ECONNRESET etc.) get the same
+          // retry/fallback treatment as a 503 — don't fail the request on
+          // one bad connection attempt.
+          console.error(`[AI Assistant] Network error on ${candidateModel} (attempt ${attempt}):`, netErr);
+          lastNetErr = netErr;
+          res = undefined;
+          if (attempt < 2) await new Promise(r => setTimeout(r, 800));
+          continue;
+        }
+
+        model = candidateModel;
+        if (res.ok) break outer;
+
+        // Only retry/fall back on transient overload — anything else (bad key,
+        // bad request, etc.) fails fast below.
+        if (res.status !== 503 && res.status !== 429) break outer;
+
+        console.warn(`[AI Assistant] ${candidateModel} returned ${res.status} (attempt ${attempt}), ${attempt < 2 ? 'retrying...' : 'falling back to next model...'}`);
+        if (attempt < 2) await new Promise(r => setTimeout(r, 800));
+      }
+    }
+
+    if (!res) {
+      if (lastNetErr) {
+        return NextResponse.json({
+          error: `Network Error: Failed to connect to ${provider} API after retries. ${lastNetErr.message || lastNetErr}`
+        }, { status: 502 });
+      }
+      return NextResponse.json({ error: 'Internal error: no response received from AI provider.' }, { status: 500 });
     }
 
     const duration = Date.now() - startTime;
-    console.log(`[AI Assistant] API response received in ${duration}ms. Status: ${res.status}`);
+    console.log(`[AI Assistant] API response received in ${duration}ms after ${attempts.length} attempt(s) (final model: ${model}). Status: ${res.status}`);
 
     if (!res.ok) {
       const errorText = await res.text();
@@ -196,7 +223,7 @@ You must output a single JSON object matching the requested schema:
 
       // Map upstream HTTP status codes to clean developer descriptions
       if (res.status === 401) {
-        return NextResponse.json({ error: "Unauthorized: Invalid API Key. Please verify your GROQ_API_KEY configuration." }, { status: 401 });
+        return NextResponse.json({ error: "Unauthorized: Invalid API Key. Please verify your GEMINI_API_KEY configuration." }, { status: 401 });
       } else if (res.status === 404) {
         return NextResponse.json({ error: `Model Not Found: The model '${model}' is not available on ${provider}.` }, { status: 404 });
       } else if (res.status === 429) {

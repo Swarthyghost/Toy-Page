@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 
 export async function GET() {
-  const groqKey = process.env.GROQ_API_KEY;
+  const geminiKey = process.env.GEMINI_API_KEY;
   const checks = {
-    apiKeyExists: !!groqKey,
+    apiKeyExists: !!geminiKey,
     apiReachable: false,
     modelAvailable: false,
     endpointResponding: false,
@@ -12,48 +12,46 @@ export async function GET() {
     error: null as string | null
   };
 
-  if (!groqKey) {
+  if (!geminiKey) {
     return NextResponse.json({
       status: "error",
       timestamp: new Date().toISOString(),
       checks,
-      error: "Missing GROQ_API_KEY environment variable in process.env."
+      error: "Missing GEMINI_API_KEY environment variable in process.env."
     }, { status: 400 });
   }
 
   try {
-    // Determine provider & endpoint
-    let endpoint = 'https://openrouter.ai/api/v1/chat/completions';
-    let model = 'meta-llama/llama-3.3-70b-instruct';
-    let provider = "OpenRouter";
+    // Google Gemini's OpenAI-compatible endpoint — free tier, no credit card required.
+    const endpoint = 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions';
+    const modelsToTry = ['gemini-flash-latest', 'gemini-flash-lite-latest'];
+    const provider = "Gemini";
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${groqKey}`
+      'Authorization': `Bearer ${geminiKey}`
     };
 
-    if (groqKey.startsWith('gsk_')) {
-      endpoint = 'https://api.groq.com/openai/v1/chat/completions';
-      model = 'llama-3.3-70b-specdec';
-      provider = "Groq Direct";
-    } else {
-      headers['HTTP-Referer'] = 'https://pleasuretoysgh.com/';
-      headers['X-Title'] = 'PleasureToys GH';
-    }
-
     checks.provider = provider;
-    checks.model = model;
 
-    // Test request
+    // Test request — fall back to the lite model if the primary is momentarily
+    // overloaded (503), same as the main assistant route.
     const startTime = Date.now();
-    const res = await fetch(endpoint, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({
-        model,
-        messages: [{ role: 'user', content: 'Say OK' }],
-        max_tokens: 10
-      })
-    });
+    let res: Response;
+    let model = modelsToTry[0];
+    for (const candidateModel of modelsToTry) {
+      model = candidateModel;
+      res = await fetch(endpoint, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          model: candidateModel,
+          messages: [{ role: 'user', content: 'Say OK' }],
+          max_tokens: 10
+        })
+      });
+      if (res.status !== 503) break;
+    }
+    checks.model = model;
 
     checks.apiReachable = true;
 
