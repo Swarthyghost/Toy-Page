@@ -32,6 +32,15 @@ export default function Cart() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<"WhatsApp" | "Paystack">("WhatsApp");
 
+  // Paystack charges a 1.95% processing fee on top of the subtotal (after
+  // discount). Computed in integer pesewas to avoid floating-point drift,
+  // and only applied when Paystack is the selected payment method.
+  const subtotalPesewas = Math.round(finalPrice * 100);
+  const paystackFeePesewas = paymentMethod === "Paystack" ? Math.round(subtotalPesewas * 0.0195) : 0;
+  const totalPayablePesewas = subtotalPesewas + paystackFeePesewas;
+  const paystackFee = paystackFeePesewas / 100;
+  const totalPayable = totalPayablePesewas / 100;
+
   // SEO optimization for cart page
   useSEO({
     title: "Shopping Cart",
@@ -128,6 +137,9 @@ Please confirm my order. Thank you!`;
           quantity: item.quantity
         })),
         totalPrice: finalPrice,
+        subtotal: finalPrice,
+        paymentProcessingFee: 0,
+        total: finalPrice,
         paymentMethod: "WhatsApp"
       });
     } catch (error) {
@@ -182,7 +194,7 @@ Please confirm my order. Thank you!`;
   const paystackConfig = {
     reference: new Date().getTime().toString(),
     email: formData.email || "customer@toy-page.com",
-    amount: Math.round(finalPrice * 100), // amount in pesewas
+    amount: totalPayablePesewas, // amount in pesewas, includes the 1.95% Paystack processing fee
     publicKey: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || "pk_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
     currency: "GHS",
   };
@@ -206,7 +218,10 @@ Please confirm my order. Thank you!`;
         price: item.price,
         quantity: item.quantity
       })),
-      totalPrice: finalPrice,
+      totalPrice: totalPayable,
+      subtotal: finalPrice,
+      paymentProcessingFee: paystackFee,
+      total: totalPayable,
       paymentMethod: "Paystack"
     }).catch(error => {
       console.error("Error saving Paystack order to Firestore:", error);
@@ -245,7 +260,8 @@ ${promoDetails}
 
 *Subtotal: GHS ${totalPrice.toFixed(2)}*
 *Discount: GHS ${discount.toFixed(2)}*
-*Total Payable (Paid): GHS ${finalPrice.toFixed(2)}*
+*Paystack Processing Fee (1.95%): GHS ${paystackFee.toFixed(2)}*
+*Total Payable (Paid): GHS ${totalPayable.toFixed(2)}*
 
 Please confirm receipt of payment and process my order. Thank you!`;
 
@@ -723,10 +739,16 @@ Please confirm receipt of payment and process my order. Thank you!`;
                         <span>Discreet Package</span>
                         <span className="text-emerald-400">Free</span>
                       </div>
+                      {paymentMethod === "Paystack" && (
+                        <div className="flex justify-between text-xs text-white/40">
+                          <span>Paystack Processing Fee (1.95%)</span>
+                          <span>GHS {paystackFee.toFixed(2)}</span>
+                        </div>
+                      )}
                       <div className="flex justify-between items-end border-t border-white/5 pt-3 mt-1">
                         <span className="text-xs font-bold">Total payable</span>
                         <span className="text-xl font-display font-bold text-primary">
-                          GHS {finalPrice.toFixed(2)}
+                          GHS {totalPayable.toFixed(2)}
                         </span>
                       </div>
                     </div>

@@ -450,6 +450,9 @@ export interface CustomerOrder {
     quantity: number;
   }[];
   totalPrice: number;
+  subtotal?: number;
+  paymentProcessingFee?: number;
+  total?: number;
   paymentMethod: "WhatsApp" | "Paystack";
   createdAt?: Timestamp;
 }
