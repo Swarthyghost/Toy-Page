@@ -74,5 +74,9 @@ export default async function ProductDetailPage({ params }: PageProps) {
     permanentRedirect(`/product/${targetSlug}`);
   }
 
-  return <ProductDetail initialProduct={product} />;
+  // Firestore Timestamps can't cross the Server -> Client props boundary as
+  // plain objects; ProductDetail never reads createdAt/updatedAt, so drop them.
+  const { createdAt, updatedAt, ...serializableProduct } = product;
+
+  return <ProductDetail initialProduct={serializableProduct} />;
 }

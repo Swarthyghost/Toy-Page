@@ -136,7 +136,7 @@ export default function Navbar() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-0 h-[100dvh] w-full bg-black/98 backdrop-blur-md p-6 pt-28 overflow-y-auto md:hidden"
+            className="fixed inset-0 z-0 h-[100dvh] w-full bg-black backdrop-blur-md p-6 pt-28 overflow-y-auto md:hidden"
           >
             <div className="flex flex-col gap-6">
               <button
