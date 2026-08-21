@@ -455,6 +455,8 @@ export interface CustomerOrder {
   total?: number;
   paymentMethod: "WhatsApp" | "Paystack";
   paymentStatus?: "paid" | "unpaid";
+  followedUp?: boolean;
+  followedUpAt?: Timestamp;
   createdAt?: Timestamp;
 }
 

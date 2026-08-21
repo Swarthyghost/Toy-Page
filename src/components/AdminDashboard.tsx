@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Plus, Edit2, Trash2, X, Image as ImageIcon, DollarSign, Tag, FileText, Upload, LogOut, Gift, Settings, BookOpen, List, LayoutGrid, Copy, Star, Eye, EyeOff, TrendingUp, AlertTriangle, PlusCircle, History, Database, Layers, Search } from 'lucide-react';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { fetchProducts, createProduct, updateProduct, deleteProduct, Product, SiteSettings, fetchSiteSettings, updateSiteSettings, fetchOrders, CustomerOrder, updateOrder, deleteOrder, updateProductsVisibility, fetchInventoryLogs, logStockAdjustment, createPurchaseOrder, updatePurchaseOrder } from '../services/firebaseApi';
+import { Timestamp } from 'firebase/firestore';
 import { uploadImage } from '../config/cloudinary';
 import PromoManagement from './PromoManagement';
 import GuidesManagement from './GuidesManagement';
@@ -215,6 +216,21 @@ export default function AdminDashboard() {
       console.error(error);
       alert("Failed to update payment status.");
       setOrders(prev => prev.map(o => (o.id === order.id ? { ...o, paymentStatus: order.paymentStatus } : o)));
+    }
+  };
+
+  const handleToggleFollowedUp = async (order: CustomerOrder) => {
+    if (!order.id) return;
+    const newValue = !order.followedUp;
+    const update: Partial<CustomerOrder> = { followedUp: newValue };
+    if (newValue) update.followedUpAt = Timestamp.now();
+    setOrders(prev => prev.map(o => (o.id === order.id ? { ...o, ...update } : o)));
+    try {
+      await updateOrder(order.id, update);
+    } catch (error) {
+      console.error(error);
+      alert("Failed to update follow-up status.");
+      setOrders(prev => prev.map(o => (o.id === order.id ? { ...o, followedUp: order.followedUp, followedUpAt: order.followedUpAt } : o)));
     }
   };
 
@@ -1451,6 +1467,26 @@ export default function AdminDashboard() {
                             }`} />
                           </span>
                         </button>
+                        <button
+                          onClick={() => handleToggleFollowedUp(order)}
+                          role="switch"
+                          aria-checked={!!order.followedUp}
+                          title="Toggle follow-up status"
+                          className="flex items-center gap-2"
+                        >
+                          <span className={`text-[9px] font-bold uppercase tracking-wider ${
+                            order.followedUp ? 'text-emerald-400' : 'text-white/40'
+                          }`}>
+                            {order.followedUp ? '✅ Followed Up' : '⏳ Not Followed Up'}
+                          </span>
+                          <span className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
+                            order.followedUp ? 'bg-emerald-500' : 'bg-white/15'
+                          }`}>
+                            <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${
+                              order.followedUp ? 'translate-x-[19px]' : 'translate-x-1'
+                            }`} />
+                          </span>
+                        </button>
                       </div>
 
                       {/* Actions */}
@@ -1601,6 +1637,29 @@ export default function AdminDashboard() {
                             }`}>
                               <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${
                                 getPaymentStatus(order) === 'paid' ? 'translate-x-[19px]' : 'translate-x-1'
+                              }`} />
+                            </span>
+                          </button>
+                        </div>
+                        <div className="my-2">
+                          <span className="text-[10px] font-bold uppercase tracking-widest text-white/40 block mb-1">Follow-Up Status</span>
+                          <button
+                            onClick={() => handleToggleFollowedUp(order)}
+                            role="switch"
+                            aria-checked={!!order.followedUp}
+                            title="Toggle follow-up status"
+                            className="flex items-center gap-2 justify-end w-full"
+                          >
+                            <span className={`text-[10px] font-bold uppercase tracking-wider ${
+                              order.followedUp ? 'text-emerald-400' : 'text-white/40'
+                            }`}>
+                              {order.followedUp ? '✅ Followed Up' : '⏳ Not Followed Up'}
+                            </span>
+                            <span className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
+                              order.followedUp ? 'bg-emerald-500' : 'bg-white/15'
+                            }`}>
+                              <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${
+                                order.followedUp ? 'translate-x-[19px]' : 'translate-x-1'
                               }`} />
                             </span>
                           </button>
