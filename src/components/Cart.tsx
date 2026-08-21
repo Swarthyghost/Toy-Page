@@ -140,7 +140,8 @@ Please confirm my order. Thank you!`;
         subtotal: finalPrice,
         paymentProcessingFee: 0,
         total: finalPrice,
-        paymentMethod: "WhatsApp"
+        paymentMethod: "WhatsApp",
+        paymentStatus: "unpaid"
       });
     } catch (error) {
       console.error("Error saving WhatsApp order to Firestore:", error);
@@ -222,7 +223,8 @@ Please confirm my order. Thank you!`;
       subtotal: finalPrice,
       paymentProcessingFee: paystackFee,
       total: totalPayable,
-      paymentMethod: "Paystack"
+      paymentMethod: "Paystack",
+      paymentStatus: "paid"
     }).catch(error => {
       console.error("Error saving Paystack order to Firestore:", error);
     });

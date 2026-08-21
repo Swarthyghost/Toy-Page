@@ -202,6 +202,22 @@ export default function AdminDashboard() {
     }
   };
 
+  const getPaymentStatus = (order: CustomerOrder): "paid" | "unpaid" =>
+    order.paymentStatus ?? (order.paymentMethod === "Paystack" ? "paid" : "unpaid");
+
+  const handleTogglePaymentStatus = async (order: CustomerOrder) => {
+    if (!order.id) return;
+    const newStatus: "paid" | "unpaid" = getPaymentStatus(order) === "paid" ? "unpaid" : "paid";
+    setOrders(prev => prev.map(o => (o.id === order.id ? { ...o, paymentStatus: newStatus } : o)));
+    try {
+      await updateOrder(order.id, { paymentStatus: newStatus });
+    } catch (error) {
+      console.error(error);
+      alert("Failed to update payment status.");
+      setOrders(prev => prev.map(o => (o.id === order.id ? { ...o, paymentStatus: order.paymentStatus } : o)));
+    }
+  };
+
   const handleDeleteOrder = async (orderId: string) => {
     if (!window.confirm("Are you sure you want to delete this order?")) return;
     try {
@@ -1406,15 +1422,35 @@ export default function AdminDashboard() {
                       </div>
 
                       {/* Total Price & Payment Badge */}
-                      <div className="md:col-span-2 flex flex-col md:items-end justify-center min-w-0">
+                      <div className="md:col-span-2 flex flex-col md:items-end justify-center min-w-0 gap-1">
                         <p className="text-sm font-bold text-primary">GHS {order.totalPrice.toFixed(2)}</p>
-                        <span className={`inline-block px-2 py-0.5 rounded-full text-[9px] font-bold mt-1 uppercase tracking-wider w-fit ${
-                          order.paymentMethod === 'Paystack' 
-                            ? 'bg-indigo-600/20 text-indigo-400 border border-indigo-500/30' 
+                        <span className={`inline-block px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider w-fit ${
+                          order.paymentMethod === 'Paystack'
+                            ? 'bg-indigo-600/20 text-indigo-400 border border-indigo-500/30'
                             : 'bg-emerald-600/20 text-emerald-400 border border-emerald-500/30'
                         }`}>
                           {order.paymentMethod}
                         </span>
+                        <button
+                          onClick={() => handleTogglePaymentStatus(order)}
+                          role="switch"
+                          aria-checked={getPaymentStatus(order) === 'paid'}
+                          title="Toggle payment status"
+                          className="flex items-center gap-2"
+                        >
+                          <span className={`text-[9px] font-bold uppercase tracking-wider ${
+                            getPaymentStatus(order) === 'paid' ? 'text-emerald-400' : 'text-red-400'
+                          }`}>
+                            {getPaymentStatus(order) === 'paid' ? '✅ Paid' : '❌ Unpaid'}
+                          </span>
+                          <span className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
+                            getPaymentStatus(order) === 'paid' ? 'bg-emerald-500' : 'bg-white/15'
+                          }`}>
+                            <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${
+                              getPaymentStatus(order) === 'paid' ? 'translate-x-[19px]' : 'translate-x-1'
+                            }`} />
+                          </span>
+                        </button>
                       </div>
 
                       {/* Actions */}
@@ -1539,12 +1575,35 @@ export default function AdminDashboard() {
                         <div className="my-2">
                           <span className="text-[10px] font-bold uppercase tracking-widest text-white/40 block">Payment Method</span>
                           <span className={`inline-block px-3 py-1 rounded-full text-[10px] font-bold mt-1 uppercase tracking-wider ${
-                            order.paymentMethod === 'Paystack' 
-                              ? 'bg-indigo-600/20 text-indigo-400 border border-indigo-500/30' 
+                            order.paymentMethod === 'Paystack'
+                              ? 'bg-indigo-600/20 text-indigo-400 border border-indigo-500/30'
                               : 'bg-emerald-600/20 text-emerald-400 border border-emerald-500/30'
                           }`}>
                             {order.paymentMethod}
                           </span>
+                        </div>
+                        <div className="my-2">
+                          <span className="text-[10px] font-bold uppercase tracking-widest text-white/40 block mb-1">Payment Status</span>
+                          <button
+                            onClick={() => handleTogglePaymentStatus(order)}
+                            role="switch"
+                            aria-checked={getPaymentStatus(order) === 'paid'}
+                            title="Toggle payment status"
+                            className="flex items-center gap-2 justify-end w-full"
+                          >
+                            <span className={`text-[10px] font-bold uppercase tracking-wider ${
+                              getPaymentStatus(order) === 'paid' ? 'text-emerald-400' : 'text-red-400'
+                            }`}>
+                              {getPaymentStatus(order) === 'paid' ? '✅ Paid' : '❌ Unpaid'}
+                            </span>
+                            <span className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
+                              getPaymentStatus(order) === 'paid' ? 'bg-emerald-500' : 'bg-white/15'
+                            }`}>
+                              <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${
+                                getPaymentStatus(order) === 'paid' ? 'translate-x-[19px]' : 'translate-x-1'
+                              }`} />
+                            </span>
+                          </button>
                         </div>
                         <div>
                           <span className="text-[10px] font-bold uppercase tracking-widest text-white/40 block">Total Price</span>
