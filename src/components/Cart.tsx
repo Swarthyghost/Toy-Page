@@ -10,6 +10,7 @@ import { useSEO } from "../hooks/useSEO";
 import { validatePromoCode, usePromoCode, saveOrder } from "../services/firebaseApi";
 import Image from "next/image";
 import { slugify } from "../utils/seoHelper";
+import { calculatePaystackGrossUp } from "../utils/paystackFee";
 
 export default function Cart() {
   const { 
@@ -32,14 +33,13 @@ export default function Cart() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<"WhatsApp" | "Paystack">("WhatsApp");
 
-  // Paystack charges a 1.95% processing fee on top of the subtotal (after
-  // discount). Computed in integer pesewas to avoid floating-point drift,
-  // and only applied when Paystack is the selected payment method.
-  const subtotalPesewas = Math.round(finalPrice * 100);
-  const paystackFeePesewas = paymentMethod === "Paystack" ? Math.round(subtotalPesewas * 0.0195) : 0;
-  const totalPayablePesewas = subtotalPesewas + paystackFeePesewas;
-  const paystackFee = paystackFeePesewas / 100;
-  const totalPayable = totalPayablePesewas / 100;
+  // Paystack deducts its processing fee from the amount charged, so the
+  // customer must be charged a grossed-up amount for us to net `finalPrice`
+  // after the fee — only applied when Paystack is the selected method.
+  const paystackGrossUp = paymentMethod === "Paystack" ? calculatePaystackGrossUp(finalPrice) : null;
+  const paystackFee = paystackGrossUp?.fee ?? 0;
+  const totalPayable = paystackGrossUp?.grossAmount ?? finalPrice;
+  const totalPayablePesewas = paystackGrossUp?.amountInPesewas ?? Math.round(finalPrice * 100);
 
   // SEO optimization for cart page
   useSEO({
@@ -195,7 +195,7 @@ Please confirm my order. Thank you!`;
   const paystackConfig = {
     reference: new Date().getTime().toString(),
     email: formData.email || "customer@toy-page.com",
-    amount: totalPayablePesewas, // amount in pesewas, includes the 1.95% Paystack processing fee
+    amount: totalPayablePesewas, // amount in pesewas, grossed up so we net finalPrice after Paystack's fee
     publicKey: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || "pk_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
     currency: "GHS",
   };
