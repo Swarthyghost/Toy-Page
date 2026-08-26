@@ -9,6 +9,7 @@ import { SlidersHorizontal } from "lucide-react";
 import { Product } from "../context/CartContext";
 import { useSEO } from "../hooks/useSEO";
 import { getCategoryMetadata } from "../utils/seoHelper";
+import ReviewsCarousel from "./ReviewsCarousel";
 
 const ProductCardSkeleton = () => {
   return (
@@ -440,6 +441,8 @@ export default function ProductListing() {
           </div>
         </div>
       )}
+
+      {!loading && filteredProducts.length > 0 && <ReviewsCarousel />}
 
       {/* Category Buying Guide and FAQs Section */}
       {!loading && (
