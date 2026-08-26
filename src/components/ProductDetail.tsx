@@ -288,9 +288,44 @@ export default function ProductDetail({ initialProduct }: ProductDetailProps = {
               "url": `https://pleasuretoysgh.com/product/${product.slug || slugify(product.name)}`,
               "priceCurrency": "GHS",
               "price": product.price.toString(),
-              "availability": product.isOutOfStock 
-                ? "https://schema.org/OutOfStock" 
-                : "https://schema.org/InStock"
+              "availability": product.isOutOfStock
+                ? "https://schema.org/OutOfStock"
+                : "https://schema.org/InStock",
+              "shippingDetails": {
+                "@type": "OfferShippingDetails",
+                "shippingRate": {
+                  "@type": "MonetaryAmount",
+                  "value": "60",
+                  "currency": "GHS"
+                },
+                "shippingDestination": {
+                  "@type": "DefinedRegion",
+                  "addressCountry": "GH"
+                },
+                "deliveryTime": {
+                  "@type": "ShippingDeliveryTime",
+                  "handlingTime": {
+                    "@type": "QuantitativeValue",
+                    "minValue": 0,
+                    "maxValue": 0,
+                    "unitCode": "DAY"
+                  },
+                  "transitTime": {
+                    "@type": "QuantitativeValue",
+                    "minValue": 0,
+                    "maxValue": 1,
+                    "unitCode": "DAY"
+                  }
+                }
+              },
+              "hasMerchantReturnPolicy": {
+                "@type": "MerchantReturnPolicy",
+                "applicableCountry": "GH",
+                "returnPolicyCategory": "https://schema.org/MerchantReturnFiniteReturnWindow",
+                "merchantReturnDays": 2,
+                "returnMethod": "https://schema.org/ReturnByMail",
+                "returnFees": "https://schema.org/ReturnShippingFees"
+              }
             }
           })
         }}

@@ -82,8 +82,15 @@ export default function RootLayout({
               "sameAs": [
                 "https://www.instagram.com/pleasuretoys.gh",
                 "https://t.me/pleasuretoysgh",
-                "https://facebook.com/AdultToysGhana"
-              ]
+                "https://facebook.com/AdultToysGhana",
+                "https://www.google.com/maps/place/?q=place_id:ChIJa20knFGj3w8Rs-QV5Vswhqc"
+              ],
+              "aggregateRating": {
+                "@type": "AggregateRating",
+                "ratingValue": "5.0",
+                "reviewCount": "11",
+                "bestRating": "5"
+              }
             })
           }}
         />
