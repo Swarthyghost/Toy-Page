@@ -80,8 +80,8 @@ export default function Hero({ initialFeaturedProduct }: { initialFeaturedProduc
 
   // SEO optimization for homepage
   useSEO({
-    title: "Sex Toys in Accra, Ghana | PleasureToys GH",
-    description: "Shop sex toys in Accra, Ghana: vibrators, BDSM gear, lubricants & more. Body-safe products, 100% discreet packaging, same-day Accra delivery.",
+    title: "Sex Toy Shop in Accra, Ghana | PleasureToys GH",
+description: "Ghana's discreet online sex toy shop — vibrators, BDSM gear, lubricants & more. Body-safe products, 100% discreet packaging, same-day Accra delivery.",
     url: "/",
   });
   const { scrollYProgress } = useScroll({
@@ -144,7 +144,7 @@ export default function Hero({ initialFeaturedProduct }: { initialFeaturedProduc
                 className="font-display font-bold leading-[1.2] mb-6"
                 style={{ fontSize: "clamp(2.2rem, 4.5vw, 3.5rem)" }}
               >
-                Sex Toys in <span className="text-gradient">Accra</span>
+                Sex Toy Shop in <span className="text-gradient">Accra</span>
                 <br />
                 Discreet & <span className="text-gradient">Same-Day</span> Delivery
               </motion.h1>
