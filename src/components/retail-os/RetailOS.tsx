@@ -33,7 +33,7 @@ export default function RetailOS() {
     { id: 'expenses' as const, label: 'Expenses Outlays', icon: TrendingDown },
     { id: 'analytics' as const, label: 'Analytics Insights', icon: BarChart3 },
     { id: 'reports' as const, label: 'Reports Exporter', icon: FileText },
-    { id: 'ai-assistant' as const, label: 'AI Assistant', icon: Sparkles },
+    { id: 'ai-assistant' as const, label: 'Athena', icon: Sparkles },
   ];
 
   const renderSubContent = () => {

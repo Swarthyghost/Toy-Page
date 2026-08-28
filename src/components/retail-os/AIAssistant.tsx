@@ -19,14 +19,21 @@ import {
   HelpCircle,
   Plus,
   Trash2,
-  FileText
+  FileText,
+  Brain
 } from 'lucide-react';
 import { marked } from 'marked';
-import { 
-  fetchProducts, 
-  bulkImportSales, 
-  Product, 
-  ParsedImportSale 
+import {
+  fetchProducts,
+  bulkImportSales,
+  Product,
+  ParsedImportSale,
+  fetchAthenaMessages,
+  saveAthenaMessage,
+  fetchKnowledge,
+  saveKnowledge,
+  deleteKnowledge,
+  AthenaKnowledge
 } from '../../services/firebaseApi';
 
 interface Message {
@@ -34,15 +41,21 @@ interface Message {
   content: string;
 }
 
+const WELCOME_MESSAGE: Message = {
+  role: 'assistant',
+  content: "Hello, I'm Athena — your Business Operations Assistant. I remember our past conversations and anything you've taught me, so my answers get sharper over time. Ask me about metrics, or **bulk import historical sales logs** by pasting unstructured sales text or WhatsApp reports here."
+};
+
 export default function AIAssistant() {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      role: 'assistant',
-      content: "Hello! I am your complete Business Operations Assistant. I can help you analyze metrics, answer questions, or **bulk import historical sales logs**. Just paste your unstructured sales text or WhatsApp reports here, and I'll clean and match the products!"
-    }
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [historyLoaded, setHistoryLoaded] = useState(false);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // Teach Athena: owner-curated knowledge base
+  const [knowledgeList, setKnowledgeList] = useState<AthenaKnowledge[]>([]);
+  const [knowledgeInput, setKnowledgeInput] = useState('');
+  const [isSavingKnowledge, setIsSavingKnowledge] = useState(false);
   
   // Products list for fuzzy matching/selection in the table
   const [products, setProducts] = useState<Product[]>([]);
@@ -114,6 +127,51 @@ export default function AIAssistant() {
     fetchProducts().then(setProducts).catch(console.error);
   }, []);
 
+  // Load persisted conversation history so Athena remembers past sessions.
+  useEffect(() => {
+    fetchAthenaMessages(50)
+      .then(history => {
+        setMessages(history.length > 0 ? history.map(m => ({ role: m.role, content: m.content })) : [WELCOME_MESSAGE]);
+      })
+      .catch(err => {
+        console.error(err);
+        setMessages([WELCOME_MESSAGE]);
+      })
+      .finally(() => setHistoryLoaded(true));
+  }, []);
+
+  // Load the taught knowledge base for the "Teach Athena" panel.
+  useEffect(() => {
+    fetchKnowledge().then(setKnowledgeList).catch(console.error);
+  }, []);
+
+  const handleTeach = async () => {
+    if (!knowledgeInput.trim() || isSavingKnowledge) return;
+    setIsSavingKnowledge(true);
+    try {
+      const text = knowledgeInput.trim();
+      const id = await saveKnowledge(text);
+      setKnowledgeList(prev => [{ id, text }, ...prev]);
+      setKnowledgeInput('');
+    } catch (err) {
+      console.error(err);
+      alert('Failed to save this to Athena\'s memory. Please try again.');
+    } finally {
+      setIsSavingKnowledge(false);
+    }
+  };
+
+  const handleDeleteKnowledge = async (id?: string) => {
+    if (!id) return;
+    setKnowledgeList(prev => prev.filter(k => k.id !== id));
+    try {
+      await deleteKnowledge(id);
+    } catch (err) {
+      console.error(err);
+      alert('Failed to remove that entry. Please refresh and try again.');
+    }
+  };
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, loading]);
@@ -125,6 +183,7 @@ export default function AIAssistant() {
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setLoading(true);
+    saveAthenaMessage('user', text).catch(console.error);
 
     try {
       const response = await fetch('/api/ai-assistant', {
@@ -136,7 +195,7 @@ export default function AIAssistant() {
         })
       });
       const data = await response.json();
-      
+
       if (!response.ok || data.error) {
         const errMsg = data.error || `HTTP Error ${response.status}: Failed to get response.`;
         setMessages(prev => [...prev, { role: 'assistant', content: `❌ **Error:** ${errMsg}` }]);
@@ -146,11 +205,13 @@ export default function AIAssistant() {
         setSkippedRows(data.skippedRows || []);
         setShowPreview(true);
         setMobileTab('import');
-        
+
         const introMsg = data.reply || "I've parsed the sales records you supplied. You can review and modify them in the Operations preview panel on the right before committing.";
         setMessages(prev => [...prev, { role: 'assistant', content: introMsg }]);
+        saveAthenaMessage('assistant', introMsg).catch(console.error);
       } else if (data.reply) {
         setMessages(prev => [...prev, { role: 'assistant', content: data.reply }]);
+        saveAthenaMessage('assistant', data.reply).catch(console.error);
       } else {
         setMessages(prev => [...prev, { role: 'assistant', content: "Sorry, I couldn't fetch a reply. Make sure your API Keys are configured." }]);
       }
@@ -167,8 +228,10 @@ export default function AIAssistant() {
     setIsImportingLogs(true);
     
     // Add user message to chat to document the action
-    setMessages(prev => [...prev, { role: 'user', content: `Parse the following sales logs:\n\n${rawLogs}` }]);
-    
+    const userMsgText = `Parse the following sales logs:\n\n${rawLogs}`;
+    setMessages(prev => [...prev, { role: 'user', content: userMsgText }]);
+    saveAthenaMessage('user', userMsgText).catch(console.error);
+
     try {
       const response = await fetch('/api/ai-assistant', {
         method: 'POST',
@@ -194,6 +257,7 @@ export default function AIAssistant() {
       
       const introMsg = data.reply || "Successfully parsed the sales logs. Please verify the entries in the Operations preview table.";
       setMessages(prev => [...prev, { role: 'assistant', content: introMsg }]);
+      saveAthenaMessage('assistant', introMsg).catch(console.error);
       setRawLogs('');
     } catch (error) {
       console.error(error);
@@ -307,8 +371,8 @@ export default function AIAssistant() {
               <Sparkles size={16} />
             </div>
             <div>
-              <h2 className="text-sm font-bold font-display text-white">AI Operations Assistant</h2>
-              <p className="text-[10px] text-zinc-500 mt-0.5 font-medium">Reconcile stock, import sales logs, or query reports.</p>
+              <h2 className="text-sm font-bold font-display text-white">Athena</h2>
+              <p className="text-[10px] text-zinc-500 mt-0.5 font-medium">Remembers past chats and everything you've taught it.</p>
             </div>
           </div>
 
@@ -341,7 +405,13 @@ export default function AIAssistant() {
 
         {/* Messages Window */}
         <div className="flex-1 overflow-y-auto space-y-4 pr-2 scrollbar-thin scrollbar-thumb-zinc-800 my-4">
-          {messages.map((msg, idx) => (
+          {!historyLoaded && (
+            <div className="flex items-center gap-2 text-zinc-500 text-xs">
+              <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+              Loading Athena's memory...
+            </div>
+          )}
+          {historyLoaded && messages.map((msg, idx) => (
             <div
               key={idx}
               className={`flex gap-3 max-w-[85%] ${msg.role === 'user' ? 'ml-auto flex-row-reverse' : ''}`}
@@ -379,7 +449,7 @@ export default function AIAssistant() {
                 <span className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce" />
                 <span className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce [animation-delay:0.2s]" />
                 <span className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce [animation-delay:0.4s]" />
-                <span className="font-bold">Analyzing Retail OS logs...</span>
+                <span className="font-bold">Athena is thinking...</span>
               </div>
             </div>
           )}
@@ -437,9 +507,55 @@ export default function AIAssistant() {
       <div className={`w-full lg:w-[450px] bg-zinc-950 border border-white/5 rounded-[2rem] p-6 h-full flex flex-col overflow-y-auto space-y-6 scrollbar-thin scrollbar-thumb-zinc-800 ${
         mobileTab === 'import' ? 'flex' : 'hidden lg:flex'
       }`}>
-        
+
+        {/* Teach Athena: owner-curated knowledge base */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <Brain size={16} className="text-primary" />
+            <h3 className="text-xs font-bold text-white uppercase tracking-wider">Teach Athena</h3>
+          </div>
+          <p className="text-[9.5px] text-zinc-500 leading-normal">
+            Teach Athena a fact, policy, or correction and it will factor it into every future answer — e.g. &ldquo;we don&apos;t restock Rose Sucker until March&rdquo; or &ldquo;always round delivery quotes up to the nearest 5 cedis&rdquo;.
+          </p>
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              value={knowledgeInput}
+              onChange={(e) => setKnowledgeInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleTeach(); } }}
+              placeholder="Teach Athena something about the business..."
+              className="flex-1 px-3 py-2.5 bg-zinc-900 border border-white/5 rounded-xl text-[11px] text-white placeholder-zinc-600 focus:outline-none focus:border-primary/50"
+            />
+            <button
+              onClick={handleTeach}
+              disabled={!knowledgeInput.trim() || isSavingKnowledge}
+              className="w-9 h-9 flex-shrink-0 rounded-xl bg-primary text-white flex items-center justify-center hover:scale-105 active:scale-95 transition-all disabled:opacity-40 disabled:scale-100 cursor-pointer"
+              title="Save to Athena's memory"
+            >
+              <Plus size={14} />
+            </button>
+          </div>
+
+          {knowledgeList.length > 0 && (
+            <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
+              {knowledgeList.map((k) => (
+                <div key={k.id} className="flex items-start justify-between gap-2 p-2.5 bg-zinc-900/60 border border-white/5 rounded-xl group">
+                  <span className="text-[10.5px] text-zinc-300 leading-snug">{k.text}</span>
+                  <button
+                    onClick={() => handleDeleteKnowledge(k.id)}
+                    className="text-zinc-600 hover:text-red-400 transition-colors flex-shrink-0 cursor-pointer"
+                    title="Remove from Athena's memory"
+                  >
+                    <Trash2 size={11} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
         {/* Upload & Raw Text Parse Zone */}
-        <div className="space-y-4">
+        <div className="space-y-4 pt-6 border-t border-white/5">
           <div className="flex items-center gap-2">
             <FileSpreadsheet size={16} className="text-primary" />
             <h3 className="text-xs font-bold text-white uppercase tracking-wider">Smart Import Tool</h3>

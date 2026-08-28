@@ -1338,3 +1338,59 @@ export const bulkImportSales = async (salesList: ParsedImportSale[]): Promise<{
   }
 };
 
+// ============ Athena AI Assistant: persistent memory + taught knowledge ============
+
+const ATHENA_MESSAGES_COLLECTION = "athenaMessages";
+const ATHENA_KNOWLEDGE_COLLECTION = "athenaKnowledge";
+
+export interface AthenaMessage {
+  id?: string;
+  role: "user" | "assistant";
+  content: string;
+  createdAt?: Timestamp;
+}
+
+export const saveAthenaMessage = async (role: "user" | "assistant", content: string): Promise<void> => {
+  await addDoc(collection(db, ATHENA_MESSAGES_COLLECTION), {
+    role,
+    content,
+    createdAt: Timestamp.now(),
+  });
+};
+
+// Returns the most recent `limitCount` messages, oldest first.
+export const fetchAthenaMessages = async (limitCount: number = 50): Promise<AthenaMessage[]> => {
+  const q = query(
+    collection(db, ATHENA_MESSAGES_COLLECTION),
+    orderBy("createdAt", "desc"),
+    limit(limitCount)
+  );
+  const snap = await getDocs(q);
+  const messages = snap.docs.map(d => ({ id: d.id, ...d.data() } as AthenaMessage));
+  return messages.reverse();
+};
+
+export interface AthenaKnowledge {
+  id?: string;
+  text: string;
+  createdAt?: Timestamp;
+}
+
+export const saveKnowledge = async (text: string): Promise<string> => {
+  const docRef = await addDoc(collection(db, ATHENA_KNOWLEDGE_COLLECTION), {
+    text,
+    createdAt: Timestamp.now(),
+  });
+  return docRef.id;
+};
+
+export const fetchKnowledge = async (): Promise<AthenaKnowledge[]> => {
+  const q = query(collection(db, ATHENA_KNOWLEDGE_COLLECTION), orderBy("createdAt", "desc"));
+  const snap = await getDocs(q);
+  return snap.docs.map(d => ({ id: d.id, ...d.data() } as AthenaKnowledge));
+};
+
+export const deleteKnowledge = async (id: string): Promise<void> => {
+  await deleteDoc(doc(db, ATHENA_KNOWLEDGE_COLLECTION, id));
+};
+
