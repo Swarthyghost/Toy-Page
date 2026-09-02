@@ -573,6 +573,23 @@ export default function AdminDashboard() {
     setFormData({ ...formData, images: newImages });
   };
 
+  // Swaps an additional image into the Main Image slot, and moves the
+  // previous main image into that additional image's slot — no images are
+  // lost or duplicated, existing image logic elsewhere is untouched.
+  const handleSetMainImage = (index: number) => {
+    const newMainImage = formData.images[index];
+    const newMainFile = additionalImageFiles[index] ?? null;
+
+    const newImages = [...formData.images];
+    newImages[index] = formData.image;
+    const newFiles = [...additionalImageFiles];
+    newFiles[index] = imageFile;
+
+    setFormData({ ...formData, image: newMainImage, images: newImages });
+    setImageFile(newMainFile);
+    setAdditionalImageFiles(newFiles);
+  };
+
   const replaceAdditionalImage = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -1169,6 +1186,14 @@ export default function AdminDashboard() {
                           
                           {/* Hover Overlay */}
                           <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center gap-3">
+                            <button
+                              type="button"
+                              onClick={() => handleSetMainImage(idx)}
+                              className="p-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors"
+                              title="Set as main image"
+                            >
+                              <Star size={16} />
+                            </button>
                             <label className="p-2 bg-white/10 hover:bg-white/20 text-white rounded-lg cursor-pointer transition-colors">
                               <Upload size={16} />
                               <input
